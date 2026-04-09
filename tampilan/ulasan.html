@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ulasan - Platform UMKM & Industri</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--primary)">B2B</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="index.html" class="nav-link"><i class="ph ph-squares-four nav-icon"></i> Dashboard</a></li>
+      <li class="nav-item"><a href="katalog.html" class="nav-link"><i class="ph ph-storefront nav-icon"></i> Katalog Produk</a></li>
+      <li class="nav-item"><a href="umkm-pencarian.html" class="nav-link"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Sewa Alat</a></li>
+      <li class="nav-item"><a href="transaksi.html" class="nav-link"><i class="ph ph-swap nav-icon"></i> Transaksi</a></li>
+      <li class="nav-item"><a href="ulasan.html" class="nav-link active"><i class="ph ph-star nav-icon"></i> Ulasan</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="profil.html" class="nav-link"><i class="ph ph-user nav-icon"></i> Profil</a></li>
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Keluar</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Ulasan</div>
+        <h1 class="page-title">Rating & Ulasan Mitra</h1>
+      </div>
+      
+      <div class="header-actions">
+        <button class="icon-btn"><i class="ph ph-bell"></i></button>
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=4318ff&color=fff" alt="Profile" class="profile-avatar">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        
+        <!-- List of Finished Transactions Awaiting Review -->
+        <div style="background: var(--card-bg); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+          <h2 style="font-size:18px; margin-bottom:20px;">Transaksi Selesai (Menunggu Ulasan)</h2>
+          
+          <div class="trans-item active" style="margin-bottom:15px;">
+            <div class="trans-item-header">
+              <span class="trans-id">#TRX-9801</span>
+              <span class="status-badge status-success">Selesai</span>
+            </div>
+            <div class="trans-item-body">
+              <div class="partner-logo">LD</div>
+              <div class="obj-info">
+                <h3>PT Lokal Denim</h3>
+                <p>Suplai Kain Denim 400 Yard</p>
+                <div style="margin-top: 10px;">
+                  <button class="btn-primary" style="padding: 8px 15px; font-size:13px;">Beri Ulasan Sekarang</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="trans-item" style="margin-bottom:15px; opacity:0.6;">
+            <div class="trans-item-header">
+              <span class="trans-id">#TRX-9755</span>
+              <span class="status-badge status-success">Selesai</span>
+            </div>
+            <div class="trans-item-body">
+              <div class="partner-logo">AG</div>
+              <div class="obj-info">
+                <h3>Agro Farm</h3>
+                <p>Pembelian Pupuk 1 Ton</p>
+                <div style="margin-top: 10px;">
+                  <span style="color:var(--success); font-weight:700; font-size:13px;"><i class="ph-bold ph-check"></i> Ulasan telah dikirim</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Review Form / Review Display section -->
+        <div style="background: var(--card-bg); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+          <h2 style="font-size:18px; margin-bottom:20px; color:var(--text-main);">Tulis Ulasan untuk #TRX-9801</h2>
+          
+          <div style="text-align: center; margin-bottom: 25px;">
+            <p style="font-weight: 600; color: var(--text-muted); margin-bottom: 10px;">Bagaimana tingkat kepuasan Anda dengan mitra PT Lokal Denim?</p>
+            <div class="stars" style="justify-content: center; font-size: 36px; cursor: pointer;">
+              <i class="ph-fill ph-star"></i>
+              <i class="ph-fill ph-star"></i>
+              <i class="ph-fill ph-star"></i>
+              <i class="ph-fill ph-star"></i>
+              <i class="ph ph-star" style="color: var(--border-color);"></i>
+            </div>
+            <p style="color: var(--warning); font-weight: 700; margin-top: 5px;">4 dari 5 Bintang</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Komentar Ulasan</label>
+            <textarea class="form-control" rows="4" placeholder="Tuliskan pengalaman Anda bekerja sama dengan mitra ini... (Kecepatan respon, kualitas barang/jasa, dll)"></textarea>
+          </div>
+
+          <button class="btn-primary btn-block">Kirim Ulasan</button>
+
+        </div>
+
+      </div>
+
+      <div style="margin-top: 30px;">
+        <h2 style="font-size:20px; margin-bottom:20px;">Ulasan Diterima untuk Anda</h2>
+        
+        <div class="grid-container">
+          <div class="review-card">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 15px;">
+              <div style="display:flex; gap:10px; align-items:center;">
+                <div class="partner-logo" style="width:30px; height:30px; font-size:12px;">TX</div>
+                <span style="font-weight:700;">PT Sumber Tekstil</span>
+              </div>
+              <div class="stars" style="font-size:16px;">
+                <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
+              </div>
+            </div>
+            <p style="font-size:14px; line-height:1.6; color:var(--text-muted);">
+              "Jasa maklon dari CV Penjahit Mandiri sangat memuaskan. Jahitan rapi dan selesai tepat waktu sebelum *deadline*. Kami pasti akan bekerja sama lagi di musim produksi mendatang."
+            </p>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 15px; text-align:right;">11 Maret 2026</p>
+          </div>
+          
+          <div class="review-card">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 15px;">
+              <div style="display:flex; gap:10px; align-items:center;">
+                <div class="partner-logo" style="width:30px; height:30px; font-size:12px;">BI</div>
+                <span style="font-weight:700;">PT Bangun Inti</span>
+              </div>
+              <div class="stars" style="font-size:16px;">
+                <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph ph-star" style="color:var(--border-color);"></i>
+              </div>
+            </div>
+            <p style="font-size:14px; line-height:1.6; color:var(--text-muted);">
+              "Mesin bubut yang disewa berfungsi dengan baik, hanya saja proses administrasi di awal sedikit memakan waktu. Secara keseluruhan sangat membantu kapasitas produksi kami."
+            </p>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 15px; text-align:right;">08 Maret 2026</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

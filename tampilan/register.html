@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daftar - Platform UMKM & Industri</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-left">
+      <div class="auth-box" style="max-width: 500px;">
+        <div class="brand" style="margin-bottom: 20px;">
+          <i class="ph-fill ph-circles-three-plus"></i>
+          <span>Connect<span style="color:var(--primary)">B2B</span></span>
+        </div>
+        
+        <h2 class="auth-title">Daftar Akun Baru 🚀</h2>
+        <p class="auth-subtitle">Bergabunglah dengan ekosistem kami untuk memperluas jangkauan bisnis Anda.</p>
+
+        <form action="index.html">
+          
+          <div class="tabs" style="margin-bottom: 20px;">
+            <div class="tab-item active" style="flex:1; text-align:center;">Sebagai UMKM</div>
+            <div class="tab-item" style="flex:1; text-align:center;">Sebagai Industri</div>
+          </div>
+
+          <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Nama Usaha / Perusahaan</label>
+              <input type="text" class="form-control" placeholder="PT / CV / Nama Toko" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Alamat Email</label>
+            <input type="email" class="form-control" placeholder="email@domain.com" required>
+          </div>
+
+          <div style="display: flex; gap: 15px;">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Kata Sandi</label>
+              <input type="password" class="form-control" placeholder="Minimal 8 karakter" required>
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Ulangi Sandi</label>
+              <input type="password" class="form-control" placeholder="Ulangi sandi" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Kategori Industri / Bisnis</label>
+            <select class="form-control" required style="cursor: pointer;">
+              <option value="" disabled selected>Pilih Kategori...</option>
+              <option>Tekstil & Garmen</option>
+              <option>Makanan & Minuman</option>
+              <option>Manufaktur Logam</option>
+              <option>Agrobisnis</option>
+              <option>Lainnya</option>
+            </select>
+          </div>
+
+          <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:13px; font-weight:500; color:var(--text-muted); margin-bottom: 20px;">
+            <input type="checkbox" required style="margin-top: 4px;"> 
+            Saya setuju dengan Syarat & Ketentuan serta Kebijakan Privasi dari Platform ConnectB2B.
+          </label>
+
+          <button type="submit" class="btn-primary btn-block">Buat Akun Sekarang</button>
+        </form>
+
+        <p style="text-align:center; margin-top:20px; font-size:14px; color:var(--text-muted); font-weight:600;">
+          Sudah punya akun? <a href="login.html" style="color:var(--primary); text-decoration:none;">Masuk di sini</a>
+        </p>
+      </div>
+    </div>
+    <div class="auth-right">
+      <div style="z-index: 10; text-align: center; padding: 40px;">
+        <h1 style="font-size: 40px; margin-bottom: 20px;">Mulai Kolaborasi Anda</h1>
+        <p style="font-size: 18px; line-height: 1.6; max-width: 400px; margin: auto; opacity: 0.9;">
+          Lebih dari ribuan mitra telah terhubung. Daftar secara gratis dan temukan partner terbaik untuk skala bisnis Anda.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

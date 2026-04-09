@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Platform UMKM & Industri</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--primary)">B2B</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item">
+        <a href="index.html" class="nav-link active">
+          <i class="ph ph-squares-four nav-icon"></i> Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="katalog.html" class="nav-link">
+          <i class="ph ph-storefront nav-icon"></i> Katalog Produk
+        </a>
+      </li>
+      <li class="nav-item"><a href="umkm-pencarian.html" class="nav-link"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Sewa Alat</a></li>
+      <li class="nav-item">
+        <a href="transaksi.html" class="nav-link">
+          <i class="ph ph-swap nav-icon"></i> Transaksi
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="ulasan.html" class="nav-link">
+          <i class="ph ph-star nav-icon"></i> Ulasan
+        </a>
+      </li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item">
+        <a href="profil.html" class="nav-link">
+          <i class="ph ph-user nav-icon"></i> Profil
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="login.html" class="nav-link" style="color:var(--danger)">
+          <i class="ph ph-sign-out nav-icon"></i> Keluar
+        </a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Dashboard</div>
+        <h1 class="page-title">Dashboard Utama</h1>
+      </div>
+      
+      <div class="header-actions">
+        <div class="search-bar">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" placeholder="Cari sesuatu..." onkeydown="if(event.key === 'Enter') window.location.href='pencarian.html'">
+        </div>
+        <button class="icon-btn" style="position:relative;" onclick="alert('Notifikasi (FR-13): Anda menerima permintaan kerja sama baru (Suplai Kulit Sapi) dari CV Jaya Abadi. Silakan tinjau di menu Transaksi.')">
+          <i class="ph ph-bell"></i>
+          <span style="position:absolute; top:2px; right:2px; background:var(--danger); width:10px; height:10px; border-radius:50%; border:2px solid var(--card-bg);"></span>
+        </button>
+        <button class="icon-btn" onclick="window.location.href='profil.html'"><i class="ph ph-gear"></i></button>
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=4318ff&color=fff" alt="Profile" class="profile-avatar" onclick="window.location.href='profil.html'">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <!-- 3 Top KPI Cards -->
+      <div class="kpi-cards">
+        <div class="kpi-card" style="cursor: pointer;" onclick="window.location.href='pencarian.html'">
+          <div class="icon-box icon-blue">
+            <i class="ph-fill ph-storefront"></i>
+          </div>
+          <div class="kpi-info">
+            <h4>Total UMKM Terdaftar</h4>
+            <h2>1,245 <span class="badge badge-up"><i class="ph-bold ph-trend-up"></i> 12%</span></h2>
+          </div>
+        </div>
+        
+        <div class="kpi-card" style="cursor: pointer;" onclick="window.location.href='pencarian.html'">
+          <div class="icon-box icon-orange">
+            <i class="ph-fill ph-factory"></i>
+          </div>
+          <div class="kpi-info">
+            <h4>Total Industri Terdaftar</h4>
+            <h2>320 <span class="badge badge-up"><i class="ph-bold ph-trend-up"></i> 5%</span></h2>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="cursor: pointer;" onclick="window.location.href='transaksi.html'">
+          <div class="icon-box icon-green">
+            <i class="ph-fill ph-handshake"></i>
+          </div>
+          <div class="kpi-info">
+            <h4>Kerjasama Aktif</h4>
+            <h2>842 <span class="badge badge-up"><i class="ph-bold ph-trend-up"></i> 24%</span></h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Large Bottom Chart/Table Widget -->
+      <div class="large-widget">
+        <div class="widget-header">
+          <h2 class="widget-title">Aktivitas Request Kerja Sama Terbaru</h2>
+          <button class="btn-outline" onclick="window.location.href='transaksi.html'">Lihat Semua <i class="ph-bold ph-caret-right"></i></button>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID Request</th>
+              <th>Industri Pencari</th>
+              <th>UMKM Mitra</th>
+              <th>Jenis Kerja Sama</th>
+              <th>Tanggal</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="cursor:pointer;" onclick="window.location.href='transaksi.html'">
+              <td>#REQ-8021</td>
+              <td>
+                <div class="partner-info">
+                  <div class="partner-logo">TX</div>
+                  <span>PT Sumber Tekstil</span>
+                </div>
+              </td>
+              <td>CV Penjahit Mandiri</td>
+              <td>Maklon Jahit Baju</td>
+              <td>12 Mar 2026</td>
+              <td><span class="status-badge status-processing">Menunggu Konfirmasi</span></td>
+            </tr>
+            <tr style="cursor:pointer;" onclick="window.location.href='transaksi.html'">
+              <td>#REQ-8020</td>
+              <td>
+                <div class="partner-info">
+                  <div class="partner-logo">MF</div>
+                  <span>PT Multi Food</span>
+                </div>
+              </td>
+              <td>Keripik Singkong Rasa</td>
+              <td>Suplai Bahan Baku</td>
+              <td>11 Mar 2026</td>
+              <td><span class="status-badge status-success">Kerja Sama Aktif</span></td>
+            </tr>
+            <tr style="cursor:pointer;" onclick="window.location.href='transaksi.html'">
+              <td>#REQ-8019</td>
+              <td>
+                <div class="partner-info">
+                  <div class="partner-logo">BI</div>
+                  <span>PT Bangun Inti</span>
+                </div>
+              </td>
+              <td>Las Bubut Jaya</td>
+              <td>Sewa Mesin Bubut</td>
+              <td>10 Mar 2026</td>
+              <td><span class="status-badge status-warning">Negosiasi</span></td>
+            </tr>
+            <tr style="cursor:pointer;" onclick="window.location.href='ulasan.html'">
+              <td>#REQ-8018</td>
+              <td>
+                <div class="partner-info">
+                  <div class="partner-logo">AF</div>
+                  <span>Agro Farmers</span>
+                </div>
+              </td>
+              <td>Pupuk Organik Pak Tani</td>
+              <td>Beli Lumpsum</td>
+              <td>09 Mar 2026</td>
+              <td><span class="status-badge status-success">Selesai</span></td>
+            </tr>
+            <tr style="cursor:pointer;" onclick="window.location.href='transaksi.html'">
+              <td>#REQ-8017</td>
+              <td>
+                <div class="partner-info">
+                  <div class="partner-logo">EL</div>
+                  <span>Electro Corp</span>
+                </div>
+              </td>
+              <td>Maju Elektronik</td>
+              <td>Perakitan Komponen</td>
+              <td>08 Mar 2026</td>
+              <td><span class="status-badge status-success">Kerja Sama Aktif</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Add some inline CSS just for rows hover in this file without cluttering style.css -->
+  <style>
+    .data-table tbody tr:hover {
+      background-color: #f8fafc;
+    }
+  </style>
+
+</body>
+</html>

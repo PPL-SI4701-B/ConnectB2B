@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beri Ulasan - Industri B2B</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar (POV INDUSTRI) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--secondary)">Industri</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="industri-dashboard.html" class="nav-link"><i class="ph ph-squares-four nav-icon"></i> Dasbor Industri</a></li>
+      <li class="nav-item"><a href="pencarian.html" class="nav-link"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Supplier UMKM</a></li>
+      <li class="nav-item"><a href="industri-transaksi.html" class="nav-link"><i class="ph ph-swap nav-icon"></i> Pantau Transaksi</a></li>
+      <li class="nav-item"><a href="industri-ulasan.html" class="nav-link active"><i class="ph ph-star nav-icon"></i> Beri Ulasan</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="industri-profil.html" class="nav-link"><i class="ph ph-user nav-icon"></i> Profil Eksekutif</a></li>
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Ganti Peran (Log Out)</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Kirim Ulasan</div>
+        <h1 class="page-title">Penilaian untuk UMKM</h1>
+      </div>
+      
+      <div class="header-actions">
+        <img src="https://ui-avatars.com/api/?name=ST&background=00b5d8&color=fff" alt="Profile" class="profile-avatar">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        
+        <!-- List of Finished Transactions Awaiting Review -->
+        <div style="background: var(--card-bg); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+          <h2 style="font-size:18px; margin-bottom:20px;">Permintaan Selesai (Butuh *Feedback* Anda)</h2>
+          
+          <div class="trans-item active" style="margin-bottom:15px;">
+            <div class="trans-item-header">
+              <span class="trans-id">#REQ-8015</span>
+              <span class="status-badge status-success">Telah Anda Konfirmasi</span>
+            </div>
+            <div class="trans-item-body">
+              <div class="partner-logo">BP</div>
+              <div class="obj-info">
+                <h3>Bintang Packaging</h3>
+                <p>Suplai Kardus Karton (1000 Pcs)</p>
+                <div style="margin-top: 10px;">
+                  <button class="btn-primary" style="padding: 8px 15px; font-size:13px; background:var(--secondary);" onclick="alert('Formulir di kanan aktif')">Beri Ulasan Sekarang</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="trans-item" style="margin-bottom:15px; opacity:0.6;">
+            <div class="trans-item-header">
+              <span class="trans-id">#REQ-7990</span>
+              <span class="status-badge status-success">Telah Anda Konfirmasi</span>
+            </div>
+            <div class="trans-item-body">
+              <div class="partner-logo">LB</div>
+              <div class="obj-info">
+                <h3>Las Bubut Amanah</h3>
+                <p>Jasa Bubut Komponen (Selesai 10 Mar)</p>
+                <div style="margin-top: 10px;">
+                  <span style="color:var(--success); font-weight:700; font-size:13px;"><i class="ph-bold ph-check"></i> Ulasan sudah dikirim</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Review Form section -->
+        <div style="background: var(--card-bg); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);">
+          <h2 style="font-size:18px; margin-bottom:20px; color:var(--text-main);">Deskripsikan Kinerja Mitra Bintang Packaging</h2>
+          
+          <div style="text-align: center; margin-bottom: 25px;">
+            <p style="font-weight: 600; color: var(--text-muted); margin-bottom: 10px;">Ketepatan Waktu & Kualitas</p>
+            <div class="stars" style="justify-content: center; font-size: 36px; cursor: pointer;">
+              <i class="ph-fill ph-star"></i>
+              <i class="ph-fill ph-star"></i>
+              <i class="ph-fill ph-star"></i>
+              <i class="ph-fill ph-star"></i>
+              <i class="ph-bold ph-star" style="color: var(--border-color);"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ulasan Profesional Terbuka</label>
+            <textarea class="form-control" rows="4" placeholder="Apakah barang yang disuplai sesuai ekspektasi industri Anda? Apakah layanan pengiriman dilakukan tepat waktu?"></textarea>
+          </div>
+
+          <button class="btn-primary btn-block" style="background:var(--secondary);" onclick="alert('Terima kasih! Ulasan Anda akan sangat membantu reputasi UMKM terkait.'); window.location.href='industri-dashboard.html'">Kirim untuk Ditampilkan di Platform</button>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profil Usaha - Platform UMKM & Industri</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--primary)">B2B</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="index.html" class="nav-link"><i class="ph ph-squares-four nav-icon"></i> Dashboard</a></li>
+      <li class="nav-item"><a href="katalog.html" class="nav-link"><i class="ph ph-storefront nav-icon"></i> Katalog Produk</a></li>
+      <li class="nav-item"><a href="umkm-pencarian.html" class="nav-link"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Sewa Alat</a></li>
+      <li class="nav-item"><a href="transaksi.html" class="nav-link"><i class="ph ph-swap nav-icon"></i> Transaksi</a></li>
+      <li class="nav-item"><a href="ulasan.html" class="nav-link"><i class="ph ph-star nav-icon"></i> Ulasan</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="profil.html" class="nav-link active"><i class="ph ph-user nav-icon"></i> Profil</a></li>
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Keluar</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Profil</div>
+        <h1 class="page-title">Kelola Profil Usaha</h1>
+      </div>
+      
+      <div class="header-actions">
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=4318ff&color=fff" alt="Profile" class="profile-avatar">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <div style="background: var(--card-bg); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); margin-bottom: 20px;">
+        <div style="height: 150px; background: linear-gradient(135deg, var(--primary), var(--secondary)); position: relative;">
+          <button style="position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 8px; cursor: pointer; backdrop-filter: blur(5px); display:flex; align-items:center; gap:5px; font-weight:600;"><i class="ph ph-camera"></i> Ubah Cover</button>
+        </div>
+        
+        <div style="padding: 0 40px 40px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: -50px; margin-bottom: 30px;">
+            <div style="position: relative;">
+              <img src="https://ui-avatars.com/api/?name=CV+Maju&background=fff&color=4318ff" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--card-bg); box-shadow: var(--shadow-sm); object-fit: cover; background: white;" alt="Logo">
+              <button style="position: absolute; bottom: 5px; right: 5px; background: var(--primary); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="ph ph-pencil-simple"></i></button>
+            </div>
+            <div>
+              <span class="status-badge status-success" style="font-size: 14px;"><i class="ph-bold ph-check-circle"></i> UMKM Terverifikasi</span>
+            </div>
+          </div>
+
+          <div class="grid-container" style="grid-template-columns: 1fr 1fr;">
+            <div>
+              <div class="form-group">
+                <label class="form-label">Nama Usaha</label>
+                <input type="text" class="form-control" value="CV Penjahit Mandiri">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Kontak</label>
+                <input type="email" class="form-control" value="kontak@penjahitmandiri.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nomor Telepon / WhatsApp</label>
+                <input type="text" class="form-control" value="+62 812-3456-7890">
+              </div>
+            </div>
+
+            <div>
+              <div class="form-group">
+                <label class="form-label">Kategori Bisnis</label>
+                <select class="form-control">
+                  <option selected>Tekstil & Garmen</option>
+                  <option>Makanan & Minuman</option>
+                  <option>Agrobisnis</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Alamat Lengkap</label>
+                <textarea class="form-control" rows="4" style="resize:none;">Jl. Dayeuhkolot No. 42, Kab. Bandung, Jawa Barat</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:1px; background:var(--border-color); margin:30px 0;"></div>
+
+          <div class="document-upload-section">
+            <h3 style="margin-bottom: 5px; font-size:18px;">Dokumen Pendukung Usaha</h3>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">Unggah dokumen perizinan Anda (NIB, SIUP, atau NPWP) agar tim Admin dapat memverifikasi status badan usaha Anda. Industri lebih menyukai UMKM terverifikasi.</p>
+
+            <div class="grid-container" style="grid-template-columns: 1fr 1fr;">
+              <!-- Upload NIB -->
+              <div style="border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: 25px; text-align: center; background: var(--bg-color); cursor: pointer; transition: all 0.3s ease;" onclick="document.getElementById('upload-nib').click()" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border-color)'">
+                <i class="ph ph-file-pdf" style="font-size: 32px; color:var(--primary); margin-bottom: 10px;"></i>
+                <h4 style="margin-bottom: 5px;">Nomor Induk Berusaha (NIB)</h4>
+                <p style="font-size: 12px; color:var(--text-muted);">Format .PDF (Maks 5MB)</p>
+                <input type="file" id="upload-nib" style="display:none;" accept=".pdf">
+              </div>
+
+              <!-- Upload NPWP -->
+              <div style="border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: 25px; text-align: center; background: var(--bg-color); cursor: pointer; transition: all 0.3s ease;" onclick="document.getElementById('upload-npwp').click()" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border-color)'">
+                <i class="ph ph-upload-simple" style="font-size: 32px; color:var(--text-muted); margin-bottom: 10px;"></i>
+                <h4 style="margin-bottom: 5px;">NPWP Badan / Pribadi</h4>
+                <p style="font-size: 12px; color:var(--text-muted);">Pilih FIle (Maks 5MB)</p>
+                <input type="file" id="upload-npwp" style="display:none;" accept=".pdf,.doc,.docx">
+              </div>
+            </div>
+            
+            <div style="background: #e6f9f4; padding: 15px; border-radius: 8px; margin-top: 15px; display:flex; align-items:flex-start; gap:10px; border:1px solid var(--success);">
+              <i class="ph-fill ph-check-circle" style="color:var(--success); font-size:24px;"></i>
+              <div>
+                <strong style="color:var(--success);">Status: Berkas Lengkap & Terverifikasi</strong>
+                <p style="font-size:13px; color:var(--text-main); margin-top:3px;">Dokumen terakhir diperiksa oleh Admin pada 10 Maret 2026. Anda bisa mengunggah ulang jika ada perubahan perizinan.</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:30px; border-top: 1px solid var(--border-color); padding-top:20px;">
+            <button class="btn-outline">Batal</button>
+            <button class="btn-primary" onclick="alert('Pembaruan profil serta dokumen legalitas berhasil disimpan sistem untuk ditinjau Admin!')">Simpan Perubahan</button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

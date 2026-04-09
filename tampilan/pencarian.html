@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pencarian Supplier - Industri B2B</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar (POV INDUSTRI) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--secondary)">Industri</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="industri-dashboard.html" class="nav-link"><i class="ph ph-squares-four nav-icon"></i> Dasbor Industri</a></li>
+      <li class="nav-item"><a href="pencarian.html" class="nav-link active"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Supplier UMKM</a></li>
+      <li class="nav-item"><a href="industri-transaksi.html" class="nav-link"><i class="ph ph-swap nav-icon"></i> Pantau Transaksi</a></li>
+      <li class="nav-item"><a href="industri-ulasan.html" class="nav-link"><i class="ph ph-star nav-icon"></i> Beri Ulasan</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="industri-profil.html" class="nav-link"><i class="ph ph-user nav-icon"></i> Profil Eksekutif</a></li>
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Ganti Peran (Log Out)</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Pencarian</div>
+        <h1 class="page-title">Temukan Mitra UMKM</h1>
+      </div>
+      
+      <div class="header-actions">
+        <button class="icon-btn" onclick="alert('Tidak ada notifikasi')"><i class="ph ph-bell"></i></button>
+        <span style="font-weight: 700; margin-left: 10px;">Manager Pengadaan</span>
+        <img src="https://ui-avatars.com/api/?name=Manager&background=00b5d8&color=fff" alt="Profile" class="profile-avatar">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <!-- Filter and Search Area -->
+      <div style="background: var(--card-bg); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); margin-bottom: 30px; display: flex; gap: 15px; align-items:flex-end;">
+        <div class="form-group" style="flex: 2; margin-bottom: 0;">
+          <label class="form-label">Cari Berdasarkan Kebutuhan Produksi</label>
+          <div style="position: relative;">
+            <i class="ph ph-magnifying-glass" style="position: absolute; left: 15px; top: 15px; font-size: 20px; color: var(--text-muted);"></i>
+            <input type="text" class="form-control" placeholder="Contoh: Jasa Maklon, Sewa Mesin Jahit, Suplai Kardus..." style="padding-left: 45px;">
+          </div>
+        </div>
+        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+          <label class="form-label">Kategori Industri</label>
+          <select class="form-control">
+            <option value="">Semua Kategori</option>
+            <option>Tekstil & Garmen</option>
+            <option>Makanan & Minuman</option>
+            <option>Manufaktur Logam</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+          <label class="form-label">Lokasi Operasional</label>
+          <select class="form-control">
+            <option value="">Provinsi / Kota</option>
+            <option>Bandung Raya</option>
+            <option>Jabodetabek</option>
+          </select>
+        </div>
+        <button class="btn-primary" style="height: 50px; padding: 0 30px; background:var(--secondary);"><i class="ph-bold ph-faders"></i> Filter</button>
+      </div>
+
+      <!-- Result Layout -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        
+        <!-- List Results -->
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <h3 style="margin-bottom: 10px; color: var(--text-main);">UMKM Tersedia (24 ditemukan)</h3>
+          
+          <div class="trans-item active" style="cursor:pointer;">
+            <div class="trans-item-header">
+              <span class="status-badge status-success" style="font-weight:700;"><i class="ph-bold ph-seal-check"></i> UMKM Terverifikasi (FR-27)</span>
+              <div class="stars" style="font-size: 16px;">
+                <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star-half"></i> <span style="color:var(--text-main); font-weight:700; font-size:14px; margin-left:5px;">4.8</span>
+              </div>
+            </div>
+            <div class="trans-item-body" style="align-items: center;">
+              <div class="partner-logo" style="width: 80px; height: 80px; font-size: 24px;">PM</div>
+              <div class="obj-info">
+                <h3>CV Penjahit Mandiri</h3>
+                <p><i class="ph ph-map-pin"></i> Dayeuhkolot, Bandung</p>
+                <p style="margin-top: 5px; color: var(--secondary); font-weight:700;">Jasa Maklon, Sewa Mesin Jahit</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="trans-item" style="cursor:pointer;" onclick="alert('Menampilkan Profil Kain Textile Jaya')">
+            <div class="trans-item-header">
+              <span class="status-badge" style="background:#feeceb; color:var(--danger); font-weight:700;"><i class="ph-bold ph-warning-circle"></i> UMKM Belum Terverifikasi (FR-27)</span>
+              <div class="stars" style="font-size: 16px;">
+                <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph ph-star"></i> <span style="color:var(--text-main); font-weight:700; font-size:14px; margin-left:5px;">4.0</span>
+              </div>
+            </div>
+            <div class="trans-item-body" style="align-items: center;">
+              <div class="partner-logo" style="width: 80px; height: 80px; font-size: 24px; background: #e0e5fe; color: var(--primary);">KT</div>
+              <div class="obj-info">
+                <h3>Kain Textile Jaya</h3>
+                <p><i class="ph ph-map-pin"></i> Majalaya, Bandung</p>
+                <p style="margin-top: 5px; color: var(--secondary); font-weight:700;">Suplai Bahan Baku Kain</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Detail / Request Form Panel -->
+        <div style="background: var(--card-bg); padding: 30px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); position: sticky; top: 110px; height: fit-content;">
+          <div style="border-bottom: 1px dashed var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <h2>CV Penjahit Mandiri</h2>
+                <p style="color: var(--text-muted);"><i class="ph ph-map-pin"></i> Dayeuhkolot, Bandung</p>
+              </div>
+              <div class="partner-logo" style="cursor:pointer;" onclick="alert('Lihat Katalog Katalog CV Penjahit Mandiri')">PM</div>
+            </div>
+            <p style="margin-top: 15px; font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+              Kami menyediakan jasa maklon jahit berkualitas tinggi untuk Kaos, Kemeja, dan Jaket. Selain itu, kami menyewakan mesin jahit industri yang sedang tidak terpakai.
+            </p>
+          </div>
+
+          <!-- Request Form Simulation -->
+          <h3 style="margin-bottom: 15px; display:flex; align-items:center; gap:8px;"><i class="ph-fill ph-handshake" style="color:var(--secondary);"></i> Ajukan Request Kerjasama</h3>
+          
+          <div class="form-group">
+            <label class="form-label">Jenis Permintaan Industri Anda</label>
+            <select class="form-control">
+              <option>Pesan Maklon (Jasa)</option>
+              <option>Sewa Alat (Mesin Jahit)</option>
+              <option>Suplai Bahan Baku</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Detail Spesifikasi / Durasi</label>
+            <textarea class="form-control" rows="3" placeholder="Sebutkan target waktu, kuantitas order, atau spesifikasi detail dari perusahaan Anda..."></textarea>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <button class="btn-outline" style="flex:1;" onclick="alert('Membuka Fitur Chat dengan UMKM')"><i class="ph ph-chat-centered-text"></i> Tanya/Chat</button>
+            <button class="btn-primary" style="flex:2; background:var(--secondary);" onclick="alert('Request berhasil dikirim ke UMKM. Cek status di Pantau Transaksi!'); window.location.href='industri-transaksi.html'">Kirim Request</button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

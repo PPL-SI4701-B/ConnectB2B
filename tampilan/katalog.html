@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Katalog Produk - Platform UMKM & Industri</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--primary)">B2B</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="index.html" class="nav-link"><i class="ph ph-squares-four nav-icon"></i> Dashboard</a></li>
+      <li class="nav-item"><a href="katalog.html" class="nav-link active"><i class="ph ph-storefront nav-icon"></i> Katalog Produk</a></li>
+      <li class="nav-item"><a href="umkm-pencarian.html" class="nav-link"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Sewa Alat</a></li>
+      <li class="nav-item"><a href="transaksi.html" class="nav-link"><i class="ph ph-swap nav-icon"></i> Transaksi</a></li>
+      <li class="nav-item"><a href="ulasan.html" class="nav-link"><i class="ph ph-star nav-icon"></i> Ulasan</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="profil.html" class="nav-link"><i class="ph ph-user nav-icon"></i> Profil</a></li>
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Keluar</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Katalog Produk</div>
+        <h1 class="page-title">Katalog & Aset Saya</h1>
+      </div>
+      
+      <div class="header-actions">
+        <div class="search-bar">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" placeholder="Cari di katalog Anda...">
+        </div>
+        <button class="icon-btn"><i class="ph ph-bell"></i></button>
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=4318ff&color=fff" alt="Profile" class="profile-avatar">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div class="tabs" style="margin-bottom: 0;">
+          <div class="tab-item active">Produk & Jasa</div>
+          <div class="tab-item">Alat / Mesin Produksi</div>
+        </div>
+        <button class="btn-primary" style="display:flex; align-items:center; gap:8px;" onclick="window.location.href='tambah-produk.html'">
+          <i class="ph-bold ph-plus"></i> Tambah Item Baru
+        </button>
+      </div>
+
+      <!-- Catalog Grid -->
+      <div class="grid-container">
+        
+        <div class="product-card">
+          <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=500&q=80" class="product-img" alt="Kaos Hitam">
+          <div class="product-body">
+            <h3 class="product-title">Maklon Kaos Polos</h3>
+            <p class="product-vendor"><i class="ph-fill ph-tag"></i> Jasa Manufaktur Tekstil</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+              <span class="product-price">Rp 25.000<span style="font-size:14px; color:var(--text-muted); font-weight:500;">/pcs</span></span>
+            </div>
+            <div style="display:flex; gap:10px; margin-top: 15px;">
+              <button class="btn-outline" style="flex:1; padding:8px; display:flex; justify-content:center;"><i class="ph ph-pencil-simple"></i></button>
+              <button class="btn-outline" style="padding:8px; color:var(--danger); border-color:var(--danger);"><i class="ph ph-trash"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="product-card">
+          <img src="https://images.unsplash.com/photo-1582216578028-d89f7febeb20?auto=format&fit=crop&w=500&q=80" class="product-img" alt="Cotton Fabric">
+          <div class="product-body">
+            <h3 class="product-title">Kain Katun Combed 30s</h3>
+            <p class="product-vendor"><i class="ph-fill ph-tag"></i> Raw Material</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+              <span class="product-price">Rp 65.000<span style="font-size:14px; color:var(--text-muted); font-weight:500;">/kg</span></span>
+            </div>
+            <div style="display:flex; gap:10px; margin-top: 15px;">
+              <button class="btn-outline" style="flex:1; padding:8px; display:flex; justify-content:center;"><i class="ph ph-pencil-simple"></i></button>
+              <button class="btn-outline" style="padding:8px; color:var(--danger); border-color:var(--danger);"><i class="ph ph-trash"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="product-card" style="border: 2px dashed var(--border-color); background: transparent; display:flex; align-items:center; justify-content:center; flex-direction:column; color: var(--text-muted); cursor:pointer;" onclick="window.location.href='tambah-produk.html'">
+          <i class="ph ph-plus" style="font-size: 40px; margin-bottom: 10px;"></i>
+          <h3 style="font-size: 16px;">Tambah Produk Baru</h3>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

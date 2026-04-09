@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tambah Produk - Platform UMKM & Industri</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    .upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      text-align: center;
+      background: var(--bg-color);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+    }
+    .upload-area:hover {
+      border-color: var(--primary);
+      background: #f0f4ff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar (POV UMKM) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--primary)">B2B</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="index.html" class="nav-link"><i class="ph ph-squares-four nav-icon"></i> Dashboard</a></li>
+      <li class="nav-item"><a href="katalog.html" class="nav-link active"><i class="ph ph-storefront nav-icon"></i> Katalog Produk</a></li>
+      <li class="nav-item"><a href="umkm-pencarian.html" class="nav-link"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Sewa Alat</a></li>
+      <li class="nav-item"><a href="transaksi.html" class="nav-link"><i class="ph ph-swap nav-icon"></i> Transaksi</a></li>
+      <li class="nav-item"><a href="ulasan.html" class="nav-link"><i class="ph ph-star nav-icon"></i> Ulasan</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="profil.html" class="nav-link"><i class="ph ph-user nav-icon"></i> Profil</a></li>
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Keluar</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb"><a href="katalog.html" style="color:var(--text-muted); text-decoration:none;">Katalog Produk</a> / Tambah Baru</div>
+        <h1 class="page-title">Tambah Item Portofolio Baru</h1>
+      </div>
+      
+      <div class="header-actions">
+        <button class="icon-btn" onclick="alert('Tidak ada notifikasi')"><i class="ph ph-bell"></i></button>
+        <img src="https://ui-avatars.com/api/?name=CV+Penjahit&background=4318ff&color=fff" alt="Profile" class="profile-avatar">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <div style="background: var(--card-bg); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--shadow-sm); max-width: 800px;">
+        
+        <form onsubmit="handleSimpan(event)">
+          
+          <!-- Image Upload Simulation -->
+          <label class="form-label" style="font-size:16px;">Foto Pendukung Produk / Alat</label>
+          <div class="upload-area" onclick="document.getElementById('file-upload').click()">
+            <i class="ph ph-upload-simple" style="font-size: 40px; color:var(--primary); margin-bottom: 15px;"></i>
+            <h3 style="margin-bottom: 5px; color: var(--text-main);">Klik untuk unggah atau seret file ke area ini</h3>
+            <p style="font-size: 13px;">Format yang didukung: JPG, PNG, WEBP (Maksimal 5MB)</p>
+            <input type="file" id="file-upload" style="display: none;" accept="image/*">
+          </div>
+
+          <div class="grid-container" style="grid-template-columns: 1fr 1fr;">
+            
+            <!-- Kiri -->
+            <div>
+              <div class="form-group">
+                <label class="form-label">Nama Item Jasa/Produk</label>
+                <input type="text" class="form-control" placeholder="Contoh: Maklon Kemeja Drill" required>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Kategori Utama</label>
+                <select class="form-control">
+                  <option>Jasa Manufaktur Tekstil</option>
+                  <option>Penyewaan Mesin/Peralatan</option>
+                  <option>Suplai Bahan Baku Mentah</option>
+                  <option>Lainnya</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Kanan -->
+            <div>
+              <div class="form-group">
+                <label class="form-label">Rentang Kapasitas / Skala</label>
+                <input type="text" class="form-control" placeholder="Contoh: Hingga 500 pcs/minggu">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Estimasi Harga (Rp)</label>
+                <div style="display: flex; gap: 10px;">
+                  <input type="number" class="form-control" style="flex: 2;" placeholder="150000" required>
+                  <select class="form-control" style="flex: 1;">
+                    <option>/ Pcs</option>
+                    <option>/ Lusin</option>
+                    <option>/ Kg</option>
+                    <option>/ Hari</option>
+                    <option>/ Lumpsum</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Deskripsi Lengkap Spesifikasi</label>
+            <textarea class="form-control" rows="5" placeholder="Tuliskan penjelasan kualifikasi jasa, bahan baku buatan, dan detail lainnya supaya Industri cepat setuju untuk Request Anda..." required></textarea>
+          </div>
+
+          <!-- Bottom Actions -->
+          <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+            <button type="button" class="btn-outline" onclick="window.location.href='katalog.html'">Batal & Kembali</button>
+            <button type="submit" class="btn-primary" style="display:flex; align-items:center; gap:8px;"><i class="ph-bold ph-floppy-disk"></i> Simpan ke Portofolio</button>
+          </div>
+
+        </form>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function handleSimpan(e) {
+      e.preventDefault();
+      alert("Hebat! Item baru Anda berhasil diterbitkan ke direktori sehingga sekarang tampil bagi Perusahaan di fitur Pencarian.");
+      window.location.href = 'katalog.html';
+    }
+  </script>
+</body>
+</html>

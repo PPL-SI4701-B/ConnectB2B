@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moderasi Konten - Admin B2B</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar (Admin Version) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Admin<span style="color:var(--danger)">B2B</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="admin-dashboard.html" class="nav-link"><i class="ph ph-chart-pie-slice nav-icon"></i> Overviu Aktivitas Sistem</a></li>
+      <li class="nav-item"><a href="admin-pengguna.html" class="nav-link"><i class="ph ph-users nav-icon"></i> Kelola Pengguna Sistem</a></li>
+      <li class="nav-item"><a href="admin-moderasi.html" class="nav-link active"><i class="ph ph-shield-warning nav-icon"></i> Tinjauan Konten Katalog</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Keluar Portal Admin</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Tinjauan Konten Katalog</div>
+        <h1 class="page-title">Moderasi & Pengelolaan Konten (FR-22)</h1>
+      </div>
+      
+      <div class="header-actions">
+        <button class="icon-btn"><i class="ph ph-warning-circle"></i></button>
+        <span style="font-weight: 700; margin-left: 10px;">SuperAdmin</span>
+        <img src="https://ui-avatars.com/api/?name=Super+Admin&background=ee5d50&color=fff" alt="Profile" class="profile-avatar">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <div style="background:var(--card-bg); padding:25px; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); margin-bottom: 30px;">
+        <h2 style="font-size:20px; margin-bottom:10px;">Antrean Laporan & Deteksi Sistem</h2>
+        <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">
+          Di bawah ini adalah daftar produk / jasa di Katalog UMKM yang dilaporkan oleh pengguna lain atau terdeteksi oleh sistem melanggar Terms of Service (Produk terlarang, Ilegal, Penipuan, dsb).
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap:20px;">
+          
+          <!-- Laporan 1 -->
+          <div class="trans-item active" id="konten-551" style="display:flex; flex-direction:column; gap:15px; border-left: 5px solid var(--danger); padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <span class="status-badge" style="background:#feeceb; color:var(--danger); margin-bottom:10px; display:inline-block;"><i class="ph-bold ph-warning"></i> Pelanggaran Berat: Barang Ilegal / Palsu</span>
+                <h3 style="font-size:18px;">ID Katalog: #CAT-551 (Tas Branded KW Super)</h3>
+                <p style="font-size:14px; color:var(--text-muted); margin-top:5px;">Dilaporkan oleh: PT Industri Retail Sentosa (Terkait Hak Cipta)</p>
+              </div>
+              <div class="partner-logo" style="width:50px; height:50px; font-size:16px; border-radius:8px;">KW</div>
+            </div>
+            
+            <div style="background:var(--bg-color); padding:15px; border-radius:8px;">
+              <p style="font-size:13px; color:var(--text-main); font-weight:500;"><strong>Deskripsi Asli UMKM (Tersangka):</strong><br>
+                Menerima maklon pembuatan tas bermerk XXX kualitas mirror 1:1, bahan kulit sintetis, bebas tag label.
+              </p>
+            </div>
+
+            <div style="display:flex; gap:15px; margin-top:10px;">
+              <button class="btn-primary" style="background:var(--danger); border-color:var(--danger);" onclick="hapusKonten('konten-551')">
+                <i class="ph-bold ph-trash"></i> Hapus Permanen & Blacklist Produk
+              </button>
+              <button class="btn-outline" onclick="abaikanKonten('konten-551')">
+                Abaikan / Salah Lapor
+              </button>
+            </div>
+          </div>
+
+          <!-- Laporan 2 -->
+          <div class="trans-item active" id="konten-892" style="display:flex; flex-direction:column; gap:15px; border-left: 5px solid var(--warning); padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <span class="status-badge status-warning" style="margin-bottom:10px; display:inline-block;"><i class="ph-bold ph-info"></i> Pelanggaran Ringan: Indikasi Spam Teks</span>
+                <h3 style="font-size:18px;">ID Katalog: #CAT-892 (Jasa Maklon Kemeja)</h3>
+                <p style="font-size:14px; color:var(--text-muted); margin-top:5px;">Dideteksi oleh: AI Bot Scanner Platform</p>
+              </div>
+              <div class="partner-logo" style="width:50px; height:50px; font-size:16px; border-radius:8px; background:#fffbdf; color:var(--warning);">SJ</div>
+            </div>
+            
+            <div style="background:var(--bg-color); padding:15px; border-radius:8px;">
+              <p style="font-size:13px; color:var(--text-main); font-weight:500;"><strong>Deskripsi Asli UMKM (Tersangka):</strong><br>
+                Jasa maklon kemeja murah kemeja maklon cepat murah meriah Bandung Jawa Barat tekstil jahit jahit kemeja pabrik kemeja murah... <i>(Teks SEO berlebihan yang merusak struktur pembacaan).</i>
+              </p>
+            </div>
+
+            <div style="display:flex; gap:15px; margin-top:10px;">
+              <button class="btn-primary" style="background:var(--warning); border-color:var(--warning);" onclick="hapusKonten('konten-892')">
+                <i class="ph-bold ph-trash"></i> Paksa Hapus dari Katalog
+              </button>
+              <button class="btn-outline" style="border-color:var(--primary); color:var(--primary);" onclick="abaikanKonten('konten-892')">
+                <i class="ph-bold ph-envelope"></i> Jangan Hapus, Kirim Teguran
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function hapusKonten(elementId) {
+      if(confirm('Apakah Anda yakin ingin menghapus produk ini dari jaringan? Tindakan ini tidak bisa dibatalkan.')) {
+        let el = document.getElementById(elementId);
+        el.style.transition = "all 0.5s ease";
+        el.style.opacity = "0";
+        el.style.transform = "scale(0.95)";
+        
+        setTimeout(() => {
+          el.style.display = "none";
+          alert("Produk berhasil dihapus secara permanen dari database sistem! (Sesuai FR-22)");
+        }, 500);
+      }
+    }
+
+    function abaikanKonten(elementId) {
+      alert("Laporan ditandai telah diselesaikan. Produk tetap tayang di Katalog.");
+      let el = document.getElementById(elementId);
+      el.style.display = "none";
+    }
+  </script>
+</body>
+</html>

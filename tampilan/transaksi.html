@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaksi - Platform UMKM & Industri</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--primary)">B2B</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="index.html" class="nav-link"><i class="ph ph-squares-four nav-icon"></i> Dashboard</a></li>
+      <li class="nav-item"><a href="katalog.html" class="nav-link"><i class="ph ph-storefront nav-icon"></i> Katalog Produk</a></li>
+      <li class="nav-item"><a href="umkm-pencarian.html" class="nav-link"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Sewa Alat</a></li>
+      <li class="nav-item"><a href="transaksi.html" class="nav-link active"><i class="ph ph-swap nav-icon"></i> Transaksi</a></li>
+      <li class="nav-item"><a href="ulasan.html" class="nav-link"><i class="ph ph-star nav-icon"></i> Ulasan</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="profil.html" class="nav-link"><i class="ph ph-user nav-icon"></i> Profil</a></li>
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Keluar</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Transaksi</div>
+        <h1 class="page-title">Manajemen Transaksi</h1>
+      </div>
+      
+      <div class="header-actions">
+        <div class="search-bar">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" placeholder="Cari transaksi ID...">
+        </div>
+        <button class="icon-btn" onclick="alert('Tidak ada notifikasi')"><i class="ph ph-bell"></i></button>
+        <button class="icon-btn" onclick="window.location.href='profil.html'"><i class="ph ph-gear"></i></button>
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=4318ff&color=fff" alt="Profile" class="profile-avatar" onclick="window.location.href='profil.html'">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <!-- 4 KPI Cards for Transaction Status -->
+      <div class="transaction-kpi">
+        <div class="kpi-card" style="border-bottom: 4px solid var(--warning); cursor:pointer;" onclick="filterPanel('menunggu')">
+          <div class="kpi-info">
+            <h4>Menunggu Konfirmasi</h4>
+            <h2>12</h2>
+          </div>
+        </div>
+        <div class="kpi-card" style="border-bottom: 4px solid var(--primary); cursor:pointer;" onclick="filterPanel('diproses')">
+          <div class="kpi-info">
+            <h4>Sedang Diproses</h4>
+            <h2>28</h2>
+          </div>
+        </div>
+        <div class="kpi-card" style="border-bottom: 4px solid var(--success); cursor:pointer;" onclick="window.location.href='ulasan.html'">
+          <div class="kpi-info">
+            <h4>Transaksi Selesai</h4>
+            <h2>142</h2>
+          </div>
+        </div>
+        <div class="kpi-card" style="border-bottom: 4px solid var(--danger); cursor:pointer;" onclick="alert('Filter: Batal')">
+          <div class="kpi-info">
+            <h4>Dibatalkan</h4>
+            <h2>3</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction Layout (List and Detail side-by-side) -->
+      <div class="transaction-layout">
+        
+        <!-- List Panel -->
+        <div class="trans-list-panel">
+          <h2 class="widget-title">Daftar Transaksi Aktif</h2>
+          
+          <div class="trans-list">
+            
+            <div class="trans-item list-diproses" id="item-9902" onclick="showPanel('diproses', 'item-9902')">
+              <div class="trans-item-header">
+                <span class="trans-id">#TRX-9902</span>
+                <span class="status-badge status-processing">Diproses</span>
+              </div>
+              <div class="trans-item-body">
+                <div class="partner-logo" style="width:60px; height:60px; font-size:20px;">IS</div>
+                <div class="obj-info">
+                  <h3>Sewa Mesin Jahit Singer</h3>
+                  <p>Dari: PT Industri Sandang</p>
+                  <p>Waktu: 15 Mar 2026</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="trans-item active list-menunggu" id="item-9855" onclick="showPanel('menunggu', 'item-9855')">
+              <div class="trans-item-header">
+                <span class="trans-id">#TRX-9855</span>
+                <span class="status-badge status-warning">Menunggu</span>
+              </div>
+              <div class="trans-item-body">
+                <div class="partner-logo" style="width:60px; height:60px; font-size:20px; background:#fffbdf; color:var(--warning)">JA</div>
+                <div class="obj-info">
+                  <h3>Suplai Bahan Kulit Sapi</h3>
+                  <p>Dari: CV Jaya Abadi</p>
+                  <p>Waktu: 14 Mar 2026</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="trans-item" onclick="window.location.href='ulasan.html'">
+              <div class="trans-item-header">
+                <span class="trans-id">#TRX-9801</span>
+                <span class="status-badge status-success">Selesai</span>
+              </div>
+              <div class="trans-item-body">
+                <div class="partner-logo" style="width:60px; height:60px; font-size:20px; background:#e6f9f4; color:var(--success)">BL</div>
+                <div class="obj-info">
+                  <h3>Maklon Pembuatan Kaos (500 pcs)</h3>
+                  <p>Dari: Brand Lokal Ind.</p>
+                  <p>Waktu: 10 Mar 2026</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Multiple Detail Panels (Toggled by JS) -->
+        <div class="trans-detail-panel" id="panel-menunggu" style="display: block;">
+          <div class="dt-header">
+            <h2 class="widget-title">Detail Transaksi #TRX-9855</h2>
+            <span class="status-badge status-warning" style="font-size:14px;">Status: Menunggu Konfirmasi Anda (FR-14)</span>
+          </div>
+          <div class="trans-detail-content">
+            <div class="dt-section">
+              <div class="dt-row">
+                <span class="dt-label">Tanggal Mulai Request</span>
+                <span class="dt-value">14 Maret 2026</span>
+              </div>
+              <div class="dt-row">
+                <span class="dt-label">Target Pengiriman</span>
+                <span class="dt-value">20 Maret 2026</span>
+              </div>
+            </div>
+            <div style="height:1px; background:var(--border-color); margin:10px 0;"></div>
+            <div class="dt-section">
+              <h4 style="color:var(--text-muted); margin-bottom:10px;">Informasi Mitra</h4>
+              <div class="dt-row">
+                <span class="dt-label">Pihak Industri (Pembeli)</span>
+                <span class="dt-value">CV Jaya Abadi</span>
+              </div>
+              <div class="dt-row">
+                <span class="dt-label">Pihak UMKM (Supplier)</span>
+                <span class="dt-value">Anda</span>
+              </div>
+            </div>
+            <div style="height:1px; background:var(--border-color); margin:10px 0;"></div>
+            <div class="dt-section">
+              <h4 style="color:var(--text-muted); margin-bottom:10px;">Detail Layanan / Produk</h4>
+              <div class="dt-row">
+                <span class="dt-label">Item</span>
+                <span class="dt-value">Suplai Bahan Kulit Sapi</span>
+              </div>
+              <div class="dt-row">
+                <span class="dt-label">Kuantitas</span>
+                <span class="dt-value">100 Lembar</span>
+              </div>
+              <div class="dt-row">
+                <span class="dt-label">Tawaran Harga Satuan</span>
+                <span class="dt-value">Rp 80.000 / Lembar</span>
+              </div>
+            </div>
+             <div style="height:1px; background:var(--border-color); margin:10px 0;"></div>
+            <div class="dt-section">
+              <div class="dt-row">
+                <span class="dt-label" style="font-size:16px;">Total Nilai Transaksi</span>
+                <span class="dt-total" style="color: var(--primary);">Rp 8.000.000</span>
+              </div>
+            </div>
+            <div class="dt-actions" style="margin-top:20px; display:flex; gap:15px;">
+              <button class="btn-outline" style="flex:1; border-color:var(--danger); color:var(--danger);" onclick="alert('Permintaan ditolak. Sistem akan mengirim notifikasi penolakan ke CV Jaya Abadi.')"><i class="ph ph-x-circle"></i> Tolak Tawaran</button>
+              <button class="btn-primary" style="flex:1; background:var(--success); border-color:var(--success);" onclick="showPanel('diproses', 'item-9902'); alert('Permintaan disetujui! Anda telah resmi mengikat kontrak dan status berpindah ke DIPROSES.');"><i class="ph ph-check-circle"></i> Terima & Buat Kontrak</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel untuk Status Diproses (FR-15) -->
+        <div class="trans-detail-panel" id="panel-diproses" style="display: none;">
+          <div class="dt-header">
+            <h2 class="widget-title">Detail Transaksi #TRX-9902</h2>
+            <span class="status-badge status-processing" style="font-size:14px;">Status: Sedang Diproses Aktif</span>
+          </div>
+          <div class="trans-detail-content">
+            <div class="dt-section">
+              <div class="dt-row">
+                <span class="dt-label">Tanggal Mulai</span>
+                <span class="dt-value">15 Maret 2026</span>
+              </div>
+              <div class="dt-row">
+                <span class="dt-label">Estimasi Selesai</span>
+                <span class="dt-value">22 Maret 2026</span>
+              </div>
+            </div>
+            <div style="height:1px; background:var(--border-color); margin:10px 0;"></div>
+            <div class="dt-section">
+              <h4 style="color:var(--text-muted); margin-bottom:10px;">Informasi Mitra</h4>
+              <div class="dt-row">
+                <span class="dt-label">Pihak Penyewa (Industri)</span>
+                <span class="dt-value">PT Industri Sandang</span>
+              </div>
+              <div class="dt-row">
+                <span class="dt-label">Pihak Pemilik (UMKM)</span>
+                <span class="dt-value">Anda</span>
+              </div>
+            </div>
+            <div style="height:1px; background:var(--border-color); margin:10px 0;"></div>
+            
+            <!-- Simulasi FR-15 Update Status Form -->
+            <div class="dt-section" style="background:#e0e5fe; padding:20px; border-radius:8px;">
+              <h4 style="color:var(--primary); margin-bottom:15px;"><i class="ph-bold ph-arrows-clockwise"></i> Perbarui Status Kerja Sama (FR-15)</h4>
+              <div class="form-group" style="margin-bottom:15px;">
+                <label class="form-label">Ubah Progress Pengerjaan Terkini:</label>
+                <select class="form-control" id="status-update-select">
+                  <option>Mesin Sedang Disiapkan (Inspeksi)</option>
+                  <option>Sudah Diambil Kurir Logistik</option>
+                  <option>Sampai di Lokasi Pabrik (Industri)</option>
+                  <option style="font-weight:700; color:var(--success);">Tandai Transaksi Selesai Sepenuhnya</option>
+                </select>
+              </div>
+              <button class="btn-primary btn-block" onclick="processUpdate()"><i class="ph ph-paper-plane-tilt"></i> Kirim Update ke Industri</button>
+            </div>
+
+            <div style="height:1px; background:var(--border-color); margin:10px 0;"></div>
+            <div class="dt-section">
+              <div class="dt-row">
+                <span class="dt-label" style="font-size:16px;">Total Biaya</span>
+                <span class="dt-total">Rp 1.050.000</span>
+              </div>
+            </div>
+            <div class="dt-actions">
+              <button class="btn-outline btn-block" onclick="alert('Membuka panel obrolan (Chat) langsung dengan industri di layar kanan terpisah.')"><i class="ph-bold ph-chat-centered-text"></i> Pesan Cepat Mitra</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function showPanel(panelType, itemId) {
+      // Sembunyikan semua panel detail
+      document.getElementById('panel-menunggu').style.display = 'none';
+      document.getElementById('panel-diproses').style.display = 'none';
+
+      // Tampilkan panel yang diklik
+      if (panelType === 'menunggu') {
+        document.getElementById('panel-menunggu').style.display = 'block';
+      } else if (panelType === 'diproses') {
+        document.getElementById('panel-diproses').style.display = 'block';
+      }
+
+      // Bersihkan class active dari semua item list
+      let items = document.querySelectorAll('.trans-item');
+      items.forEach(el => el.classList.remove('active'));
+
+      // Tambahkan class active ke item yang diklik
+      document.getElementById(itemId).classList.add('active');
+    }
+
+    function processUpdate() {
+      let selectBox = document.getElementById('status-update-select');
+      let statusInfo = selectBox.options[selectBox.selectedIndex].text;
+      
+      if (statusInfo.includes('Selesai Sepenuhnya')) {
+        alert("Pekerjaan berhasil diselesaikan! Transaksi dipindah ke arsip Selesai.");
+        window.location.href = 'ulasan.html';
+      } else {
+        alert("Sistem berhasil menyimpan perubahan: [" + statusInfo + "]. Pihak Industri akan langsung menerima notifikasi update progres secara real-time.");
+      }
+    }
+
+    // Fungsi ekstra jika user memencet tombol KPI (Hanya tampilan visual hide/show basic)
+    function filterPanel(filterType) {
+      showPanel(filterType, filterType === 'menunggu' ? 'item-9855' : 'item-9902');
+    }
+  </script>
+</body>
+</html>

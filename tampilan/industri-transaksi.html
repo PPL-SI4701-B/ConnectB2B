@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaksi Industri - Platform B2B</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar (POV INDUSTRI) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--secondary)">Industri</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="industri-dashboard.html" class="nav-link"><i class="ph ph-squares-four nav-icon"></i> Dasbor Industri</a></li>
+      <li class="nav-item"><a href="pencarian.html" class="nav-link"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Supplier UMKM</a></li>
+      <li class="nav-item"><a href="industri-transaksi.html" class="nav-link active"><i class="ph ph-swap nav-icon"></i> Pantau Transaksi</a></li>
+      <li class="nav-item"><a href="industri-ulasan.html" class="nav-link"><i class="ph ph-star nav-icon"></i> Beri Ulasan</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="industri-profil.html" class="nav-link"><i class="ph ph-user nav-icon"></i> Profil Eksekutif</a></li>
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Ganti Peran (Log Out)</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Pantau Transaksi</div>
+        <h1 class="page-title">Pembelian & Kerja Sama</h1>
+      </div>
+      
+      <div class="header-actions">
+        <div class="search-bar">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" placeholder="Cari ID Request...">
+        </div>
+        <img src="https://ui-avatars.com/api/?name=ST&background=00b5d8&color=fff" alt="Profile" class="profile-avatar">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <div class="transaction-layout">
+        
+        <!-- List Panel -->
+        <div class="trans-list-panel">
+          <h2 class="widget-title">Daftar Pengajuan Aktif Anda</h2>
+          
+          <div class="trans-list">
+            
+            <div class="trans-item" id="item-8022" onclick="showPanel('bayar', 'item-8022')">
+              <div class="trans-item-header">
+                <span class="trans-id">#REQ-8022</span>
+                <span class="status-badge status-warning">Menunggu Pembayaran</span>
+              </div>
+              <div class="trans-item-body">
+                <div class="partner-logo" style="width:60px; height:60px; font-size:20px;">PM</div>
+                <div class="obj-info">
+                  <h3>Sewa Mesin Jahit Singer</h3>
+                  <p>Ke: CV Penjahit Mandiri</p>
+                  <p>Nilai: Rp 1.050.000</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="trans-item active" id="item-8015" onclick="showPanel('sampai', 'item-8015')">
+              <div class="trans-item-header">
+                <span class="trans-id">#REQ-8015</span>
+                <span class="status-badge" style="background:#e6f9f4; color:var(--success);">Barang Tiba</span>
+              </div>
+              <div class="trans-item-body">
+                <div class="partner-logo" style="width:60px; height:60px; font-size:20px; background:#fffbdf; color:var(--warning)">BP</div>
+                <div class="obj-info">
+                  <h3>Suplai Kardus Karton</h3>
+                  <p>Ke: Bintang Packaging</p>
+                  <p>Nilai: Rp 3.500.000</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Detail Panel: Menunggu Pembayaran (FR-28) -->
+        <div class="trans-detail-panel" id="panel-bayar" style="display: none;">
+          <div class="dt-header" style="text-align:left; border-bottom:none;">
+            <span class="status-badge status-warning" style="font-size:14px; margin-bottom:10px; display:inline-block;">Status: UMKM Menyetujui, Menunggu Pembayaran Anda</span>
+            <h2 class="widget-title" style="font-size:24px;">Detail Request #REQ-8022</h2>
+          </div>
+          <div style="background:#fffbdf; padding:20px; border-radius:12px; margin-bottom:20px; border:1px solid var(--warning);">
+            <p style="font-size:14px; color:var(--text-main); font-weight:600; line-height:1.6;">
+              <i class="ph-bold ph-warning-circle" style="color:var(--warning); margin-right:5px;"></i> CV Penjahit Mandiri telah menyetujui request Anda. Silakan transfer pembayaran ke Rekening Bersama (Escrow) ConnectB2B untuk memulai proses pengerjaan.
+            </p>
+          </div>
+          <div class="trans-detail-content" style="margin-top:0;">
+            <div class="dt-section">
+              <div class="dt-row">
+                <span class="dt-label" style="font-size:16px;">Total Tagihan Pembayaran</span>
+                <span class="dt-total" style="color:var(--danger);">Rp 1.050.000</span>
+              </div>
+            </div>
+            <div style="height:1px; background:var(--border-color); margin:10px 0;"></div>
+            
+            <div class="document-upload-section" style="margin-top:20px;">
+              <h3 style="margin-bottom: 10px; font-size:16px;">Upload Bukti Pembayaran (FR-28)</h3>
+              <div style="border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: 20px; text-align: center; background: var(--bg-color); cursor: pointer;" onclick="document.getElementById('upload-bukti').click()">
+                <i class="ph ph-receipt" style="font-size: 32px; color:var(--primary); margin-bottom: 10px;"></i>
+                <h4 style="margin-bottom: 5px;">Unggah Bukti Transfer / Resi</h4>
+                <p style="font-size: 12px; color:var(--text-muted);">Format JPG, PNG, atau PDF</p>
+                <input type="file" id="upload-bukti" style="display:none;" accept=".jpg,.png,.pdf">
+              </div>
+            </div>
+
+            <div class="dt-actions" style="margin-top:20px;">
+              <button class="btn-primary" style="width:100%;" onclick="alert('Bukti pembayaran berhasil diunggah! Sistem sedang memproses berkas (FR-28). Menunggu verifikasi dari Admin.')">Kirim Bukti Pembayaran Sistem Escrow</button>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Detail Panel untuk Konfirmasi Industri (FR-16) -->
+        <div class="trans-detail-panel" id="panel-sampai" style="display: block;">
+          <div class="dt-header" style="text-align:left; border-bottom:none;">
+            <span class="status-badge" style="background:#e6f9f4; color:var(--success); font-size:14px; margin-bottom:10px; display:inline-block;">Status: Barang Telah Tiba di Lokasi Pabrik</span>
+            <h2 class="widget-title" style="font-size:24px;">Detail Request #REQ-8015</h2>
+          </div>
+
+          <div style="background:#e6f9f4; padding:20px; border-radius:12px; margin-bottom:20px; border: 1px solid var(--success);">
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+              <i class="ph-fill ph-check-circle" style="color:var(--success); font-size:28px;"></i>
+              <div>
+                <h4 style="color:var(--success); margin-bottom:5px;">Konfirmasi Pesanan Selesai (FR-16)</h4>
+                <p style="font-size:13px; color:var(--text-main); font-weight:500; line-height:1.5;">
+                  Bintang Packaging mengabarkan bahwa Suplai Kardus telah dikirimkan sampai di pabrik Anda. Mohon cek kondisi fisik secara nyata, dan jika Anda puas, rilis pembayaran dan konfirmasi bahwa pekerjaan ini Selesai.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="trans-detail-content" style="margin-top:0;">
+            <div class="dt-section">
+              <div class="dt-row">
+                <span class="dt-label">Pemasok Utama</span>
+                <span class="dt-value">Bintang Packaging</span>
+              </div>
+              <div class="dt-row">
+                <span class="dt-label">Tanggal Estimasi Diterima</span>
+                <span class="dt-value">25 Maret 2026</span>
+              </div>
+            </div>
+
+             <div style="height:1px; background:var(--border-color); margin:10px 0;"></div>
+
+            <div class="dt-section">
+              <div class="dt-row">
+                <span class="dt-label" style="font-size:16px;">Total Kesepakatan Lumpsum</span>
+                <span class="dt-total">Rp 3.500.000</span>
+              </div>
+            </div>
+
+            <div class="dt-actions" style="margin-top:20px; display:flex; gap:15px;">
+              <button class="btn-outline" style="flex:1;" onclick="alert('Membuka Fitur Komplain Pengembalian')"><i class="ph ph-warning-circle"></i> Ajukan Komplain</button>
+              <button class="btn-primary" style="background:var(--success); flex:2; border-color:var(--success); font-weight:700;" onclick="alert('Pesanan dikonfirmasi SELESAI dan dana diteruskan ke UMKM. Mari beri ulasan atas kepuasan Anda!'); window.location.href='industri-ulasan.html'"><i class="ph-bold ph-check-fat"></i> Pesanan Sesuai & Selesai</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    function showPanel(panelType, itemId) {
+      document.getElementById('panel-bayar').style.display = 'none';
+      document.getElementById('panel-sampai').style.display = 'none';
+
+      if (panelType === 'bayar') {
+        document.getElementById('panel-bayar').style.display = 'block';
+      } else if (panelType === 'sampai') {
+        document.getElementById('panel-sampai').style.display = 'block';
+      }
+
+      let items = document.querySelectorAll('.trans-item');
+      items.forEach(el => el.classList.remove('active'));
+
+      document.getElementById(itemId).classList.add('active');
+    }
+  </script>
+</body>
+</html>

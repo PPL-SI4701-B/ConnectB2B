@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cari Sewa Alat - Platform B2B</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar (POV UMKM) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--primary)">B2B</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="index.html" class="nav-link"><i class="ph ph-squares-four nav-icon"></i> Dashboard</a></li>
+      <li class="nav-item"><a href="katalog.html" class="nav-link"><i class="ph ph-storefront nav-icon"></i> Katalog Produk</a></li>
+      <li class="nav-item"><a href="umkm-pencarian.html" class="nav-link active"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Sewa Alat</a></li>
+      <li class="nav-item"><a href="transaksi.html" class="nav-link"><i class="ph ph-swap nav-icon"></i> Transaksi</a></li>
+      <li class="nav-item"><a href="ulasan.html" class="nav-link"><i class="ph ph-star nav-icon"></i> Ulasan</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="profil.html" class="nav-link"><i class="ph ph-user nav-icon"></i> Profil</a></li>
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Keluar</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Penyewaan Aset UMKM</div>
+        <h1 class="page-title">Direktori Alat Produksi Lintas-UMKM</h1>
+      </div>
+      
+      <div class="header-actions">
+        <button class="icon-btn" onclick="alert('Tidak ada notifikasi')"><i class="ph ph-bell"></i></button>
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=4318ff&color=fff" alt="Profile" class="profile-avatar">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <!-- Filter and Search Area -->
+      <div style="background: var(--card-bg); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); margin-bottom: 30px; display: flex; gap: 15px; align-items:flex-end;">
+        <div class="form-group" style="flex: 2; margin-bottom: 0;">
+          <label class="form-label">Cari Kapasitas Tambahan / Nama Mesin</label>
+          <div style="position: relative;">
+            <i class="ph ph-magnifying-glass" style="position: absolute; left: 15px; top: 15px; font-size: 20px; color: var(--text-muted);"></i>
+            <input type="text" class="form-control" placeholder="Contoh: Sewa Mesin Obras Tipe B, Alat Potong Kayu..." style="padding-left: 45px;">
+          </div>
+        </div>
+        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+           <label class="form-label">Filter Kategori Alat</label>
+          <select class="form-control">
+            <option value="">Semua Instrumen</option>
+            <option>Mesin Jahit Industri</option>
+            <option>Peralatan Katering</option>
+            <option>Mesin Logam/Perkakas</option>
+          </select>
+        </div>
+        <button class="btn-primary" style="height: 50px; padding: 0 30px;"><i class="ph-bold ph-faders"></i> Saring Bantuan</button>
+      </div>
+
+      <!-- Result Layout -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        
+        <!-- List Results -->
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <h3 style="margin-bottom: 10px; color: var(--text-main);">UMKM yang Membuka Penyewaan (4 hasil)</h3>
+          
+          <div class="trans-item active" style="cursor:pointer;" onclick="alert('Menampilkan Profil Tenda Jaya')">
+            <div class="trans-item-header">
+              <span class="status-badge status-success" style="font-weight:700;"><i class="ph-bold ph-seal-check"></i> UMKM Terverifikasi (FR-27)</span>
+              <div class="stars" style="font-size: 16px;">
+                <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star-half"></i> <span style="color:var(--text-main); font-weight:700; font-size:14px; margin-left:5px;">4.7</span>
+              </div>
+            </div>
+            <div class="trans-item-body" style="align-items: center;">
+              <div class="partner-logo" style="width: 80px; height: 80px; font-size: 24px;">TJ</div>
+              <div class="obj-info">
+                <h3>Terpal & Tenda Jaya</h3>
+                <p><i class="ph ph-map-pin"></i> Ciparay, Bandung Raya</p>
+                <p style="margin-top: 5px; color: var(--primary); font-weight:700;">Tersedia Mesin Jahit Karung / Terpal</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="trans-item" style="cursor:pointer;" onclick="alert('Menampilkan Profil Las Bubut Amanah')">
+            <div class="trans-item-header">
+              <span class="status-badge" style="background:#feeceb; color:var(--danger); font-weight:700;"><i class="ph-bold ph-warning-circle"></i> UMKM Belum Terverifikasi (FR-27)</span>
+              <div class="stars" style="font-size: 16px;">
+                <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph ph-star"></i> <span style="color:var(--text-main); font-weight:700; font-size:14px; margin-left:5px;">4.0</span>
+              </div>
+            </div>
+            <div class="trans-item-body" style="align-items: center;">
+              <div class="partner-logo" style="width: 80px; height: 80px; font-size: 24px; background: #e6f9f4; color: var(--success);">LB</div>
+              <div class="obj-info">
+                <h3>Las Bubut Amanah</h3>
+                <p><i class="ph ph-map-pin"></i> Rancaekek, Bandung Raya</p>
+                <p style="margin-top: 5px; color: var(--primary); font-weight:700;">Alat Las Argon Portabel</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Detail / Request Form Panel -->
+        <div style="background: var(--card-bg); padding: 30px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); position: sticky; top: 110px; height: fit-content;">
+          <div style="border-bottom: 1px dashed var(--border-color); padding-bottom: 20px; margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <h2>Terpal & Tenda Jaya</h2>
+                <p style="color: var(--text-muted);"><i class="ph ph-map-pin"></i> Ciparay, Jawa Barat</p>
+              </div>
+              <div class="partner-logo" style="cursor:pointer;" onclick="alert('Membuka Katalog Produk Milik Terpal & Tenda Jaya')">TJ</div>
+            </div>
+            <p style="margin-top: 15px; font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+              Kami memiliki kelebihan 2 unit Mesin Jahit Industri Spesialis Terpal Tebal yang saat ini menganggur dan bisa disewa untuk sesama UMKM guna mempercepat orderan. Biaya sewa bervariasi bergantung durasi. 
+            </p>
+          </div>
+
+          <!-- Request Form Simulation for UMKM -->
+          <h3 style="margin-bottom: 15px; display:flex; align-items:center; gap:8px;"><i class="ph-fill ph-handshake" style="color:var(--primary);"></i> Form Peminjaman Internal</h3>
+          
+          <div class="form-group">
+            <label class="form-label">Pilih Aset yang Ingin Disewa</label>
+            <select class="form-control">
+              <option>Mesin Jahit Terpal Brother (Rp 75.000 / Hari)</option>
+              <option>Mesin Potong Kain Elektrik (Rp 50.000 / Hari)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Durasi Negosiasi Peminjaman</label>
+            <textarea class="form-control" rows="3" placeholder="Sebutkan berapa lama Anda akan menyewa mesin ini dan apakah ada jaminan KTP / Dokumen yang disertakan untuk UMKM pemberi pinjaman..."></textarea>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <button class="btn-outline" style="flex:1;" onclick="alert('Membuka Chat Room dengan UMKM TJ')"><i class="ph ph-chat-centered-text"></i> Pesan Cepat</button>
+            <button class="btn-primary" style="flex:2;" onclick="alert('Request Peminjaman Anda berhasil dilempar ke pihak UMKM Terkait. Segera cek menu Transaksi untuk tahu apakah disetujui!'); window.location.href='transaksi.html'">Ajukan Kontrak Sewa</button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

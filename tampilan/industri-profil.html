@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profil Industri - Platform B2B</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar (POV INDUSTRI) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Connect<span style="color:var(--secondary)">Industri</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="industri-dashboard.html" class="nav-link"><i class="ph ph-squares-four nav-icon"></i> Dasbor Industri</a></li>
+      <li class="nav-item"><a href="pencarian.html" class="nav-link"><i class="ph ph-magnifying-glass nav-icon"></i> Cari Supplier UMKM</a></li>
+      <li class="nav-item"><a href="industri-transaksi.html" class="nav-link"><i class="ph ph-swap nav-icon"></i> Pantau Transaksi</a></li>
+      <li class="nav-item"><a href="industri-ulasan.html" class="nav-link"><i class="ph ph-star nav-icon"></i> Beri Ulasan</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="industri-profil.html" class="nav-link active"><i class="ph ph-user nav-icon"></i> Profil Eksekutif</a></li>
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Ganti Peran (Log Out)</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Profil & Legalitas</div>
+        <h1 class="page-title">Profil Korporasi</h1>
+      </div>
+      
+      <div class="header-actions">
+        <button class="icon-btn" onclick="alert('Tidak ada notifikasi baru')"><i class="ph ph-bell"></i></button>
+        <button class="icon-btn" onclick="window.location.href='industri-profil.html'"><i class="ph ph-gear"></i></button>
+        <img src="https://ui-avatars.com/api/?name=ST&background=00b5d8&color=fff" alt="Profile" class="profile-avatar">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <div style="background: var(--card-bg); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); margin-bottom: 20px;">
+        <div style="height: 150px; background: linear-gradient(135deg, var(--secondary), #058da8); position: relative;">
+          <button style="position: absolute; right: 20px; top: 20px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 8px; cursor: pointer; backdrop-filter: blur(5px); display:flex; align-items:center; gap:5px; font-weight:600;"><i class="ph ph-camera"></i> Ubah Cover Perusahaan</button>
+        </div>
+        
+        <div style="padding: 0 40px 40px;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: -50px; margin-bottom: 30px;">
+            <div style="position: relative;">
+              <img src="https://ui-avatars.com/api/?name=ST&background=fff&color=00b5d8" style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--card-bg); box-shadow: var(--shadow-sm); object-fit: cover; background: white;" alt="Logo">
+              <button style="position: absolute; bottom: 5px; right: 5px; background: var(--secondary); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; display:flex; align-items:center; justify-content:center; cursor:pointer;"><i class="ph ph-pencil-simple"></i></button>
+            </div>
+            <div>
+              <span class="status-badge" style="font-size: 14px; background:#e6f9f4; color:var(--success)"><i class="ph-bold ph-check-circle"></i> Korporasi Tervalidasi</span>
+            </div>
+          </div>
+
+          <div class="grid-container" style="grid-template-columns: 1fr 1fr;">
+            <div>
+              <div class="form-group">
+                <label class="form-label">Nama Badan Usaha / PT</label>
+                <input type="text" class="form-control" value="PT Sumber Tekstil">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email Pengadaan (Procurement)</label>
+                <input type="email" class="form-control" value="procurement@sumbertekstil.co.id">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nomor Telepon Kantor</label>
+                <input type="text" class="form-control" value="022-7788990">
+              </div>
+            </div>
+
+            <div>
+              <div class="form-group">
+                <label class="form-label">Skala Operasi Industri</label>
+                <select class="form-control">
+                  <option selected>Nasional (Pabrikan Besar)</option>
+                  <option>Internasional / Multinasional</option>
+                  <option>Menengah (Pabrikan Lokal)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Alamat Kantor Pusat</label>
+                <textarea class="form-control" rows="4" style="resize:none;">Jl. Kawasan Sentra Industri Rancaekek No. 99, Jawa Barat</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:1px; background:var(--border-color); margin:30px 0;"></div>
+
+          <div class="document-upload-section">
+            <h3 style="margin-bottom: 5px; font-size:18px;">Dokumen Legalitas Industri</h3>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">Berbeda dengan UMKM, pengisian dokumen bagi Industri (SIUP, NIB, NPWP) diperlukan untuk menjamin kepada pengguna bahwa operasi pengadaan (*procurement*) adalah sah.</p>
+
+            <div class="grid-container" style="grid-template-columns: repeat(3, 1fr);">
+              <!-- Upload SIUP -->
+              <div style="border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: 25px; text-align: center; background: var(--bg-color); cursor: pointer; transition: all 0.3s ease;" onclick="document.getElementById('upload-siup-ind').click()" onmouseover="this.style.borderColor='var(--secondary)'" onmouseout="this.style.borderColor='var(--border-color)'">
+                <i class="ph ph-file-pdf" style="font-size: 32px; color:var(--secondary); margin-bottom: 10px;"></i>
+                <h4 style="margin-bottom: 5px;">SIUP / IUT</h4>
+                <p style="font-size: 12px; color:var(--text-muted);">PDF Maks 10MB</p>
+                <input type="file" id="upload-siup-ind" style="display:none;" accept=".pdf">
+              </div>
+
+              <!-- Upload NIB -->
+              <div style="border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: 25px; text-align: center; background: var(--bg-color); cursor: pointer; transition: all 0.3s ease;" onclick="document.getElementById('upload-nib-ind').click()" onmouseover="this.style.borderColor='var(--secondary)'" onmouseout="this.style.borderColor='var(--border-color)'">
+                <i class="ph ph-file-pdf" style="font-size: 32px; color:var(--secondary); margin-bottom: 10px;"></i>
+                <h4 style="margin-bottom: 5px;">Sertifikat NIB</h4>
+                <p style="font-size: 12px; color:var(--text-muted);">PDF Maks 10MB</p>
+                <input type="file" id="upload-nib-ind" style="display:none;" accept=".pdf">
+              </div>
+
+              <!-- Upload NPWP -->
+              <div style="border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: 25px; text-align: center; background: var(--bg-color); cursor: pointer; transition: all 0.3s ease;" onclick="document.getElementById('upload-npwp-ind').click()" onmouseover="this.style.borderColor='var(--secondary)'" onmouseout="this.style.borderColor='var(--border-color)'">
+                <i class="ph ph-upload-simple" style="font-size: 32px; color:var(--text-muted); margin-bottom: 10px;"></i>
+                <h4 style="margin-bottom: 5px;">NPWP Perusahaan</h4>
+                <p style="font-size: 12px; color:var(--text-muted);">Scan Dokumen / PDF</p>
+                <input type="file" id="upload-npwp-ind" style="display:none;" accept=".pdf,.doc,.docx">
+              </div>
+            </div>
+            
+            <div style="background: #e6f9f4; padding: 15px; border-radius: 8px; margin-top: 15px; display:flex; align-items:flex-start; gap:10px; border:1px solid var(--success);">
+              <i class="ph-fill ph-shield-check" style="color:var(--success); font-size:24px;"></i>
+              <div>
+                <strong style="color:var(--success);">Trust Center: Bebas Risiko Pengadaan</strong>
+                <p style="font-size:13px; color:var(--text-main); margin-top:3px;">Karena Anda merupakan perusahaan kelas menengah/besar, sistem meninjau dokumen secara prioritas tinggi. UMKM akan lebih termotivasi menerima tawaran kerja sama Anda karena legalitas yang mantap.</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:15px; margin-top:30px; border-top: 1px solid var(--border-color); padding-top:20px;">
+            <button class="btn-outline">Sembunyikan Panel</button>
+            <button class="btn-primary" style="background:var(--secondary); border-color:var(--secondary);" onclick="alert('Aset digital perusahaan dan dokumen perpajakan terkirim sukses!')">Update Database Perusahaan</button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Platform UMKM & Industri</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+  <!-- Sidebar (Admin Version) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="ph-fill ph-circles-three-plus"></i>
+      <span>Admin<span style="color:var(--danger)">B2B</span></span>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="admin-dashboard.html" class="nav-link active"><i class="ph ph-chart-pie-slice nav-icon"></i> Overviu Aktivitas Sistem</a></li>
+      <li class="nav-item"><a href="admin-pengguna.html" class="nav-link"><i class="ph ph-users nav-icon"></i> Kelola Pengguna Sistem</a></li>
+      <li class="nav-item"><a href="admin-moderasi.html" class="nav-link"><i class="ph ph-shield-warning nav-icon"></i> Tinjauan Konten Katalog</a></li>
+    </ul>
+
+    <div style="flex: 1;"></div>
+
+    <ul class="nav-links">
+      <li class="nav-item"><a href="login.html" class="nav-link" style="color:var(--danger)"><i class="ph ph-sign-out nav-icon"></i> Keluar Portal Admin</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div>
+        <div class="page-breadcrumb">Halaman / Panel Admin</div>
+        <h1 class="page-title">Monitoring Platform Utama</h1>
+      </div>
+      
+      <div class="header-actions">
+        <button class="icon-btn" onclick="alert('Sistem Aman')"><i class="ph ph-warning-circle"></i></button>
+        <span style="font-weight: 700; margin-left: 10px;">SuperAdmin</span>
+        <img src="https://ui-avatars.com/api/?name=Super+Admin&background=ee5d50&color=fff" alt="Profile" class="profile-avatar" onclick="alert('Buka Pengaturan Keamanan Tiga Lapis Admin')">
+      </div>
+    </header>
+
+    <!-- Content Container -->
+    <div class="content-container">
+      
+      <!-- Admin KPI -->
+      <div class="kpi-cards" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h4>Total Transaksi Sukses</h4>
+            <h2 style="font-size:28px; color:var(--success);">3,421</h2>
+          </div>
+        </div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="window.location.href='admin-pengguna.html'">
+          <div class="kpi-info">
+            <h4>Pengguna Tervalidasi</h4>
+            <h2 style="font-size:28px; color:var(--text-main);">1,142</h2>
+          </div>
+        </div>
+        <div class="kpi-card" style="cursor:pointer;" onclick="alert('Membuka detail tiket laporan pelanggan')">
+          <div class="kpi-info">
+            <h4>Laporan Pelanggaran Konten</h4>
+            <h2 style="font-size:28px; color:var(--danger);">12</h2>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h4>Industri Aktif (Bulan Ini)</h4>
+            <h2 style="font-size:28px; color:var(--primary);">893</h2>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+        
+        <!-- Pendaftaran Terbaru -->
+        <div class="large-widget" style="min-height:300px;">
+          <div class="widget-header">
+            <h2 class="widget-title">Antrean Verifikasi Dokumen Akun Baru</h2>
+            <button class="btn-outline" onclick="window.location.href='admin-pengguna.html'">Kelola Pengguna</button>
+          </div>
+          
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama Entitas Pendaftar</th>
+                <th>Tipe Akun (Rule)</th>
+                <th>File Legalitas</th>
+                <th>Aksi Verifikasi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr id="verif-1">
+                <td>Koperasi Jahit Bersama</td>
+                <td><span class="badge" style="background:#e0e5fe; color:var(--primary);">UMKM</span></td>
+                <td><a href="#" style="color:var(--primary); font-weight:600;" onclick="alert('Membuka PDF NIB di tab baru')"><i class="ph ph-file-pdf"></i> SIUP.pdf</a></td>
+                <td>
+                  <button class="btn-outline" style="padding: 6px 12px; font-size:13px; color:var(--success); border-color:var(--success);" onclick="verifikasiDokumen('verif-1', 'Koperasi Jahit Bersama')">Setujui</button>
+                </td>
+              </tr>
+              <tr id="verif-2">
+                <td>CV Pakan Ternak Makmur</td>
+                <td><span class="badge" style="background:#e0e5fe; color:var(--primary);">UMKM</span></td>
+                <td><a href="#" style="color:var(--primary); font-weight:600;" onclick="alert('Membuka PDF NPWP di tab baru')"><i class="ph ph-file-pdf"></i> NIB.pdf</a></td>
+                <td>
+                  <button class="btn-outline" style="padding: 6px 12px; font-size:13px; color:var(--success); border-color:var(--success);" onclick="verifikasiDokumen('verif-2', 'CV Pakan Ternak Makmur')">Setujui</button>
+                </td>
+              </tr>
+              <tr id="verif-3">
+                <td>PT Global Eksporindo</td>
+                <td><span class="badge" style="background:#feeceb; color:var(--danger);">Industri</span></td>
+                <td><a href="#" style="color:var(--text-muted);"><i class="ph ph-warning"></i> Tidak Lengkap</a></td>
+                <td>
+                   <button class="btn-outline" style="padding: 6px 12px; font-size:13px; color:var(--danger); border-color:var(--danger);" onclick="tolakDokumen('verif-3')">Tolak Izin</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Log Pelanggaran / Moderasi -->
+        <div class="large-widget" style="min-height:300px;">
+          <div class="widget-header">
+            <h2 class="widget-title">Antrean Moderasi Katalog</h2>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:15px;">
+            <div style="border-left: 4px solid var(--danger); padding: 15px; background:var(--bg-color); border-radius: 8px;">
+              <h4 style="margin-bottom:5px;">Barang Ilegal / Palsu Ditandai</h4>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">ID Katalog: #CAT-551 (oleh PT X)<br>Pelanggaran Hak Cipta Desain Pakaian.</p>
+              <div style="display:flex; gap:10px;">
+                <button style="border:none; background:var(--danger); color:white; padding:5px 10px; border-radius:5px; cursor:pointer;" onclick="alert('Katalog Terhapus.')">Hapus Konten</button>
+                <button style="border:1px solid var(--border-color); background:transparent; padding:5px 10px; border-radius:5px; cursor:pointer;" onclick="alert('Laporan diabaikan.')">Abaikan</button>
+              </div>
+            </div>
+            
+            <div style="border-left: 4px solid var(--warning); padding: 15px; background:var(--bg-color); border-radius: 8px;">
+              <h4 style="margin-bottom:5px;">Spam Deskripsi Jasa</h4>
+              <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">ID Katalog: #CAT-892<br>Teks SEO berlebihan yang merusak susunan platform.</p>
+              <div style="display:flex; gap:10px;">
+                <button style="border:none; background:var(--warning); color:white; padding:5px 10px; border-radius:5px; cursor:pointer;" onclick="window.location.href='admin-moderasi.html'">Buka Panel Moderasi</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="large-widget" style="margin-top:20px;">
+        <div class="widget-header">
+          <h2 class="widget-title">Antrean Validasi Pembayaran Escrow (FR-29)</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID Transaksi</th>
+              <th>Pengirim Dana (Industri)</th>
+              <th>Bukti Transfer</th>
+              <th>Nominal Tagihan</th>
+              <th>Aksi Validasi Rekening</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="bayar-1">
+              <td>#REQ-8022</td>
+              <td>PT Industri Sandang</td>
+              <td><a href="#" style="color:var(--primary); font-weight:600;" onclick="alert('Menampilkan Pop-Up Bukti_Tranfer_BCA.jpg')"><i class="ph ph-image"></i> TF_BCA_8022.jpg</a></td>
+              <td style="font-weight:700;">Rp 1.050.000</td>
+              <td>
+                <button class="btn-outline" style="padding: 6px 12px; font-size:13px; color:var(--success); border-color:var(--success);" onclick="validasiBayar('bayar-1')">Dana Masuk (Valid)</button>
+                <button class="btn-outline" style="padding: 6px 12px; font-size:13px; color:var(--danger); border-color:var(--danger);" onclick="tolakBayar('bayar-1')">Tolak/Palsu</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+  
+  <script>
+    function verifikasiDokumen(rowId, umkmName) {
+      if(confirm('Apakah Anda yakin setuju hasil tinjauan dokumen valid? Status ' + umkmName + ' akan menjadi UMKM Terverifikasi.')) {
+        let el = document.getElementById(rowId);
+        el.style.transition = "all 0.5s ease";
+        el.style.opacity = "0";
+        el.style.transform = "translateX(-20px)";
+        
+        setTimeout(() => {
+          el.style.display = "none";
+          alert("Dokumen diverifikasi (FR-24). Email persetujuan telah otomatis terkirim dan lencana Terverifikasi muncul di profil UMKM.");
+        }, 500);
+      }
+    }
+    
+    function tolakDokumen(rowId) {
+      let el = document.getElementById(rowId);
+      el.style.transition = "all 0.5s ease";
+      el.style.backgroundColor = "#feeceb";
+      alert("Pendaftaran ditolak karena dokumen ilegal/kurang. (FR-24)");
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 500);
+    }
+
+    function validasiBayar(rowId) {
+      let el = document.getElementById(rowId);
+      el.style.transition = "all 0.5s ease";
+      el.style.backgroundColor = "#e6f9f4";
+      alert("Bukti pembayaran sah! Sistem escrow telah mengunci dana. Status transaksi bagi UMKM dan Industri kini berubah menjadi DIPROSES. (FR-29)");
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 700);
+    }
+
+    function tolakBayar(rowId) {
+      let el = document.getElementById(rowId);
+      el.style.transition = "all 0.5s ease";
+      el.style.backgroundColor = "#feeceb";
+      alert("Bukti transfer palsu atau dana tidak masuk. Peringatan akan dikirim ke pihak Industri. (FR-29)");
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 700);
+    }
+  </script>
+</body>
+</html>
