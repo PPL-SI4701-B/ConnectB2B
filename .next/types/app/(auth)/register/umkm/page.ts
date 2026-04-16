@@ -1,4 +1,4 @@
-// File: E:\Code\ConnectB2B\app\(auth)\register\umkm\page.tsx
+// File: D:\ppl\ConnectB2B\app\(auth)\register\umkm\page.tsx
 import * as entry from '../../../../../../app/(auth)/register/umkm/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
