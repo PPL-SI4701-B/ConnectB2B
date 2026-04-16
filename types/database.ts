@@ -99,6 +99,13 @@ export type Database = {
             foreignKeyName: "dokumen_legalitas_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "pending_verifications"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "dokumen_legalitas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -137,6 +144,13 @@ export type Database = {
             foreignKeyName: "equipment_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "pending_verifications"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "equipment_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -171,6 +185,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "kategori"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "industri_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "pending_verifications"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "industri_user_id_fkey"
@@ -272,6 +293,13 @@ export type Database = {
             foreignKeyName: "notifikasi_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "pending_verifications"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "notifikasi_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -345,6 +373,13 @@ export type Database = {
             foreignKeyName: "produk_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "pending_verifications"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "produk_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -373,6 +408,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "pending_verifications"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "profiles_user_id_fkey"
             columns: ["user_id"]
@@ -477,6 +519,13 @@ export type Database = {
             foreignKeyName: "transaksi_admin_id_fkey"
             columns: ["admin_id"]
             isOneToOne: false
+            referencedRelation: "pending_verifications"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "transaksi_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -558,6 +607,13 @@ export type Database = {
             foreignKeyName: "umkm_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "pending_verifications"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "umkm_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -570,6 +626,9 @@ export type Database = {
           id: string
           nama: string
           role: Database["public"]["Enums"]["user_role"]
+          status_verifikasi: Database["public"]["Enums"]["verifikasi_status"]
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           created_at?: string
@@ -577,6 +636,9 @@ export type Database = {
           id: string
           nama: string
           role?: Database["public"]["Enums"]["user_role"]
+          status_verifikasi?: Database["public"]["Enums"]["verifikasi_status"]
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           created_at?: string
@@ -584,12 +646,40 @@ export type Database = {
           id?: string
           nama?: string
           role?: Database["public"]["Enums"]["user_role"]
+          status_verifikasi?: Database["public"]["Enums"]["verifikasi_status"]
+          verified_at?: string | null
+          verified_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "pending_verifications"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "users_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
-      [_ in never]: never
+      pending_verifications: {
+        Row: {
+          dokumen_list: Json | null
+          email: string | null
+          nama_entitas: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          user_id: string | null
+          user_status: Database["public"]["Enums"]["verifikasi_status"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_role: {
