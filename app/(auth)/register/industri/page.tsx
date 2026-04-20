@@ -215,8 +215,8 @@ export default function RegisterIndustri() {
             </div>
           </div>
           <div className="flex justify-between text-sm font-medium text-gray-500 mb-8 px-1">
-            <span className={step >= 1 ? 'text-gray-900' : ''}>Data Akun</span>
-            <span className={step === 2 ? 'text-gray-900' : ''}>Dokumen Legalitas</span>
+            <span className={step >= 1 ? 'text-black' : ''}>Data Akun</span>
+            <span className={step === 2 ? 'text-black' : ''}>Dokumen Legalitas</span>
           </div>
 
           {/* Alerts */}
@@ -247,7 +247,7 @@ export default function RegisterIndustri() {
                     name="nama_perusahaan"
                     value={formData.nama_perusahaan}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none transition-all"
+                    className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-black focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none transition-all"
                     placeholder="PT / CV"
                     required
                   />
@@ -265,7 +265,7 @@ export default function RegisterIndustri() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none transition-all"
+                    className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-black focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none transition-all"
                     placeholder="nama@email.com"
                     required
                   />
@@ -284,7 +284,7 @@ export default function RegisterIndustri() {
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none transition-all"
+                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-black focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none transition-all"
                       placeholder="Min. 8 karakter"
                       required
                     />
@@ -302,7 +302,7 @@ export default function RegisterIndustri() {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none transition-all"
+                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-black focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none transition-all"
                       placeholder="Ulangi sandi"
                       required
                     />

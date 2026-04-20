@@ -35,7 +35,7 @@ export default function RegisterPage() {
             className="flex items-center gap-2 mb-10 cursor-pointer w-fit"
           >
             <CirclePlus className="w-8 h-8 text-indigo-600 fill-indigo-600 text-white" />
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-2xl font-bold text-black">
               Connect<span className="text-indigo-600">B2B</span>
             </span>
           </Link>
@@ -49,7 +49,7 @@ export default function RegisterPage() {
               Kembali ke Login
             </button>
 
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-bold text-black mb-2">
               Daftar Akun Baru 🚀
             </h2>
             <p className="text-gray-500 mb-8">
@@ -66,7 +66,7 @@ export default function RegisterPage() {
                     <Store className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">Daftar sebagai UMKM</h3>
+                    <h3 className="font-bold text-black">Daftar sebagai UMKM</h3>
                     <p className="text-sm text-gray-500">Penyedia produk atau jasa skala menengah & kecil</p>
                   </div>
                 </div>
@@ -82,7 +82,7 @@ export default function RegisterPage() {
                     <Factory className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">Daftar sebagai Industri</h3>
+                    <h3 className="font-bold text-black">Daftar sebagai Industri</h3>
                     <p className="text-sm text-gray-500">Perusahaan besar penyerap pasokan UMKM</p>
                   </div>
                 </div>
