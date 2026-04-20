@@ -77,12 +77,14 @@ export default function LoginPage() {
       }
 
       if (data?.user) {
-        // Fetch role from users table
-        const { data: userData, error: userError } = await supabase
+        // Fetch role, verification status, and block status from users table
+        const { data: userDataRaw, error: userError } = await supabase
           .from("users")
-          .select("role")
+          .select("role, status_verifikasi, is_blocked")
           .eq("id", data.user.id)
           .single();
+
+        const userData = userDataRaw as any;
 
         if (userError) {
           setErrorMsg("Gagal mengambil data profil pengguna.");
@@ -90,10 +92,24 @@ export default function LoginPage() {
           return;
         }
 
-        // Verify if the login role matches the database role?
-        // Let's redirect them based on their actual role in DB
-        const userRole = userData?.role?.toLowerCase();
+        // Cek jika akun diblokir
+        if (userData?.is_blocked) {
+          await supabase.auth.signOut();
+          setErrorMsg("Akun Anda telah diblokir. Hubungi admin.");
+          setIsLoading(false);
+          return;
+        }
 
+        const userRole = userData?.role?.toLowerCase();
+        const statusVerifikasi = userData?.status_verifikasi;
+
+        // Cek status verifikasi (admin bypass)
+        if (userRole !== "admin" && statusVerifikasi !== "terverifikasi") {
+          router.push(`/status-verifikasi?status=${statusVerifikasi}`);
+          return;
+        }
+
+        // Redirect sesuai role untuk akun yang terverifikasi/admin
         if (userRole === "umkm") {
           router.push("/dashboard");
         } else if (userRole === "industri") {
