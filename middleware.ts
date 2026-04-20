@@ -58,6 +58,7 @@ export async function middleware(request: NextRequest) {
 
   // Protect dashboard and admin routes
   if (!user && (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/admin'))) {
+    console.log('[Middleware Redirect] No user found for path:', request.nextUrl.pathname);
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
