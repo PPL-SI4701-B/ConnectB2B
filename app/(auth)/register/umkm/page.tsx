@@ -14,7 +14,8 @@ import {
   AlertCircle,
   X,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  ArrowLeft
 } from 'lucide-react'
 
 export default function RegisterUMKM() {
@@ -183,9 +184,17 @@ export default function RegisterUMKM() {
             </span>
           </div>
 
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Daftar Akun Baru 🚀</h2>
+          <Link
+            href="/register"
+            className="flex items-center gap-2 text-sm text-gray-500 font-semibold mb-6 hover:text-gray-900 transition-colors w-fit"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Kembali ke Pilihan
+          </Link>
+
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Daftar UMKM 🏪</h2>
           <p className="text-gray-500 mb-8">
-            Bergabunglah dengan ekosistem kami sebagai UMKM untuk memperluas jangkauan bisnis Anda.
+            Daftarkan usaha Anda dan bergabunglah dengan ribuan mitra industri untuk memperluas jangkauan pasar Anda.
           </p>
 
           {/* Progress Indicator */}
