@@ -26,6 +26,9 @@ export default function RegisterUMKM() {
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
+  const [dragActiveNIB, setDragActiveNIB] = useState(false)
+  const [dragActiveNPWP, setDragActiveNPWP] = useState(false)
+
   // Form Data Step 1
   const [formData, setFormData] = useState({
     nama_usaha: '',
@@ -48,10 +51,7 @@ export default function RegisterUMKM() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'NIB' | 'NPWP') => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
+  const processFile = (file: File, type: 'NIB' | 'NPWP') => {
     if (file.type !== 'application/pdf') {
       setErrorMsg(`Format file ${type} harus PDF.`)
       return
@@ -63,6 +63,35 @@ export default function RegisterUMKM() {
     
     setErrorMsg('')
     setFiles(prev => ({ ...prev, [type]: file }))
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'NIB' | 'NPWP') => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    processFile(file, type)
+  }
+
+  const handleDrag = (e: React.DragEvent<HTMLLabelElement>, type: 'NIB' | 'NPWP') => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      if (type === 'NIB') setDragActiveNIB(true)
+      if (type === 'NPWP') setDragActiveNPWP(true)
+    } else if (e.type === "dragleave") {
+      if (type === 'NIB') setDragActiveNIB(false)
+      if (type === 'NPWP') setDragActiveNPWP(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>, type: 'NIB' | 'NPWP') => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (type === 'NIB') setDragActiveNIB(false)
+    if (type === 'NPWP') setDragActiveNPWP(false)
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0], type)
+    }
   }
 
   const handleNextStep = (e: React.FormEvent) => {
@@ -329,10 +358,18 @@ export default function RegisterUMKM() {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50/50 transition-colors rounded-lg cursor-pointer group">
-                    <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-blue-500 transition-colors mb-2" />
-                    <p className="text-sm font-medium text-gray-600 group-hover:text-blue-600">Klik atau drag untuk unggah NIB</p>
-                    <p className="text-xs text-gray-500 mt-1">Format PDF maks. 5MB</p>
+                  <label 
+                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed transition-colors rounded-lg cursor-pointer group ${dragActiveNIB ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50/50'}`}
+                    onDragEnter={(e) => handleDrag(e, 'NIB')}
+                    onDragLeave={(e) => handleDrag(e, 'NIB')}
+                    onDragOver={(e) => handleDrag(e, 'NIB')}
+                    onDrop={(e) => handleDrop(e, 'NIB')}
+                  >
+                    <div className="pointer-events-none flex flex-col items-center">
+                      <UploadCloud className={`w-8 h-8 transition-colors mb-2 ${dragActiveNIB ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500'}`} />
+                      <p className={`text-sm font-medium ${dragActiveNIB ? 'text-blue-600' : 'text-gray-600 group-hover:text-blue-600'}`}>Klik atau drag untuk unggah NIB</p>
+                      <p className="text-xs text-gray-500 mt-1">Format PDF maks. 5MB</p>
+                    </div>
                     <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileChange(e, 'NIB')} />
                   </label>
                 )}
@@ -355,10 +392,18 @@ export default function RegisterUMKM() {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50/50 transition-colors rounded-lg cursor-pointer group">
-                    <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-blue-500 transition-colors mb-2" />
-                    <p className="text-sm font-medium text-gray-600 group-hover:text-blue-600">Klik atau drag untuk unggah NPWP</p>
-                    <p className="text-xs text-gray-500 mt-1">Format PDF maks. 5MB</p>
+                  <label 
+                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed transition-colors rounded-lg cursor-pointer group ${dragActiveNPWP ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-500 hover:bg-blue-50/50'}`}
+                    onDragEnter={(e) => handleDrag(e, 'NPWP')}
+                    onDragLeave={(e) => handleDrag(e, 'NPWP')}
+                    onDragOver={(e) => handleDrag(e, 'NPWP')}
+                    onDrop={(e) => handleDrop(e, 'NPWP')}
+                  >
+                    <div className="pointer-events-none flex flex-col items-center">
+                      <UploadCloud className={`w-8 h-8 transition-colors mb-2 ${dragActiveNPWP ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500'}`} />
+                      <p className={`text-sm font-medium ${dragActiveNPWP ? 'text-blue-600' : 'text-gray-600 group-hover:text-blue-600'}`}>Klik atau drag untuk unggah NPWP</p>
+                      <p className="text-xs text-gray-500 mt-1">Format PDF maks. 5MB</p>
+                    </div>
                     <input type="file" accept="application/pdf" className="hidden" onChange={(e) => handleFileChange(e, 'NPWP')} />
                   </label>
                 )}
