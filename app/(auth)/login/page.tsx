@@ -122,14 +122,14 @@ export default function LoginPage() {
             onClick={() => setStep("role")}
           >
             <CirclePlus className="w-8 h-8 text-indigo-600 fill-indigo-600 text-white" />
-            <span className="text-2xl font-bold text-gray-900">
+            <span className="text-2xl font-bold text-black">
               Connect<span className="text-indigo-600">B2B</span>
             </span>
           </div>
 
           {step === "role" ? (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold text-black mb-2">
                 Selamat Datang 👋
               </h2>
               <p className="text-gray-500 mb-8">
@@ -186,13 +186,13 @@ export default function LoginPage() {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <button
                 onClick={() => setStep("role")}
-                className="flex items-center gap-2 text-sm text-gray-500 font-semibold mb-6 hover:text-gray-900 transition-colors"
+                className="flex items-center gap-2 text-sm text-gray-500 font-semibold mb-6 hover:text-black transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Kembali Pilih Peran
               </button>
 
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold text-black mb-2">
                 Login <span className={getRoleColor(selectedRole)}>{selectedRole}</span>
               </h2>
               <p className="text-gray-500 mb-8">
@@ -206,7 +206,7 @@ export default function LoginPage() {
                 </div>
                 <Link
                   href="/register"
-                  className="w-1/2 py-2 text-center text-gray-500 hover:text-gray-900 font-semibold transition-colors"
+                  className="w-1/2 py-2 text-center text-gray-500 hover:text-black font-semibold transition-colors"
                 >
                   Daftar Akun Baru
                 </Link>
@@ -220,35 +220,35 @@ export default function LoginPage() {
 
               <form onSubmit={handleLogin} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-black mb-1">
                     Alamat Email
                   </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all text-black"
                     placeholder="nama@perusahaan.com"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-black mb-1">
                     Kata Sandi
                   </label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all text-black"
                     placeholder="Minimal 8 karakter"
                     required
                   />
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2 cursor-pointer text-gray-600">
+                  <label className="flex items-center gap-2 cursor-pointer text-black">
                     <input
                       type="checkbox"
                       className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
