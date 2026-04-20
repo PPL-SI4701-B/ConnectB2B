@@ -240,7 +240,7 @@ export default function RegisterUMKM() {
                     name="nama_usaha"
                     value={formData.nama_usaha}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                    className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-black focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                     placeholder="PT / CV / Nama Usaha"
                     required
                   />
@@ -258,7 +258,7 @@ export default function RegisterUMKM() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                    className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-black focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                     placeholder="nama@email.com"
                     required
                   />
@@ -277,7 +277,7 @@ export default function RegisterUMKM() {
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-black focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                       placeholder="Min. 8 karakter"
                       required
                     />
@@ -295,7 +295,7 @@ export default function RegisterUMKM() {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                      className="pl-10 block w-full rounded-lg border border-gray-300 bg-white py-2.5 text-black focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                       placeholder="Ulangi sandi"
                       required
                     />
