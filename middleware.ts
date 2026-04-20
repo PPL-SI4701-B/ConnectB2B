@@ -56,12 +56,27 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect dashboard and admin routes
-  if (!user && (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/admin'))) {
+  const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard');
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+
+  // Protect dashboard and admin routes from unauthenticated users
+  if (!user && (isDashboardRoute || isAdminRoute)) {
     console.log('[Middleware Redirect] No user found for path:', request.nextUrl.pathname);
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+  }
+
+  // Protect dashboard routes from unverified users
+  if (user && isDashboardRoute) {
+    const { data: profile } = await supabase.from('users').select('status_verifikasi, role').eq('id', user.id).single();
+    
+    if (profile && profile.role !== 'admin' && profile.status_verifikasi !== 'terverifikasi') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/status-verifikasi'
+      url.search = `?status=${profile.status_verifikasi}`
+      return NextResponse.redirect(url)
+    }
   }
 
   return response
