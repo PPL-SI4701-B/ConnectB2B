@@ -624,6 +624,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_blocked: boolean
           nama: string
           role: Database["public"]["Enums"]["user_role"]
           status_verifikasi: Database["public"]["Enums"]["verifikasi_status"]
@@ -634,6 +635,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          is_blocked?: boolean
           nama: string
           role?: Database["public"]["Enums"]["user_role"]
           status_verifikasi?: Database["public"]["Enums"]["verifikasi_status"]
@@ -644,6 +646,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_blocked?: boolean
           nama?: string
           role?: Database["public"]["Enums"]["user_role"]
           status_verifikasi?: Database["public"]["Enums"]["verifikasi_status"]
