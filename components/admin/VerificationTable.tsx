@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { verifyUserDocuments, rejectUserDocuments } from '@/app/actions/admin-actions';
+import { createClient } from '@/lib/supabase';
 import { CheckCircle, XCircle, FileText, Check, X, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
 
 type PendingDocument = {
@@ -38,6 +39,7 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
   const [rejectReason, setRejectReason] = useState('');
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<'Semua' | 'UMKM' | 'Industri'>('Semua');
+  const supabase = createClient();
 
   const toggleRow = (userId: string) => {
     setExpandedRows(prev => ({ ...prev, [userId]: !prev[userId] }));
@@ -75,7 +77,8 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
   };
 
   const getPublicUrl = (path: string) => {
-    return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/dokumen/${path}`;
+    const { data } = supabase.storage.from('dokumen').getPublicUrl(path);
+    return data.publicUrl;
   };
 
   const groupedData: Record<string, UserEntity> = {};
