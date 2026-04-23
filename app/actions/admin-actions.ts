@@ -3,47 +3,53 @@
 import { createClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabaseAny = (client: any) => client as any;
+
 export async function verifyUserDocuments(userId: string) {
   const supabase = createClient();
+  const db = supabaseAny(supabase);
+
+  // Gunakan getUser() — aman untuk server (tidak bisa dipalsukan)
+  const { data: { user } } = await supabase.auth.getUser();
+  const adminId = user?.id ?? null;
 
   // Update status_verifikasi di dokumen_legalitas
-  const { error: updateError } = await supabase
+  const { error: docError } = await db
     .from('dokumen_legalitas')
-    // @ts-ignore
     .update({ status_verifikasi: 'terverifikasi' })
     .eq('user_id', userId)
     .eq('status_verifikasi', 'menunggu');
 
+  if (docError) {
+    return { success: false, error: docError.message };
+  }
+
   // Update status_verifikasi di users
-  const { data: { session } } = await supabase.auth.getSession();
-  const adminId = session?.user?.id;
-  await supabase
+  const { error: userError } = await db
     .from('users')
-    // @ts-ignore
     .update({
       status_verifikasi: 'terverifikasi',
-      verified_by: adminId || null,
-      verified_at: new Date().toISOString()
+      verified_by: adminId,
+      verified_at: new Date().toISOString(),
     })
     .eq('id', userId);
 
-  if (updateError) {
-    return { success: false, error: updateError.message };
+  if (userError) {
+    return { success: false, error: userError.message };
   }
 
-  // Insert notifikasi
-  const { error: notifyError } = await supabase
+  // Kirim notifikasi ke user
+  const { error: notifyError } = await db
     .from('notifikasi')
-    // @ts-ignore
     .insert({
       user_id: userId,
-      pesan: 'Selamat! Dokumen legalitas Anda telah diverifikasi oleh Admin. Akun Anda kini menjadi valid.',
+      pesan: 'Selamat! Dokumen legalitas Anda telah diverifikasi oleh Admin. Akun Anda kini aktif dan dapat digunakan.',
       status: 'belum dibaca',
     });
 
   if (notifyError) {
-    console.error('Failed to insert notification:', notifyError);
-    // Kita tetap return sukses karena core actionnya berhasil
+    console.error('Gagal insert notifikasi:', notifyError);
   }
 
   revalidatePath('/admin');
@@ -52,41 +58,43 @@ export async function verifyUserDocuments(userId: string) {
 
 export async function rejectUserDocuments(userId: string, reason: string) {
   const supabase = createClient();
+  const db = supabaseAny(supabase);
 
   // Update status_verifikasi & catatan_admin di dokumen_legalitas
-  const { error: updateError } = await supabase
+  const { error: docError } = await db
     .from('dokumen_legalitas')
-    // @ts-ignore
     .update({
       status_verifikasi: 'ditolak',
-      catatan_admin: reason
+      catatan_admin: reason,
     })
     .eq('user_id', userId)
     .eq('status_verifikasi', 'menunggu');
 
-  // Update status_verifikasi di users juga
-  await supabase
+  if (docError) {
+    return { success: false, error: docError.message };
+  }
+
+  // Update status_verifikasi di users
+  const { error: userError } = await db
     .from('users')
-    // @ts-ignore
     .update({ status_verifikasi: 'ditolak' })
     .eq('id', userId);
 
-  if (updateError) {
-    return { success: false, error: updateError.message };
+  if (userError) {
+    return { success: false, error: userError.message };
   }
 
-  // Insert notifikasi
-  const { error: notifyError } = await supabase
+  // Kirim notifikasi ke user
+  const { error: notifyError } = await db
     .from('notifikasi')
-    // @ts-ignore
     .insert({
       user_id: userId,
-      pesan: `Mohon maaf, dokumen legalitas Anda ditolak. Alasan: ${reason}. Silakan perbarui dokumen Anda.`,
+      pesan: `Mohon maaf, dokumen legalitas Anda ditolak. Alasan: ${reason}. Silakan unggah ulang dokumen perbaikan.`,
       status: 'belum dibaca',
     });
 
   if (notifyError) {
-    console.error('Failed to insert notification:', notifyError);
+    console.error('Gagal insert notifikasi:', notifyError);
   }
 
   revalidatePath('/admin');

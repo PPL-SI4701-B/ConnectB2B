@@ -20,9 +20,9 @@ export default async function KatalogPage() {
     .from('users')
     .select('status_verifikasi')
     .eq('id', user.id)
-    .single();
+    .single() as any;
 
-  const statusVerifikasi = userData?.status_verifikasi || 'menunggu';
+  const statusVerifikasi = (userData?.status_verifikasi as string) || 'menunggu';
 
   // Ambil list produk
   const { data: produkList } = await supabase

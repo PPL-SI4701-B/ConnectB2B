@@ -22,7 +22,7 @@ export default async function DashboardPage() {
       .from('umkm')
       .select('id')
       .eq('user_id', user.id)
-      .single();
+      .single() as any;
     umkmId = umkmData?.id;
   }
 
@@ -36,7 +36,7 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true });
     
   let activeCooperations = 0;
-  let requests = [];
+  let requests: any[] = [];
 
   if (umkmId) {
     // Active cooperations
@@ -44,55 +44,53 @@ export default async function DashboardPage() {
       .from('request')
       .select('*', { count: 'exact', head: true })
       .eq('umkm_id', umkmId)
-      .in('status', ['Kerja Sama Aktif', 'Aktif', 'Selesai']);
-      
-    activeCooperations = count || 0;
+      .eq('status', 'approve');
+
+    activeCooperations = count ?? 0;
 
     // Recent requests
-    const { data: recentReq } = await supabase
+    const { data: recentReqRaw } = await supabase
       .from('request')
       .select('id, tanggal_request, status, industri_id, pesan')
       .eq('umkm_id', umkmId)
       .order('tanggal_request', { ascending: false })
       .limit(5);
+    const recentReq = recentReqRaw as any[] | null;
 
     if (recentReq && recentReq.length > 0) {
       // Fetch industri details for these requests
-      const industriIds = [...new Set(recentReq.map(r => r.industri_id))].filter(Boolean);
-      
-      let industriMap = {};
+      const industriIds = Array.from(new Set(recentReq.map(r => r.industri_id))).filter(Boolean) as number[];
+
+      const industriMap: Record<number, string> = {};
       if (industriIds.length > 0) {
-        const { data: industris } = await supabase
+        const { data: industrisRaw } = await supabase
           .from('industri')
           .select('id, nama_perusahaan')
           .in('id', industriIds);
+        const industris = industrisRaw as any[] | null;
           
-        industris?.forEach(ind => {
+        industris?.forEach((ind: any) => {
           industriMap[ind.id] = ind.nama_perusahaan;
         });
       }
 
       requests = recentReq.map(req => ({
         ...req,
-        industri_nama: industriMap[req.industri_id] || 'Unknown',
-        initials: (industriMap[req.industri_id] || 'UN').substring(0, 2).toUpperCase()
+        industri_nama: industriMap[req.industri_id as number] || 'Unknown',
+        initials: (industriMap[req.industri_id as number] || 'UN').substring(0, 2).toUpperCase()
       }));
     }
   }
 
-  const getStatusBadge = (status) => {
+
+  const getStatusBadge = (status: string | null | undefined) => {
     switch(status?.toLowerCase()) {
-      case 'menunggu konfirmasi':
       case 'pending':
         return <span className="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full text-sm font-medium">Menunggu Konfirmasi</span>;
-      case 'kerja sama aktif':
-      case 'aktif':
-      case 'diterima':
-        return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm font-medium">Kerja Sama Aktif</span>;
-      case 'selesai':
-        return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm font-medium">Selesai</span>;
-      case 'negosiasi':
-        return <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-sm font-medium">Negosiasi</span>;
+      case 'approve':
+        return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm font-medium">Disetujui</span>;
+      case 'ditolak':
+        return <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-sm font-medium">Ditolak</span>;
       default:
         return <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-sm font-medium">{status || 'Diproses'}</span>;
     }
@@ -133,7 +131,7 @@ export default async function DashboardPage() {
           </div>
           <h4 className="text-gray-500 font-medium text-sm mb-1">Total UMKM Terdaftar</h4>
           <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{countUmkm || 1245}</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{countUmkm ?? 0}</h2>
             <div className="flex items-center text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-bold">
               <TrendingUp className="w-3 h-3 mr-1" />
               12%
@@ -147,7 +145,7 @@ export default async function DashboardPage() {
           </div>
           <h4 className="text-gray-500 font-medium text-sm mb-1">Total Industri Terdaftar</h4>
           <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{countIndustri || 320}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{countIndustri ?? 0}</h2>
             <div className="flex items-center text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-bold">
               <TrendingUp className="w-3 h-3 mr-1" />
               5%
@@ -161,7 +159,7 @@ export default async function DashboardPage() {
           </div>
           <h4 className="text-gray-500 font-medium text-sm mb-1">Kerjasama Aktif</h4>
           <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{activeCooperations || 842}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{activeCooperations ?? 0}</h2>
             <div className="flex items-center text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-bold">
               <TrendingUp className="w-3 h-3 mr-1" />
               24%
