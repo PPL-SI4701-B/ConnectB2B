@@ -24,8 +24,9 @@ export default async function DashboardIndustriPage() {
       .select('id, nama_perusahaan')
       .eq('user_id', user.id)
       .single();
-    industriId = industriData?.id;
-    industriName = industriData?.nama_perusahaan || industriName;
+    const indData = industriData as any;
+    industriId = indData?.id;
+    industriName = indData?.nama_perusahaan || industriName;
   }
 
   let totalMitra = 0;

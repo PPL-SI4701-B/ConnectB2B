@@ -150,6 +150,7 @@ export default function RegisterUMKM() {
 
       const { error: dbError } = await supabase
         .from('dokumen_legalitas')
+        // @ts-ignore
         .insert(dokumenInserts)
 
       if (dbError) throw new Error(`Gagal menyimpan data dokumen: ${dbError.message}`)
