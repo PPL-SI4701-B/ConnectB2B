@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 const supabaseAny = (client: any) => client as any;
 
 export async function verifyUserDocuments(userId: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const db = supabaseAny(supabase);
 
   // Gunakan getUser() — aman untuk server (tidak bisa dipalsukan)
@@ -57,7 +57,7 @@ export async function verifyUserDocuments(userId: string) {
 }
 
 export async function rejectUserDocuments(userId: string, reason: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const db = supabaseAny(supabase);
 
   // Update status_verifikasi & catatan_admin di dokumen_legalitas
