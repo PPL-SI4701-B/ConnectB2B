@@ -18,7 +18,7 @@ type Role = "UMKM" | "Industri" | "Admin";
 export default function LoginPage() {
   const [step, setStep] = useState<"role" | "form">("role");
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -72,36 +72,30 @@ export default function LoginPage() {
 
       if (error) {
         setErrorMsg(error.message);
-        setIsLoading(false);
         return;
       }
 
       if (data?.user) {
-        // Fetch role, verification status, and block status from users table
-        const { data: userDataRaw, error: userError } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from("users")
           .select("role, status_verifikasi, is_blocked")
           .eq("id", data.user.id)
-          .single();
+          .single() as any;
 
-        const userData = userDataRaw as any;
-
-        if (userError) {
+        if (userError || !userData) {
           setErrorMsg("Gagal mengambil data profil pengguna.");
-          setIsLoading(false);
           return;
         }
 
         // Cek jika akun diblokir
-        if (userData?.is_blocked) {
+        if (userData.is_blocked) {
           await supabase.auth.signOut();
           setErrorMsg("Akun Anda telah diblokir. Hubungi admin.");
-          setIsLoading(false);
           return;
         }
 
-        const userRole = userData?.role?.toLowerCase();
-        const statusVerifikasi = userData?.status_verifikasi;
+        const userRole = userData.role?.toLowerCase();
+        const statusVerifikasi = userData.status_verifikasi;
 
         // Cek status verifikasi (admin bypass)
         if (userRole !== "admin" && statusVerifikasi !== "terverifikasi") {
@@ -109,7 +103,7 @@ export default function LoginPage() {
           return;
         }
 
-        // Redirect sesuai role untuk akun yang terverifikasi/admin
+        // Redirect sesuai role
         if (userRole === "umkm") {
           router.push("/dashboard");
         } else if (userRole === "industri") {
@@ -123,7 +117,8 @@ export default function LoginPage() {
     } catch (err: any) {
       setErrorMsg("Terjadi kesalahan pada server.");
     } finally {
-      if (!errorMsg) setIsLoading(false);
+      // Selalu matikan loading — tanpa kondisi stale closure
+      setIsLoading(false);
     }
   };
 

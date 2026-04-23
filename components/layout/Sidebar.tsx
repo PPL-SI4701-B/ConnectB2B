@@ -20,7 +20,7 @@ export default async function Sidebar() {
       .from('users')
       .select('role')
       .eq('id', user.id)
-      .single();
+      .single() as any;
     if (userData?.role) {
       role = userData.role.toLowerCase();
     }

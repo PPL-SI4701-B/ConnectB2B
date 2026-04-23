@@ -41,13 +41,13 @@ export default async function AdminPage() {
     { count: penggunaTervalidasi },
     { count: industriAktif }
   ] = await Promise.all([
-    // @ts-ignore
     supabase.from('transaksi').select('*', { count: 'exact', head: true }).eq('status', 'lunas'),
-    // @ts-ignore
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('status_verifikasi', 'terverifikasi'),
-    // @ts-ignore
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'industri').eq('status_verifikasi', 'terverifikasi')
   ]);
+
+  // Calculate unique pending users instead of total documents
+  const pendingUsersCount = documents ? new Set(documents.map((d: any) => d.user_id)).size : 0;
 
   return (
     <>
@@ -91,7 +91,7 @@ export default async function AdminPage() {
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-slate-900">{penggunaTervalidasi || 0}</span>
               <span className="text-xs font-medium text-slate-500">
-                Menunggu: <span className="font-bold text-amber-500">{documents?.length || 0}</span>
+                Menunggu: <span className="font-bold text-amber-500">{pendingUsersCount}</span>
               </span>
             </div>
           </div>
@@ -108,10 +108,8 @@ export default async function AdminPage() {
               </div>
             </div>
             <div className="flex items-baseline space-x-2">
-              <span className="text-3xl font-bold text-slate-900">12</span>
-              <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded">
-                -3 <span className="font-medium text-slate-400">dr sblm</span>
-              </span>
+              <span className="text-3xl font-bold text-slate-900">{(documents as any[])?.filter((d: any) => d.status_verifikasi === 'ditolak').length ?? 0}</span>
+              <span className="text-xs font-medium text-slate-500">Total ditolak</span>
             </div>
           </div>
         </div>
@@ -140,7 +138,7 @@ export default async function AdminPage() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-900">Antrean Verifikasi Dokumen Akun Baru</h2>
         <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
-          {documents?.length || 0} Menunggu
+          {pendingUsersCount} Menunggu
         </span>
       </div>
 

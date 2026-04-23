@@ -162,7 +162,8 @@ export default function ProdukFormClient({ user, kategoriList, initialData }: Pr
 
       if (initialData) {
         // Edit Row
-        const { error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
           .from('produk')
           .update(produkPayload)
           .eq('id', initialData.id);
@@ -170,7 +171,8 @@ export default function ProdukFormClient({ user, kategoriList, initialData }: Pr
         if (error) throw error;
       } else {
         // Insert new Row
-        const { error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any)
           .from('produk')
           .insert([produkPayload]);
 

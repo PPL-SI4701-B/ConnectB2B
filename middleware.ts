@@ -56,7 +56,9 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard');
+  const isDashboardRoute =
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname.startsWith('/dashboard-industri');
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
   // Protect dashboard and admin routes from unauthenticated users
