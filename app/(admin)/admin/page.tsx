@@ -35,10 +35,22 @@ export default async function AdminPage() {
     console.error('Error fetching documents:', error);
   }
 
-  // To do a real stat calculation, we'd query the DB. 
-  // For the moment, we use placeholder counts or sample queries 
-  // to fill the stat cards beautifully as requested in the design.
+  // Fetch stat counts
+  const [
+    { count: totalTransaksi },
+    { count: penggunaTervalidasi },
+    { count: industriAktif }
+  ] = await Promise.all([
+    // @ts-ignore
+    supabase.from('transaksi').select('*', { count: 'exact', head: true }).eq('status', 'lunas'),
+    // @ts-ignore
+    supabase.from('users').select('*', { count: 'exact', head: true }).eq('status_verifikasi', 'terverifikasi'),
+    // @ts-ignore
+    supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'industri').eq('status_verifikasi', 'terverifikasi')
+  ]);
   
+  const uniqueEntitiesCount = documents ? new Set(documents.map(d => d.user_id)).size : 0;
+
   return (
     <>
       <div className="mb-8">
@@ -60,7 +72,7 @@ export default async function AdminPage() {
               </div>
             </div>
             <div className="flex items-baseline space-x-2">
-              <span className="text-3xl font-bold text-slate-900">1,248</span>
+              <span className="text-3xl font-bold text-slate-900">{totalTransaksi || 0}</span>
               <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded flex items-center">
                 +12% <span className="ml-1 text-slate-400 font-medium">bln ini</span>
               </span>
@@ -79,9 +91,9 @@ export default async function AdminPage() {
               </div>
             </div>
             <div className="flex items-baseline space-x-2">
-              <span className="text-3xl font-bold text-slate-900">3,856</span>
+              <span className="text-3xl font-bold text-slate-900">{penggunaTervalidasi || 0}</span>
               <span className="text-xs font-medium text-slate-500">
-                Menunggu: <span className="font-bold text-amber-500">{documents?.length || 0}</span>
+                Menunggu: <span className="font-bold text-amber-500">{uniqueEntitiesCount}</span>
               </span>
             </div>
           </div>
@@ -117,7 +129,7 @@ export default async function AdminPage() {
               </div>
             </div>
             <div className="flex items-baseline space-x-2">
-              <span className="text-3xl font-bold text-slate-900">214</span>
+              <span className="text-3xl font-bold text-slate-900">{industriAktif || 0}</span>
               <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
                 +45
               </span>
@@ -130,7 +142,7 @@ export default async function AdminPage() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-900">Antrean Verifikasi Dokumen Akun Baru</h2>
         <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
-          {documents?.length || 0} Menunggu
+          {uniqueEntitiesCount} Menunggu
         </span>
       </div>
 

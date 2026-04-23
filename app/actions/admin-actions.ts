@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 
-export async function verifyDocument(documentId: number, userId: string) {
+export async function verifyUserDocuments(userId: string) {
   const supabase = createClient();
 
   // Update status_verifikasi di dokumen_legalitas
@@ -11,7 +11,21 @@ export async function verifyDocument(documentId: number, userId: string) {
     .from('dokumen_legalitas')
     // @ts-ignore
     .update({ status_verifikasi: 'terverifikasi' })
-    .eq('id', documentId);
+    .eq('user_id', userId)
+    .eq('status_verifikasi', 'menunggu');
+
+  // Update status_verifikasi di users
+  const { data: { session } } = await supabase.auth.getSession();
+  const adminId = session?.user?.id;
+  await supabase
+    .from('users')
+    // @ts-ignore
+    .update({ 
+      status_verifikasi: 'terverifikasi',
+      verified_by: adminId || null,
+      verified_at: new Date().toISOString()
+    })
+    .eq('id', userId);
 
   if (updateError) {
     return { success: false, error: updateError.message };
@@ -36,7 +50,7 @@ export async function verifyDocument(documentId: number, userId: string) {
   return { success: true };
 }
 
-export async function rejectDocument(documentId: number, userId: string, reason: string) {
+export async function rejectUserDocuments(userId: string, reason: string) {
   const supabase = createClient();
 
   // Update status_verifikasi & catatan_admin di dokumen_legalitas
@@ -47,7 +61,15 @@ export async function rejectDocument(documentId: number, userId: string, reason:
       status_verifikasi: 'ditolak',
       catatan_admin: reason 
     })
-    .eq('id', documentId);
+    .eq('user_id', userId)
+    .eq('status_verifikasi', 'menunggu');
+
+  // Update status_verifikasi di users juga
+  await supabase
+    .from('users')
+    // @ts-ignore
+    .update({ status_verifikasi: 'ditolak' })
+    .eq('id', userId);
 
   if (updateError) {
     return { success: false, error: updateError.message };
