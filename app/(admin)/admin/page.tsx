@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase-server';
 import VerificationTable from '@/components/admin/VerificationTable';
-import { 
-  TrendingUp, 
-  ShieldCheck, 
-  AlertTriangle, 
-  Factory 
+import {
+  TrendingUp,
+  ShieldCheck,
+  AlertTriangle,
+  Factory
 } from 'lucide-react';
 
 export const revalidate = 0; // ensure fresh data on load
@@ -48,8 +48,6 @@ export default async function AdminPage() {
     // @ts-ignore
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'industri').eq('status_verifikasi', 'terverifikasi')
   ]);
-  
-  const uniqueEntitiesCount = documents ? new Set(documents.map(d => d.user_id)).size : 0;
 
   return (
     <>
@@ -60,7 +58,7 @@ export default async function AdminPage() {
 
       {/* Stat Cards - using glassmorphism and subtle gradients */}
       <div className="grid grid-cols-1 md:grid-cols-2 flex-wrap xl:grid-cols-4 gap-6 mb-10">
-        
+
         {/* Card 1 */}
         <div className="relative overflow-hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-100 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-500 z-0"></div>
@@ -93,7 +91,7 @@ export default async function AdminPage() {
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-slate-900">{penggunaTervalidasi || 0}</span>
               <span className="text-xs font-medium text-slate-500">
-                Menunggu: <span className="font-bold text-amber-500">{uniqueEntitiesCount}</span>
+                Menunggu: <span className="font-bold text-amber-500">{documents?.length || 0}</span>
               </span>
             </div>
           </div>
@@ -142,7 +140,7 @@ export default async function AdminPage() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-900">Antrean Verifikasi Dokumen Akun Baru</h2>
         <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
-          {uniqueEntitiesCount} Menunggu
+          {documents?.length || 0} Menunggu
         </span>
       </div>
 
