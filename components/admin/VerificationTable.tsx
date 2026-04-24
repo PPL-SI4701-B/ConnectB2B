@@ -1,10 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { verifyUserDocuments, rejectUserDocuments } from '@/app/actions/admin-actions';
 import { createClient } from '@/lib/supabase';
-import { CheckCircle, XCircle, FileText, Check, X, ChevronDown, ChevronUp, AlertTriangle, ExternalLink, Loader } from 'lucide-react';
+import {
+  CheckCircle,
+  XCircle,
+  FileText,
+  Check,
+  X,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  ExternalLink,
+  Loader,
+  ShieldCheck,
+  ShieldX,
+} from 'lucide-react';
 
 type PendingDocument = {
   id: number;
@@ -33,38 +46,62 @@ type UserEntity = {
   }[];
 };
 
+type ToastState = {
+  show: boolean;
+  message: string;
+  type: 'success' | 'error';
+};
+
 export default function VerificationTable({ documents }: { documents: any[] }) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<UserEntity | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<'Semua' | 'UMKM' | 'Industri'>('Semua');
   const [docLoadingId, setDocLoadingId] = useState<number | null>(null);
+  const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'success' });
   const router = useRouter();
   const supabase = createClient();
+
+  const showToast = useCallback((message: string, type: 'success' | 'error') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+  }, []);
 
   const toggleRow = (userId: string) => {
     setExpandedRows(prev => ({ ...prev, [userId]: !prev[userId] }));
   };
 
-  const handleVerify = async (userId: string) => {
-    setLoadingId(userId);
+  // --- SETUJU (Approve) ---
+  const openConfirmModal = (entity: UserEntity) => {
+    setSelectedEntity(entity);
+    setConfirmModalOpen(true);
+  };
+
+  const handleVerify = async () => {
+    if (!selectedEntity) return;
+    setLoadingId(selectedEntity.user_id);
+    setConfirmModalOpen(false);
     try {
-      const result = await verifyUserDocuments(userId);
+      const result = await verifyUserDocuments(selectedEntity.user_id);
       if (!result.success) {
-        alert(`Gagal memverifikasi: ${result.error}`);
+        showToast(`Gagal memverifikasi: ${result.error}`, 'error');
       } else {
+        showToast(result.message || 'Dokumen berhasil diverifikasi!', 'success');
         router.refresh();
       }
     } catch (e) {
       console.error(e);
-      alert('Terjadi kesalahan saat memverifikasi.');
+      showToast('Terjadi kesalahan saat memverifikasi.', 'error');
     } finally {
       setLoadingId(null);
+      setSelectedEntity(null);
     }
   };
 
+  // --- TOLAK (Reject) ---
   const openRejectModal = (entity: UserEntity) => {
     setSelectedEntity(entity);
     setRejectReason('');
@@ -77,15 +114,16 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
     try {
       const result = await rejectUserDocuments(selectedEntity.user_id, rejectReason);
       if (!result.success) {
-        alert(`Gagal menolak: ${result.error}`);
+        showToast(`Gagal menolak: ${result.error}`, 'error');
       } else {
+        showToast(result.message || 'Dokumen berhasil ditolak.', 'success');
         setRejectModalOpen(false);
         setSelectedEntity(null);
         router.refresh();
       }
     } catch (e) {
       console.error(e);
-      alert('Terjadi kesalahan saat menolak verifikasi.');
+      showToast('Terjadi kesalahan saat menolak verifikasi.', 'error');
     } finally {
       setLoadingId(null);
     }
@@ -100,13 +138,13 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
         .createSignedUrl(filePath, 3600); // Berlaku 1 jam
 
       if (error || !data?.signedUrl) {
-        alert('Tidak dapat membuka dokumen. Pastikan bucket "dokumen" sudah dibuat di Supabase Storage.');
+        showToast('Tidak dapat membuka dokumen. Pastikan bucket "dokumen" sudah dibuat di Supabase Storage.', 'error');
         return;
       }
       window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
     } catch (e) {
       console.error(e);
-      alert('Gagal membuka dokumen.');
+      showToast('Gagal membuka dokumen.', 'error');
     } finally {
       setDocLoadingId(null);
     }
@@ -150,6 +188,30 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
 
   return (
     <>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-6 right-6 z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className={`flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-lg border backdrop-blur-sm ${
+            toast.type === 'success'
+              ? 'bg-emerald-50/95 border-emerald-200 text-emerald-800'
+              : 'bg-red-50/95 border-red-200 text-red-800'
+          }`}>
+            {toast.type === 'success' ? (
+              <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+            ) : (
+              <XCircle className="w-5 h-5 text-red-500 shrink-0" />
+            )}
+            <p className="text-sm font-medium">{toast.message}</p>
+            <button
+              onClick={() => setToast({ show: false, message: '', type: 'success' })}
+              className="ml-2 text-current opacity-50 hover:opacity-100 transition-opacity"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex space-x-2 mb-4">
         {(['Semua', 'UMKM', 'Industri'] as const).map(tab => (
           <button
@@ -194,10 +256,11 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
                   const isExpanded = expandedRows[entity.user_id];
                   const requiredDocsCount = isUMKM ? 2 : 3;
                   const isComplete = entity.documents.length >= requiredDocsCount;
+                  const isLoading = loadingId === entity.user_id;
 
                   return (
                     <React.Fragment key={entity.user_id}>
-                      <tr className="hover:bg-slate-50/50 transition-colors">
+                      <tr className={`hover:bg-slate-50/50 transition-colors ${isLoading ? 'opacity-60 pointer-events-none' : ''}`}>
                         <td className="px-6 py-4 whitespace-nowrap cursor-pointer" onClick={() => toggleRow(entity.user_id)}>
                           <div className="flex items-center gap-2">
                             <button className="p-1 rounded bg-slate-100 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">
@@ -236,11 +299,11 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="flex items-center justify-end space-x-2">
                             <button
-                              onClick={() => handleVerify(entity.user_id)}
-                              disabled={loadingId === entity.user_id}
+                              onClick={() => openConfirmModal(entity)}
+                              disabled={isLoading}
                               className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium text-white shadow-sm shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {loadingId === entity.user_id ? (
+                              {isLoading ? (
                                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                               ) : (
                                 <><Check className="w-4 h-4 mr-1.5" />Setuju</>
@@ -248,7 +311,7 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
                             </button>
                             <button
                               onClick={() => openRejectModal(entity)}
-                              disabled={loadingId === entity.user_id}
+                              disabled={isLoading}
                               className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-medium text-red-600 bg-white border border-red-200 hover:bg-red-50 hover:border-red-300 focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                             >
                               <X className="w-4 h-4 mr-1.5" />
@@ -297,18 +360,71 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
         </div>
       )}
 
-      {/* Modal Penolakan */}
-      {rejectModalOpen && (
+      {/* Modal Konfirmasi Setuju */}
+      {confirmModalOpen && selectedEntity && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            onClick={() => setRejectModalOpen(false)}
+            onClick={() => { setConfirmModalOpen(false); setSelectedEntity(null); }}
+          />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="text-center mb-6">
+              <div className="mx-auto w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
+                <ShieldCheck className="w-8 h-8 text-emerald-500" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Setujui Verifikasi?</h3>
+              <p className="text-sm text-slate-500">
+                Anda akan menyetujui <strong className="text-slate-700">{selectedEntity.documents.length} dokumen</strong> milik{' '}
+                <strong className="text-slate-700">{selectedEntity.entityName}</strong>.
+                <br />Akun pengguna ini akan aktif setelah disetujui.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => { setConfirmModalOpen(false); setSelectedEntity(null); }}
+                className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleVerify}
+                disabled={loadingId === selectedEntity.user_id}
+                className="flex-1 inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium text-white bg-emerald-500 hover:bg-emerald-600 rounded-xl shadow-sm shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {loadingId === selectedEntity.user_id ? (
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 mr-1.5" />
+                    Ya, Setujui
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Penolakan */}
+      {rejectModalOpen && selectedEntity && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            onClick={() => { setRejectModalOpen(false); setSelectedEntity(null); }}
           />
           <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-slate-900">Alasan Penolakan</h3>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
+                  <ShieldX className="w-5 h-5 text-red-500" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Tolak Verifikasi</h3>
+              </div>
               <button
-                onClick={() => setRejectModalOpen(false)}
+                onClick={() => { setRejectModalOpen(false); setSelectedEntity(null); }}
                 className="text-slate-400 hover:text-slate-500 p-1 rounded-full hover:bg-slate-100 transition-colors"
               >
                 <XCircle className="w-5 h-5" />
@@ -316,9 +432,15 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
             </div>
 
             <div className="space-y-4">
+              <div className="bg-red-50/50 border border-red-100 rounded-lg p-3 mb-2">
+                <p className="text-xs text-red-600">
+                  Dokumen <strong>{selectedEntity.entityName}</strong> ({selectedEntity.documents.length} dokumen) akan ditolak.
+                  Pengguna akan mendapat notifikasi untuk upload ulang.
+                </p>
+              </div>
               <div>
                 <label htmlFor="reason" className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Catatan untuk <span className="font-semibold text-slate-900">{selectedEntity?.nama}</span>
+                  Catatan penolakan untuk <span className="font-semibold text-slate-900">{selectedEntity.nama}</span>
                 </label>
                 <textarea
                   id="reason"
@@ -334,7 +456,7 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
               <div className="flex justify-end space-x-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setRejectModalOpen(false)}
+                  onClick={() => { setRejectModalOpen(false); setSelectedEntity(null); }}
                   className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 transition-colors"
                 >
                   Batal
@@ -342,10 +464,10 @@ export default function VerificationTable({ documents }: { documents: any[] }) {
                 <button
                   type="button"
                   onClick={handleReject}
-                  disabled={!rejectReason.trim() || loadingId === selectedEntity?.user_id}
+                  disabled={!rejectReason.trim() || loadingId === selectedEntity.user_id}
                   className="px-4 py-2 text-sm font-medium text-white shadow-sm shadow-red-500/20 bg-red-600 hover:bg-red-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all inline-flex items-center justify-center min-w-[5rem]"
                 >
-                  {loadingId === selectedEntity?.user_id ? (
+                  {loadingId === selectedEntity.user_id ? (
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     'Kirim Penolakan'
