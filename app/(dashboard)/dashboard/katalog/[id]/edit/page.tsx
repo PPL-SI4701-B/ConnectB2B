@@ -7,7 +7,7 @@ export const metadata = {
 };
 
 export default async function EditProdukPage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -35,7 +35,7 @@ export default async function EditProdukPage({ params }: { params: { id: string 
   const { data: produk } = await supabase
     .from('produk')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', Number(params.id))
     .eq('user_id', user.id) // pastikan milik user yg login
     .single();
 

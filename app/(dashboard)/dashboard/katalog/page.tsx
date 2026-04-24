@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function KatalogPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -39,10 +39,10 @@ export default async function KatalogPage() {
     .order('id', { ascending: false });
 
   return (
-    <CatalogClient 
-      produkList={produkList || []} 
-      equipmentList={equipmentList || []} 
-      statusVerifikasi={statusVerifikasi} 
+    <CatalogClient
+      produkList={produkList || []}
+      equipmentList={equipmentList || []}
+      statusVerifikasi={statusVerifikasi}
     />
   );
 }

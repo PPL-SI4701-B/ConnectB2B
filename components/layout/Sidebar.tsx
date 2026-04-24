@@ -1,19 +1,19 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
-import { 
-  LayoutDashboard, 
-  Store, 
-  Search, 
-  ArrowRightLeft, 
-  Star, 
-  User, 
-  LogOut 
+import {
+  LayoutDashboard,
+  Store,
+  Search,
+  ArrowRightLeft,
+  Star,
+  User,
+  LogOut
 } from 'lucide-react';
 
 export default async function Sidebar() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   let role = 'umkm';
   if (user) {
     const { data: userData } = await supabase
@@ -73,9 +73,9 @@ export default async function Sidebar() {
         </ul>
 
         <div className="pt-6 mt-6 border-t border-gray-100 space-y-2">
-          <Link href={isIndustri ? "/dashboard-industri/profil" : "/dashboard/profil"} className="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors group">
-             <User className={`w-5 h-5 text-gray-400 group-hover:${brandColor} transition-colors`} />
-             <span className="ms-3">{isIndustri ? 'Profil Eksekutif' : 'Profil'}</span>
+          <Link href="/profil" className="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors group">
+            <User className={`w-5 h-5 text-gray-400 group-hover:${brandColor} transition-colors`} />
+            <span className="ms-3">{isIndustri ? 'Profil Eksekutif' : 'Profil'}</span>
           </Link>
           <form action="/auth/signout" method="post">
             <button type="submit" className="w-full flex items-center p-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors group">
