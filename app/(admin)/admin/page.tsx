@@ -10,7 +10,7 @@ import {
 export const revalidate = 0; // ensure fresh data on load
 
 export default async function AdminPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // Fetch pending review documents
   const { data: documents, error } = await supabase
