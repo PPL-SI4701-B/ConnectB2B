@@ -11,21 +11,43 @@ export async function verifyUserDocuments(userId: string) {
   const db = supabaseAny(supabase);
 
   // Gunakan getUser() — aman untuk server (tidak bisa dipalsukan)
-  const { data: { user } } = await supabase.auth.getUser();
-  const adminId = user?.id ?? null;
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return { success: false, error: 'Admin tidak terautentikasi. Silakan login ulang.' };
+  }
+  const adminId = user.id;
+
+  // Verifikasi bahwa user ini memang admin
+  const { data: adminProfile } = await db
+    .from('users')
+    .select('role')
+    .eq('id', adminId)
+    .single();
+
+  if (!adminProfile || adminProfile.role !== 'admin') {
+    return { success: false, error: 'Anda tidak memiliki akses admin.' };
+  }
 
   // Update status_verifikasi di dokumen_legalitas
-  const { error: docError } = await db
+  // Trigger sync_user_verification_status akan otomatis update status di tabel users
+  const { data: updatedDocs, error: docError } = await db
     .from('dokumen_legalitas')
     .update({ status_verifikasi: 'terverifikasi' })
     .eq('user_id', userId)
-    .eq('status_verifikasi', 'menunggu');
+    .eq('status_verifikasi', 'menunggu')
+    .select('id');
 
   if (docError) {
+    console.error('[Admin Action] Gagal update dokumen_legalitas:', docError);
     return { success: false, error: docError.message };
   }
 
-  // Update status_verifikasi di users
+  if (!updatedDocs || updatedDocs.length === 0) {
+    return { success: false, error: 'Tidak ada dokumen menunggu verifikasi untuk user ini.' };
+  }
+
+  // Update users table secara eksplisit sebagai fallback
+  // (Trigger harusnya sudah handle, tapi kita pastikan)
   const { error: userError } = await db
     .from('users')
     .update({
@@ -36,7 +58,8 @@ export async function verifyUserDocuments(userId: string) {
     .eq('id', userId);
 
   if (userError) {
-    return { success: false, error: userError.message };
+    console.error('[Admin Action] Gagal update users:', userError);
+    // Tidak return error karena trigger harusnya sudah handle
   }
 
   // Kirim notifikasi ke user
@@ -49,39 +72,69 @@ export async function verifyUserDocuments(userId: string) {
     });
 
   if (notifyError) {
-    console.error('Gagal insert notifikasi:', notifyError);
+    console.error('[Admin Action] Gagal insert notifikasi:', notifyError);
+    // Non-critical, jangan gagalkan proses
   }
 
   revalidatePath('/admin');
-  return { success: true };
+  return { success: true, message: `${updatedDocs.length} dokumen berhasil diverifikasi.` };
 }
 
 export async function rejectUserDocuments(userId: string, reason: string) {
   const supabase = await createClient();
   const db = supabaseAny(supabase);
 
+  // Validasi input
+  if (!reason || !reason.trim()) {
+    return { success: false, error: 'Alasan penolakan wajib diisi.' };
+  }
+
+  // Auth check
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return { success: false, error: 'Admin tidak terautentikasi. Silakan login ulang.' };
+  }
+
+  // Verifikasi bahwa user ini memang admin
+  const { data: adminProfile } = await db
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (!adminProfile || adminProfile.role !== 'admin') {
+    return { success: false, error: 'Anda tidak memiliki akses admin.' };
+  }
+
   // Update status_verifikasi & catatan_admin di dokumen_legalitas
-  const { error: docError } = await db
+  // Trigger sync_user_verification_status akan otomatis update status di tabel users
+  const { data: updatedDocs, error: docError } = await db
     .from('dokumen_legalitas')
     .update({
       status_verifikasi: 'ditolak',
       catatan_admin: reason,
     })
     .eq('user_id', userId)
-    .eq('status_verifikasi', 'menunggu');
+    .eq('status_verifikasi', 'menunggu')
+    .select('id');
 
   if (docError) {
+    console.error('[Admin Action] Gagal update dokumen_legalitas:', docError);
     return { success: false, error: docError.message };
   }
 
-  // Update status_verifikasi di users
+  if (!updatedDocs || updatedDocs.length === 0) {
+    return { success: false, error: 'Tidak ada dokumen menunggu verifikasi untuk user ini.' };
+  }
+
+  // Update users table secara eksplisit sebagai fallback
   const { error: userError } = await db
     .from('users')
     .update({ status_verifikasi: 'ditolak' })
     .eq('id', userId);
 
   if (userError) {
-    return { success: false, error: userError.message };
+    console.error('[Admin Action] Gagal update users:', userError);
   }
 
   // Kirim notifikasi ke user
@@ -94,9 +147,9 @@ export async function rejectUserDocuments(userId: string, reason: string) {
     });
 
   if (notifyError) {
-    console.error('Gagal insert notifikasi:', notifyError);
+    console.error('[Admin Action] Gagal insert notifikasi:', notifyError);
   }
 
   revalidatePath('/admin');
-  return { success: true };
+  return { success: true, message: `${updatedDocs.length} dokumen berhasil ditolak.` };
 }
