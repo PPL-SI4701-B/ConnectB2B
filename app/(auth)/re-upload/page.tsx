@@ -34,6 +34,7 @@ export default function ReUploadPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string>('umkm')
   const [rejectedDocs, setRejectedDocs] = useState<RejectedDoc[]>([])
   const [files, setFiles] = useState<Record<string, File | null>>({})
 
@@ -47,6 +48,17 @@ export default function ReUploadPage() {
       }
 
       setUserId(user.id)
+
+      // Fetch user role to determine storage path
+      const { data: userProfile } = await (supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single() as any)
+
+      if (userProfile?.role) {
+        setUserRole(userProfile.role)
+      }
 
       // Fetch all rejected documents for this user
       const { data: docs, error: docError } = await (supabase
@@ -110,8 +122,8 @@ export default function ReUploadPage() {
       setErrorMsg(`Format file ${docType} harus PDF.`)
       return
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg(`Ukuran file ${docType} tidak boleh lebih dari 5MB.`)
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg(`Ukuran file ${docType} tidak boleh lebih dari 10MB.`)
       return
     }
 
@@ -129,8 +141,8 @@ export default function ReUploadPage() {
       setErrorMsg(`Format file ${docType} harus PDF.`)
       return
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg(`Ukuran file ${docType} tidak boleh lebih dari 5MB.`)
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg(`Ukuran file ${docType} tidak boleh lebih dari 10MB.`)
       return
     }
 
@@ -169,7 +181,8 @@ export default function ReUploadPage() {
         if (!file) continue
 
         // Upload new file to storage
-        const filePath = `umkm/${userId}/${docType}_${timestamp}.pdf`
+        // Use user role as storage folder (umkm or industri) — required by RLS policy
+        const filePath = `${userRole}/${userId}/${docType}_${timestamp}.pdf`
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('dokumen')
           .upload(filePath, file, { upsert: true })
@@ -273,7 +286,7 @@ export default function ReUploadPage() {
               {/* Info Box */}
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 shadow-sm">
                 <span className="font-semibold block mb-1">Perhatian</span>
-                Unggah ulang dokumen yang ditolak dengan dokumen yang sudah diperbaiki. Format PDF, maksimal 5MB per file.
+                Unggah ulang dokumen yang ditolak dengan dokumen yang sudah diperbaiki. Format PDF, maksimal 10MB per file.
               </div>
 
               {/* Document Upload Cards */}
@@ -330,7 +343,7 @@ export default function ReUploadPage() {
                         <p className="text-sm font-medium text-gray-600 group-hover:text-indigo-600">
                           Klik atau drag untuk unggah {doc.jenis_dokumen}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">Format PDF maks. 5MB</p>
+                        <p className="text-xs text-gray-500 mt-1">Format PDF maks. 10MB</p>
                         <input
                           type="file"
                           accept="application/pdf"
