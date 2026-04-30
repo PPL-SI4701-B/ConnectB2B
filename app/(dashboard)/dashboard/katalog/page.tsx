@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default async function KatalogPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -20,9 +20,9 @@ export default async function KatalogPage() {
     .from('users')
     .select('status_verifikasi')
     .eq('id', user.id)
-    .single();
+    .single() as any;
 
-  const statusVerifikasi = userData?.status_verifikasi || 'menunggu';
+  const statusVerifikasi = (userData?.status_verifikasi as string) || 'menunggu';
 
   // Ambil list produk
   const { data: produkList } = await supabase
@@ -39,10 +39,10 @@ export default async function KatalogPage() {
     .order('id', { ascending: false });
 
   return (
-    <CatalogClient 
-      produkList={produkList || []} 
-      equipmentList={equipmentList || []} 
-      statusVerifikasi={statusVerifikasi} 
+    <CatalogClient
+      produkList={produkList || []}
+      equipmentList={equipmentList || []}
+      statusVerifikasi={statusVerifikasi}
     />
   );
 }
