@@ -4,13 +4,13 @@ import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  Building2, 
-  Mail, 
-  Lock, 
-  UploadCloud, 
-  FileText, 
-  CheckCircle2, 
+import {
+  Building2,
+  Mail,
+  Lock,
+  UploadCloud,
+  FileText,
+  CheckCircle2,
   AlertCircle,
   X,
   Loader2,
@@ -21,7 +21,7 @@ import {
 export default function RegisterUMKM() {
   const router = useRouter()
   const supabase = createClient()
-  
+
   const [step, setStep] = useState<1 | 2>(1)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -61,7 +61,7 @@ export default function RegisterUMKM() {
       setErrorMsg(`Ukuran file ${type} tidak boleh lebih dari 5MB.`)
       return
     }
-    
+
     setErrorMsg('')
     setFiles(prev => ({ ...prev, [type]: file }))
   }
@@ -99,10 +99,9 @@ export default function RegisterUMKM() {
 
     setLoading(true)
     setErrorMsg('')
+    let isSuccess = false
 
     try {
-      // Step A: SignUp to Supabase Auth
-      // Trigger on_auth_user_created automatically creates rows in users, profiles, and umkm
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -119,28 +118,23 @@ export default function RegisterUMKM() {
       if (!authData.user) throw new Error('Terjadi kesalahan yang tidak diketahui saat mendaftar.')
 
       const userId = authData.user.id
-
-      // Step B: Upload PDF files to "dokumen" storage bucket
       const timestamp = new Date().getTime()
-      
+
       const uploadPromises = [
         { type: 'NIB', file: files.NIB },
         { type: 'NPWP', file: files.NPWP }
       ].map(async ({ type, file }) => {
-        // Path: umkm/{user_id}/{jenis_dokumen}_{timestamp}.pdf (matches RLS)
         const filePath = `umkm/${userId}/${type}_${timestamp}.pdf`
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('dokumen')
           .upload(filePath, file as File, { upsert: true })
 
         if (uploadError) throw new Error(`Gagal mengunggah ${type}: ${uploadError.message}`)
-        
         return { type, path: uploadData.path }
       })
 
       const uploadedFiles = await Promise.all(uploadPromises)
 
-      // Step E: Insert 2 rows into dokumen_legalitas
       const dokumenInserts = uploadedFiles.map(({ type, path }) => ({
         user_id: userId,
         jenis_dokumen: type,
@@ -150,13 +144,14 @@ export default function RegisterUMKM() {
 
       const { error: dbError } = await supabase
         .from('dokumen_legalitas')
-        .insert(dokumenInserts)
+        .insert(dokumenInserts as any)
+
 
       if (dbError) throw new Error(`Gagal menyimpan data dokumen: ${dbError.message}`)
 
-      // SUCCESS
+      isSuccess = true
       setSuccessMsg('Registrasi berhasil! Akun Anda sedang menunggu verifikasi admin. Anda akan menerima notifikasi setelah dokumen diverifikasi.')
-      
+
       setTimeout(() => {
         router.push('/login')
       }, 3000)
@@ -165,7 +160,7 @@ export default function RegisterUMKM() {
       console.error(err)
       setErrorMsg(err.message || 'Terjadi kesalahan sistem saat mendaftarkan akun.')
     } finally {
-      if (!successMsg) setLoading(false)
+      if (!isSuccess) setLoading(false)
     }
   }
 
@@ -416,7 +411,7 @@ export default function RegisterUMKM() {
         {/* Dekorasi Shapes Background */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-        
+
         <div className="relative z-10 text-center px-12 lg:px-24">
           <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
             Hubungkan<br />Bisnis Anda

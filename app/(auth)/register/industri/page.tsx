@@ -102,12 +102,9 @@ export default function RegisterIndustri() {
 
     setLoading(true)
     setErrorMsg('')
+    let isSuccess = false
 
     try {
-      // Step A: SignUp to Supabase Auth
-      // Terdapat trigger yang diaktifkan ketika user baru terdaftar.
-      // Trigger tsb akan otomatis mengisi table `users` (dengan role 'industri' dan status_verifikasi 'menunggu')
-      // serta table `industri` dengan nama_perusahaan.
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -124,10 +121,8 @@ export default function RegisterIndustri() {
       if (!authData.user) throw new Error('Terjadi kesalahan saat mendaftar.')
 
       const userId = authData.user.id
-
-      // Step B: Upload PDF files to "dokumen" storage bucket
       const timestamp = new Date().getTime()
-      
+
       const uploadPromises = [
         { type: 'SIUP', file: files.SIUP },
         { type: 'NIB', file: files.NIB },
@@ -139,13 +134,11 @@ export default function RegisterIndustri() {
           .upload(filePath, file as File, { upsert: true })
 
         if (uploadError) throw new Error(`Gagal mengunggah ${type}: ${uploadError.message}`)
-        
         return { type, path: uploadData.path }
       })
 
       const uploadedFiles = await Promise.all(uploadPromises)
 
-      // Step E: Insert 3 row into dokumen_legalitas
       const dokumenInserts = uploadedFiles.map(({ type, path }) => ({
         user_id: userId,
         jenis_dokumen: type,
@@ -155,13 +148,13 @@ export default function RegisterIndustri() {
 
       const { error: dbError } = await supabase
         .from('dokumen_legalitas')
-        .insert(dokumenInserts)
+        .insert(dokumenInserts as any)
 
       if (dbError) throw new Error(`Gagal menyimpan data dokumen: ${dbError.message}`)
 
-      // SUCCESS
+      isSuccess = true
       setSuccessMsg('Registrasi berhasil! Akun Anda berstatus "menunggu" dan dijadwalkan untuk diverifikasi oleh Admin. Silakan periksa email Anda secara berkala.')
-      
+
       setTimeout(() => {
         router.push('/login')
       }, 3500)
@@ -169,10 +162,8 @@ export default function RegisterIndustri() {
     } catch (err: any) {
       console.error(err)
       setErrorMsg(err.message || 'Terjadi kesalahan sistem saat memproses registrasi Anda.')
-      // Secara ideal (bila ada backend/RPC khusus) kita rollback pengguna Auth dan file yang sudah terunggah,
-      // Namun untuk client-side di Supabase, penghapusan user auth tidak dimungkinkan secara langsung, manual intervensi atau cronjob mungkin diperlukan.
     } finally {
-      if (!successMsg) setLoading(false)
+      if (!isSuccess) setLoading(false)
     }
   }
 
