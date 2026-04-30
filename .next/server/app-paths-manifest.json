@@ -1,7 +1,0 @@
-{
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/(auth)/register/umkm/page": "app/(auth)/register/umkm/page.js",
-  "/(auth)/status-verifikasi/page": "app/(auth)/status-verifikasi/page.js",
-  "/(admin)/admin/page": "app/(admin)/admin/page.js",
-  "/(dashboard)/dashboard/katalog/page": "app/(dashboard)/dashboard/katalog/page.js"
-}
