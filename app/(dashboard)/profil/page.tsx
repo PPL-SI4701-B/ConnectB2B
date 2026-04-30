@@ -61,6 +61,7 @@ export default async function ProfilPage() {
     .eq('user_id', user.id);
 
   return (
+    // Render ProfileClient component for UMKM or Industri profile view
     <ProfileClient 
       userId={user.id}
       userEmail={userData.email}
