@@ -7,7 +7,7 @@ export const metadata = {
 };
 
 export default async function TambahProdukPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -20,9 +20,9 @@ export default async function TambahProdukPage() {
     .from('users')
     .select('status_verifikasi')
     .eq('id', user.id)
-    .single();
+    .single() as any;
 
-  if (userData?.status_verifikasi !== 'terverifikasi') {
+  if ((userData?.status_verifikasi as string) !== 'terverifikasi') {
     redirect('/dashboard/katalog');
   }
 
