@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 export default async function DashboardIndustriPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -19,29 +19,30 @@ export default async function DashboardIndustriPage() {
   let industriName = 'Perusahaan';
   
   if (user) {
-    const { data: industriData } = await supabase
+    const { data: industriDataRaw } = await supabase
       .from('industri')
       .select('id, nama_perusahaan')
       .eq('user_id', user.id)
-      .single();
-    industriId = industriData?.id;
-    industriName = industriData?.nama_perusahaan || industriName;
+      .single() as any;
+    const indData = industriDataRaw as any;
+    industriId = indData?.id;
+    industriName = indData?.nama_perusahaan || industriName;
   }
 
   let totalMitra = 0;
   let pendingRequests = 0;
   let activeProcess = 0;
-  let requests = [];
+  let requests: any[] = [];
 
   if (industriId) {
     // Total Mitra UMKM Disimpan (Count distinct umkm_id from request)
     const { data: reqs } = await supabase
       .from('request')
       .select('umkm_id')
-      .eq('industri_id', industriId);
+      .eq('industri_id', industriId) as any;
       
-    if (reqs) {
-      const distinctUmkm = new Set(reqs.map(r => r.umkm_id));
+    if (reqs?.data) {
+      const distinctUmkm = new Set((reqs.data as any[]).map((r: any) => r.umkm_id));
       totalMitra = distinctUmkm.size;
     }
 
@@ -50,37 +51,39 @@ export default async function DashboardIndustriPage() {
       .from('request')
       .select('*', { count: 'exact', head: true })
       .eq('industri_id', industriId)
-      .in('status', ['Menunggu Konfirmasi', 'Pending', 'Negosiasi']);
-    pendingRequests = countPending || 0;
+      .eq('status', 'pending');
+    pendingRequests = countPending ?? 0;
 
     // Active Process
     const { count: countActive } = await supabase
       .from('request')
       .select('*', { count: 'exact', head: true })
       .eq('industri_id', industriId)
-      .in('status', ['Kerja Sama Aktif', 'Aktif', 'Diterima']);
-    activeProcess = countActive || 0;
+      .eq('status', 'approve');
+    activeProcess = countActive ?? 0;
 
     // Recent requests
-    const { data: recentReq } = await supabase
+    const { data: recentReqRaw } = await supabase
       .from('request')
       .select('id, tanggal_request, status, umkm_id, pesan')
       .eq('industri_id', industriId)
       .order('tanggal_request', { ascending: false })
       .limit(5);
+    const recentReq = recentReqRaw as any[] | null;
 
     if (recentReq && recentReq.length > 0) {
       // Fetch UMKM details
-      const umkmIds = [...new Set(recentReq.map(r => r.umkm_id))].filter(Boolean);
-      
-      let umkmMap = {};
+      const umkmIds = Array.from(new Set(recentReq.map(r => r.umkm_id))).filter(Boolean) as number[];
+
+      const umkmMap: Record<number, string> = {};
       if (umkmIds.length > 0) {
-        const { data: umkms } = await supabase
+        const { data: umkmsRaw } = await supabase
           .from('umkm')
           .select('id, nama_usaha')
           .in('id', umkmIds);
+        const umkms = umkmsRaw as any[] | null;
           
-        umkms?.forEach(u => {
+        umkms?.forEach((u: any) => {
           umkmMap[u.id] = u.nama_usaha;
         });
       }
@@ -93,19 +96,15 @@ export default async function DashboardIndustriPage() {
     }
   }
 
-  const getStatusBadge = (status) => {
+
+  const getStatusBadge = (status: string | null | undefined) => {
     switch(status?.toLowerCase()) {
-      case 'menunggu konfirmasi umkm':
-      case 'menunggu konfirmasi':
       case 'pending':
-        return <span className="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full text-sm font-medium">Menunggu Konfirmasi UMKM</span>;
-      case 'barang dikirim':
-      case 'kerja sama aktif':
-      case 'aktif':
-        return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm font-medium">Barang Dikirim / Aktif</span>;
-      case 'selesai (butuh ulasan)':
-      case 'selesai':
-        return <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-medium">Selesai (Butuh Ulasan)</span>;
+        return <span className="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full text-sm font-medium">Menunggu Konfirmasi</span>;
+      case 'approve':
+        return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm font-medium">Disetujui</span>;
+      case 'ditolak':
+        return <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-sm font-medium">Ditolak</span>;
       default:
         return <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-sm font-medium">{status || 'Diproses'}</span>;
     }
@@ -144,7 +143,7 @@ export default async function DashboardIndustriPage() {
           </div>
           <h4 className="text-gray-500 font-medium text-sm mb-1">Total Mitra UMKM Disimpan</h4>
           <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{totalMitra || 14}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{totalMitra ?? 0}</h2>
             <div className="flex items-center text-cyan-600 bg-cyan-50 px-2 py-1 rounded-md text-xs font-bold">
               2 Baru
             </div>
@@ -157,7 +156,7 @@ export default async function DashboardIndustriPage() {
           </div>
           <h4 className="text-gray-500 font-medium text-sm mb-1">Request Menunggu Konfirmasi</h4>
           <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{pendingRequests || 2}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{pendingRequests ?? 0}</h2>
             <div className="flex items-center text-white bg-orange-500 px-2 py-1 rounded-md text-xs font-bold shadow-sm">
               Perlu Tindakan
             </div>
@@ -170,7 +169,7 @@ export default async function DashboardIndustriPage() {
           </div>
           <h4 className="text-gray-500 font-medium text-sm mb-1">Proses Kerja Sama Aktif</h4>
           <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{activeProcess || 5}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{activeProcess ?? 0}</h2>
             <div className="flex items-center text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-bold">
               Stabil
             </div>
