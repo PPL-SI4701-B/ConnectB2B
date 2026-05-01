@@ -31,14 +31,14 @@ export default async function Sidebar() {
   const umkmLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/katalog', label: 'Katalog Produk', icon: Store },
-    { href: '/dashboard/pencarian', label: 'Cari Sewa Alat', icon: Search },
+    { href: '/pencarian', label: 'Cari Supplier / Alat', icon: Search },
     { href: '/dashboard/transaksi', label: 'Transaksi', icon: ArrowRightLeft },
     { href: '/dashboard/ulasan', label: 'Ulasan', icon: Star },
   ];
 
   const industriLinks = [
     { href: '/dashboard-industri', label: 'Dasbor Industri', icon: LayoutDashboard },
-    { href: '/dashboard-industri/pencarian', label: 'Cari Supplier UMKM', icon: Search },
+    { href: '/pencarian', label: 'Cari Supplier UMKM', icon: Search },
     { href: '/dashboard-industri/transaksi', label: 'Pantau Transaksi', icon: ArrowRightLeft },
     { href: '/dashboard-industri/ulasan', label: 'Beri Ulasan', icon: Star },
   ];

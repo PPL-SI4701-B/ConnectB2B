@@ -72,6 +72,12 @@ export default function CatalogClient({
     }).format(angka);
   };
 
+  const getSatuan = (deskripsi: string) => {
+    if (!deskripsi) return '';
+    const match = deskripsi.match(/Satuan:\s*(.*?)\n/);
+    return match ? match[1] : '';
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 text-black">
       <header className="flex justify-between items-center mb-8">
@@ -141,57 +147,75 @@ export default function CatalogClient({
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredItems.map((item) => (
-          <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col group">
-            {item.gambar_url ? (
-              <img src={item.gambar_url} alt={item.nama} className="w-full h-48 object-cover" />
-            ) : (
-              <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400">
-                <Tag className="w-12 h-12 opacity-20" />
-              </div>
-            )}
-            <div className="p-5 flex flex-col flex-1">
-              <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-1">{item.nama}</h3>
-              <p className="text-gray-500 text-sm flex items-center gap-1 mb-3">
-                <Tag className="w-3 h-3 text-indigo-500" />
-                {item.kategori || item.status || 'No Category'}
-              </p>
-              
-              <div className="mt-auto">
-                <p className="font-bold text-indigo-600 text-lg">
-                  {item.harga || item.harga_sewa ? formatRupiah(item.harga || item.harga_sewa) : 'Penawaran Khusus'}
+      {filteredItems.length === 0 ? (
+        <div className="col-span-full flex flex-col items-center justify-center py-12 px-4 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+            <Tag className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">Belum ada {activeTab === 'produk' ? 'produk/jasa' : 'alat/mesin'}</h3>
+          <p className="text-gray-500 mb-6 max-w-md">Anda belum menambahkan {activeTab === 'produk' ? 'produk atau jasa' : 'alat atau mesin'} ke katalog Anda. Tambahkan sekarang untuk mulai menawarkan kepada mitra.</p>
+          {statusVerifikasi === 'terverifikasi' && (
+            <Link href={activeTab === 'produk' ? "/dashboard/katalog/tambah" : "#"} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              Tambah {activeTab === 'produk' ? 'Produk' : 'Alat'} Baru
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredItems.map((item) => (
+            <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col group">
+              {item.gambar_url ? (
+                <img src={item.gambar_url} alt={item.nama} className="w-full h-48 object-cover" />
+              ) : (
+                <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400">
+                  <Tag className="w-12 h-12 opacity-20" />
+                </div>
+              )}
+              <div className="p-5 flex flex-col flex-1">
+                <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-1">{item.nama}</h3>
+                <p className="text-gray-500 text-sm flex items-center gap-1 mb-3">
+                  <Tag className="w-3 h-3 text-indigo-500" />
+                  {item.kategori || item.status || 'No Category'}
                 </p>
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-50">
-                  <Link 
-                    href={activeTab === 'produk' ? `/dashboard/katalog/${item.id}/edit` : '#'} 
-                    className="flex-1 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors disabled:opacity-50"
-                  >
-                    <Pencil className="w-4 h-4" /> Edit
-                  </Link>
-                  <button 
-                    onClick={() => handleDelete(item.id, item.gambar_url)}
-                    disabled={isDeleting}
-                    className="p-2 border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors disabled:opacity-50"
-                    title="Hapus item"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                
+                <div className="mt-auto">
+                  <p className="font-bold text-indigo-600 text-lg">
+                    {item.harga || item.harga_sewa ? formatRupiah(item.harga || item.harga_sewa) : 'Penawaran Khusus'}
+                    {activeTab === 'produk' && item.deskripsi && <span className="text-sm text-gray-500 font-normal ml-1">{getSatuan(item.deskripsi)}</span>}
+                    {activeTab === 'equipment' && <span className="text-sm text-gray-500 font-normal ml-1">/ Hari</span>}
+                  </p>
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-50">
+                    <Link 
+                      href={activeTab === 'produk' ? `/dashboard/katalog/${item.id}/edit` : '#'} 
+                      className="flex-1 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors disabled:opacity-50"
+                    >
+                      <Pencil className="w-4 h-4" /> Edit
+                    </Link>
+                    <button 
+                      onClick={() => handleDelete(item.id, item.gambar_url)}
+                      disabled={isDeleting}
+                      className="p-2 border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors disabled:opacity-50"
+                      title="Hapus item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
 
-        {statusVerifikasi === 'terverifikasi' && (
-          <Link href="/dashboard/katalog/tambah" className="border-2 border-dashed border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-2xl flex flex-col items-center justify-center text-gray-400 hover:text-indigo-600 min-h-[300px] transition-colors group cursor-pointer">
-            <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-white flex items-center justify-center mb-3">
-              <Plus className="w-6 h-6" />
-            </div>
-            <h3 className="font-medium">Tambah {activeTab === 'produk' ? 'Produk' : 'Alat'} Baru</h3>
-          </Link>
-        )}
-      </div>
+          {statusVerifikasi === 'terverifikasi' && (
+            <Link href={activeTab === 'produk' ? "/dashboard/katalog/tambah" : "#"} className="border-2 border-dashed border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-2xl flex flex-col items-center justify-center text-gray-400 hover:text-indigo-600 min-h-[300px] transition-colors group cursor-pointer">
+              <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-white flex items-center justify-center mb-3">
+                <Plus className="w-6 h-6" />
+              </div>
+              <h3 className="font-medium">Tambah {activeTab === 'produk' ? 'Produk' : 'Alat'} Baru</h3>
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }
