@@ -2,23 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bug 2 Fix: App is light-themed. Force black text on white background regardless of OS dark mode. */
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+  color-scheme: light;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
+  color: #111827;
   background: white;
+}
+
+/* Ensure all inputs, selects, and textareas always show dark text */
+input,
+select,
+textarea {
+  color: #111827;
+  background-color: white;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
 }
 
 @layer utilities {

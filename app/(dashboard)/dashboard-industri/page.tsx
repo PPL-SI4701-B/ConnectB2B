@@ -41,8 +41,9 @@ export default async function DashboardIndustriPage() {
       .select('umkm_id')
       .eq('industri_id', industriId) as any;
       
-    if (reqs?.data) {
-      const distinctUmkm = new Set((reqs.data as any[]).map((r: any) => r.umkm_id));
+    // Bug 6 Fix: reqs is already an array, not reqs.data
+    if (reqs && reqs.length > 0) {
+      const distinctUmkm = new Set((reqs as any[]).map((r: any) => r.umkm_id));
       totalMitra = distinctUmkm.size;
     }
 
@@ -230,7 +231,7 @@ export default async function DashboardIndustriPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-fit">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Jalan Pintas Cepat</h2>
           <div className="space-y-4">
-            <Link href="/dashboard-industri/pencarian" className="w-full flex items-center justify-start gap-3 p-4 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg shadow-cyan-500/30 transition-all font-medium">
+            <Link href="/pencarian" className="w-full flex items-center justify-start gap-3 p-4 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg shadow-cyan-500/30 transition-all font-medium">
               <PlusCircle className="w-6 h-6" />
               <span className="text-lg">Temukan Supplier Baru</span>
             </Link>

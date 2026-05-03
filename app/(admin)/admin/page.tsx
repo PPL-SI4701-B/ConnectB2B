@@ -39,11 +39,13 @@ export default async function AdminPage() {
   const [
     { count: totalTransaksi },
     { count: penggunaTervalidasi },
-    { count: industriAktif }
+    { count: industriAktif },
+    { count: laporanDitolak } // Bug 7 Fix: separate query for rejected documents
   ] = await Promise.all([
     supabase.from('transaksi').select('*', { count: 'exact', head: true }).eq('status', 'lunas'),
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('status_verifikasi', 'terverifikasi'),
-    supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'industri').eq('status_verifikasi', 'terverifikasi')
+    supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'industri').eq('status_verifikasi', 'terverifikasi'),
+    supabase.from('dokumen_legalitas').select('*', { count: 'exact', head: true }).eq('status_verifikasi', 'ditolak')
   ]);
 
   // Calculate unique pending users instead of total documents
@@ -108,7 +110,8 @@ export default async function AdminPage() {
               </div>
             </div>
             <div className="flex items-baseline space-x-2">
-              <span className="text-3xl font-bold text-slate-900">{(documents as any[])?.filter((d: any) => d.status_verifikasi === 'ditolak').length ?? 0}</span>
+              {/* Bug 7 Fix: use laporanDitolak from dedicated query */}
+              <span className="text-3xl font-bold text-slate-900">{laporanDitolak || 0}</span>
               <span className="text-xs font-medium text-slate-500">Total ditolak</span>
             </div>
           </div>
