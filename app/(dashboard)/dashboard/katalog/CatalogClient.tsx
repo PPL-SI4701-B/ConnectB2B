@@ -8,7 +8,8 @@ import {
   Bell, 
   Trash2, 
   Pencil, 
-  Tag
+  Tag,
+  Eye
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -185,21 +186,30 @@ export default function CatalogClient({
                     {activeTab === 'produk' && item.deskripsi && <span className="text-sm text-gray-500 font-normal ml-1">{getSatuan(item.deskripsi)}</span>}
                     {activeTab === 'equipment' && <span className="text-sm text-gray-500 font-normal ml-1">/ Hari</span>}
                   </p>
-                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-50">
+                  <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-gray-50">
+                    {/* Bug 3 Fix: Tambah tombol Lihat Detail */}
                     <Link 
-                      href={activeTab === 'produk' ? `/dashboard/katalog/${item.id}/edit` : '#'} 
-                      className="flex-1 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors disabled:opacity-50"
+                      href={activeTab === 'produk' ? `/dashboard/katalog/${item.id}` : '#'}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors"
                     >
-                      <Pencil className="w-4 h-4" /> Edit
+                      <Eye className="w-4 h-4" /> Lihat Detail
                     </Link>
-                    <button 
-                      onClick={() => handleDelete(item.id, item.gambar_url)}
-                      disabled={isDeleting}
-                      className="p-2 border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors disabled:opacity-50"
-                      title="Hapus item"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <Link 
+                        href={activeTab === 'produk' ? `/dashboard/katalog/${item.id}/edit` : '#'} 
+                        className="flex-1 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors"
+                      >
+                        <Pencil className="w-4 h-4" /> Edit
+                      </Link>
+                      <button 
+                        onClick={() => handleDelete(item.id, item.gambar_url)}
+                        disabled={isDeleting}
+                        className="p-2 border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors disabled:opacity-50"
+                        title="Hapus item"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

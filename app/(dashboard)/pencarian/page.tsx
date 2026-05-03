@@ -3,7 +3,7 @@ import PencarianClient from './PencarianClient';
 import { redirect } from 'next/navigation';
 
 export const metadata = {
-  title: 'Katalog Publik | ConnectB2B',
+  title: 'Cari Supplier UMKM | ConnectB2B',
 };
 
 export default async function PencarianPage() {
@@ -14,49 +14,63 @@ export default async function PencarianPage() {
     redirect('/login');
   }
 
-  // Get all products and join with users and umkm tables to get the vendor name
-  // Note: Since umkm references user_id, we can join it directly or via users
-  // We'll fetch all products first
-  const { data: produkList } = await supabase
-    .from('produk')
-    .select('*, users (nama)');
-    
-  const { data: equipmentList } = await supabase
-    .from('equipment')
-    .select('*, users (nama)');
-
-  // We can fetch UMKM names mapping to user_ids to display actual company names
+  // Bug 4 Fix: Fetch per-UMKM data, not per-product
+  // Get all UMKM with their profile info, products, and equipment
   const { data: umkmList } = await supabase
     .from('umkm')
-    .select('user_id, nama_usaha');
+    .select(`
+      id,
+      user_id,
+      nama_usaha,
+      alamat,
+      kategori_id,
+      kategori (nama_kategori),
+      produk (id, nama, harga, gambar_url, deskripsi),
+      equipment (id, nama, harga_sewa, gambar_url, deskripsi)
+    `)
+    .order('id', { ascending: false });
+
+  // Get profile contacts for each UMKM
+  const userIds = (umkmList || []).map(u => u.user_id).filter(Boolean);
+  
+  let profileMap: Record<string, string> = {};
+  let userMap: Record<string, string> = {};
+  
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, kontak')
+      .in('user_id', userIds);
     
-  const umkmMap: Record<string, string> = {};
-  if (umkmList) {
-    umkmList.forEach(u => {
-      umkmMap[u.user_id] = u.nama_usaha;
+    profiles?.forEach(p => {
+      profileMap[p.user_id] = p.kontak || '';
+    });
+
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, nama, email, status_verifikasi')
+      .in('id', userIds);
+    
+    usersData?.forEach(u => {
+      userMap[u.id] = u.nama || '';
     });
   }
 
-  // Map products
-  const formattedProduk = (produkList || []).map(p => ({
-    ...p,
-    type: 'produk',
-    vendorName: umkmMap[p.user_id] || p.users?.nama || 'UMKM Tidak Diketahui',
-    rating: 0 // Mock rating as per requirements, since rating column might not exist or we don't have ulasan yet
+  // Shape data for client
+  const formattedUmkm = (umkmList || []).map(u => ({
+    id: u.id,
+    user_id: u.user_id,
+    nama_usaha: u.nama_usaha,
+    alamat: u.alamat || '-',
+    kategori: (u.kategori as any)?.nama_kategori || 'Umum',
+    kontak: profileMap[u.user_id] || '',
+    nama_user: userMap[u.user_id] || u.nama_usaha,
+    produk: (u.produk as any[]) || [],
+    equipment: (u.equipment as any[]) || [],
+    totalProduk: ((u.produk as any[]) || []).length + ((u.equipment as any[]) || []).length,
   }));
-  
-  // Map equipment
-  const formattedEquipment = (equipmentList || []).map(e => ({
-    ...e,
-    type: 'equipment',
-    vendorName: umkmMap[e.user_id] || e.users?.nama || 'UMKM Tidak Diketahui',
-    rating: 0,
-    harga: e.harga_sewa // Mapping for common sorting
-  }));
-
-  const allItems = [...formattedProduk, ...formattedEquipment];
 
   return (
-    <PencarianClient items={allItems} />
+    <PencarianClient umkmList={formattedUmkm} />
   );
 }
