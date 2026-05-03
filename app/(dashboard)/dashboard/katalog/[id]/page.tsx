@@ -16,7 +16,8 @@ const formatRupiah = (angka?: number | null) => {
   }).format(angka);
 };
 
-export default async function DetailProdukPage({ params }: { params: { id: string } }) {
+export default async function DetailProdukPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -28,7 +29,7 @@ export default async function DetailProdukPage({ params }: { params: { id: strin
   const { data: produk } = await supabase
     .from('produk')
     .select('*, kategori (nama_kategori)')
-    .eq('id', Number(params.id))
+    .eq('id', Number(id))
     .eq('user_id', user.id) // only owner can view in dashboard
     .single();
 
