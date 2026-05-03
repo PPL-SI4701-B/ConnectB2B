@@ -28,7 +28,7 @@ export default async function DetailProdukPage({ params }: { params: Promise<{ i
   // Fetch product with kategori join
   const { data: produk } = await supabase
     .from('produk')
-    .select('*, kategori (nama_kategori)')
+    .select('*')
     .eq('id', Number(id))
     .eq('user_id', user.id) // only owner can view in dashboard
     .single();
@@ -37,7 +37,7 @@ export default async function DetailProdukPage({ params }: { params: Promise<{ i
     notFound();
   }
 
-  const kategoriNama = (produk.kategori as any)?.nama_kategori || 'Tidak Dikategorikan';
+  const kategoriNama = produk.kategori || 'Tidak Dikategorikan';
 
   return (
     <div className="max-w-4xl mx-auto pb-12 text-black">
@@ -111,11 +111,11 @@ export default async function DetailProdukPage({ params }: { params: Promise<{ i
               <p className="text-xs text-gray-500 mb-1">ID Produk</p>
               <p className="text-sm font-medium text-gray-700">#{produk.id.toString().padStart(4, '0')}</p>
             </div>
-            {produk.created_at && (
+            {(produk as any).created_at && (
               <div>
                 <p className="text-xs text-gray-500 mb-1">Ditambahkan</p>
                 <p className="text-sm font-medium text-gray-700">
-                  {new Date(produk.created_at).toLocaleDateString('id-ID', {
+                  {new Date((produk as any).created_at).toLocaleDateString('id-ID', {
                     day: 'numeric', month: 'long', year: 'numeric'
                   })}
                 </p>
