@@ -2,6 +2,12 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // #region agent log
+  const _dbgStart = Date.now();
+  const _dbgPath = request.nextUrl.pathname;
+  console.log(`[DBG:f49df7][H3-H4] middleware:entry path=${_dbgPath} method=${request.method} t=${_dbgStart}`);
+  // #endregion
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -54,12 +60,23 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // #region agent log
+  const _dbgAuthT0 = Date.now();
+  // #endregion
   const { data: { user } } = await supabase.auth.getUser()
+  // #region agent log
+  const _dbgAuthMs = Date.now() - _dbgAuthT0;
+  console.log(`[DBG:f49df7][H3] middleware:getUser path=${_dbgPath} hasUser=${!!user} authMs=${_dbgAuthMs}`);
+  // #endregion
 
   const isDashboardRoute =
     request.nextUrl.pathname.startsWith('/dashboard') ||
     request.nextUrl.pathname.startsWith('/dashboard-industri');
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+
+  // #region agent log
+  console.log(`[DBG:f49df7][H4] middleware:route-check path=${_dbgPath} isDashboard=${isDashboardRoute} isAdmin=${isAdminRoute} hasUser=${!!user}`);
+  // #endregion
 
   // Protect dashboard and admin routes from unauthenticated users
   if (!user && (isDashboardRoute || isAdminRoute)) {
@@ -71,7 +88,14 @@ export async function middleware(request: NextRequest) {
 
   // Protect dashboard routes from unverified users
   if (user && isDashboardRoute) {
+    // #region agent log
+    const _dbgDbT0 = Date.now();
+    // #endregion
     const { data: profile } = await supabase.from('users').select('status_verifikasi, role').eq('id', user.id).single();
+    // #region agent log
+    const _dbgDbMs = Date.now() - _dbgDbT0;
+    console.log(`[DBG:f49df7][H3] middleware:db-query path=${_dbgPath} dbMs=${_dbgDbMs} role=${profile?.role} status=${profile?.status_verifikasi}`);
+    // #endregion
     
     if (profile && profile.role !== 'admin' && profile.status_verifikasi !== 'terverifikasi') {
       const url = request.nextUrl.clone()
@@ -80,6 +104,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
   }
+
+  // #region agent log
+  console.log(`[DBG:f49df7][H3] middleware:exit path=${_dbgPath} totalMs=${Date.now()-_dbgStart}`);
+  // #endregion
 
   return response
 }

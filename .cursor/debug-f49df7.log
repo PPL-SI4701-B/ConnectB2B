@@ -1,0 +1,3 @@
+{"sessionId":"f49df7","location":"middleware.ts:route-check","message":"route classification","data":{"path":"/dashboard","isDashboard":true,"isAdmin":false,"hasUser":true},"hypothesisId":"H4","timestamp":1777796186878}
+{"sessionId":"f49df7","location":"middleware.ts:after-db-query","message":"profile db query timing","data":{"path":"/dashboard","dbMs":392,"role":"umkm","status":"terverifikasi"},"hypothesisId":"H3","timestamp":1777796187271}
+{"sessionId":"f49df7","location":"middleware.ts:exit","message":"middleware complete","data":{"path":"/dashboard","totalMs":1082},"hypothesisId":"H3","timestamp":1777796187272}
