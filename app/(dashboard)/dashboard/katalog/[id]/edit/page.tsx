@@ -6,7 +6,8 @@ export const metadata = {
   title: 'Edit Item Portofolio | ConnectB2B',
 };
 
-export default async function EditProdukPage({ params }: { params: { id: string } }) {
+export default async function EditProdukPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -35,7 +36,7 @@ export default async function EditProdukPage({ params }: { params: { id: string 
   const { data: produk } = await supabase
     .from('produk')
     .select('*')
-    .eq('id', Number(params.id))
+    .eq('id', Number(id))
     .eq('user_id', user.id) // pastikan milik user yg login
     .single();
 

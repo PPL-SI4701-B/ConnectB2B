@@ -26,8 +26,10 @@ export default async function PencarianPage() {
       kategori_id,
       kategori (nama_kategori),
       produk (id, nama, harga, gambar_url, deskripsi),
-      equipment (id, nama, harga_sewa, gambar_url, deskripsi)
+      equipment (id, nama, harga_sewa, gambar_url, deskripsi),
+      users!inner (status_verifikasi)
     `)
+    .eq('users.status_verifikasi', 'terverifikasi')
     .order('id', { ascending: false });
 
   // Get profile contacts for each UMKM

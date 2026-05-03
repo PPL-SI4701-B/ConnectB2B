@@ -26,27 +26,35 @@ export default async function DashboardPage() {
     umkmId = umkmData?.id;
   }
 
-  // Fetch metrics
-  const { count: countUmkm } = await supabase
-    .from('umkm')
-    .select('*', { count: 'exact', head: true });
-    
-  const { count: countIndustri } = await supabase
-    .from('industri')
-    .select('*', { count: 'exact', head: true });
-    
+  let countProduk = 0;
+  let countPending = 0;
   let activeCooperations = 0;
   let requests: any[] = [];
 
+  if (user) {
+    const { count: cp } = await supabase
+      .from('produk')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+    countProduk = cp ?? 0;
+  }
+
   if (umkmId) {
+    // Pending requests
+    const { count: cpe } = await supabase
+      .from('request')
+      .select('*', { count: 'exact', head: true })
+      .eq('umkm_id', umkmId)
+      .eq('status', 'pending');
+    countPending = cpe ?? 0;
+
     // Active cooperations
-    const { count } = await supabase
+    const { count: ca } = await supabase
       .from('request')
       .select('*', { count: 'exact', head: true })
       .eq('umkm_id', umkmId)
       .eq('status', 'approve');
-
-    activeCooperations = count ?? 0;
+    activeCooperations = ca ?? 0;
 
     // Recent requests
     const { data: recentReqRaw } = await supabase
@@ -86,83 +94,96 @@ export default async function DashboardPage() {
   const getStatusBadge = (status: string | null | undefined) => {
     switch(status?.toLowerCase()) {
       case 'pending':
-        return <span className="px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full text-sm font-medium">Menunggu Konfirmasi</span>;
+        return <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-sm font-medium border border-amber-200 shadow-sm">Menunggu Konfirmasi</span>;
       case 'approve':
-        return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm font-medium">Disetujui</span>;
+        return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm font-medium border border-emerald-200 shadow-sm">Disetujui</span>;
       case 'ditolak':
-        return <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-sm font-medium">Ditolak</span>;
+        return <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-sm font-medium border border-rose-200 shadow-sm">Ditolak</span>;
       default:
-        return <span className="px-3 py-1 bg-gray-50 text-gray-600 rounded-full text-sm font-medium">{status || 'Diproses'}</span>;
+        return <span className="px-3 py-1 bg-slate-50 text-slate-600 rounded-full text-sm font-medium border border-slate-200 shadow-sm">{status || 'Diproses'}</span>;
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <header className="flex justify-between items-center mb-8">
+    <div className="max-w-7xl mx-auto space-y-8">
+      <header className="flex justify-between items-end mb-8 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
         <div>
-          <div className="text-sm font-medium text-gray-500 mb-1">Halaman / Dashboard</div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard Utama</h1>
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-400 mb-2">
+            <Store className="w-4 h-4" /> <span>Halaman Dashboard</span>
+          </div>
+          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500 tracking-tight">Dashboard UMKM</h1>
         </div>
         
         <div className="flex items-center gap-4">
           <div className="relative hidden md:block">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Cari sesuatu..." 
-              className="pl-10 pr-4 py-2 border border-gray-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm w-64"
+              placeholder="Cari aktivitas..." 
+              className="pl-11 pr-4 py-2.5 border border-slate-200 rounded-full bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-sm w-64 transition-all shadow-inner"
             />
           </div>
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative transition-colors">
+          <button className="p-2.5 text-slate-500 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full relative transition-all shadow-sm">
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+            {countPending > 0 && (
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white animate-pulse"></span>
+            )}
           </button>
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors hidden sm:block">
-            <Settings className="w-5 h-5" />
-          </button>
-          <img src="https://ui-avatars.com/api/?name=Admin+User&background=4318ff&color=fff" alt="Profile" className="w-10 h-10 rounded-full ml-2 cursor-pointer object-cover shadow-sm ring-2 ring-gray-100" />
+          <img src="https://ui-avatars.com/api/?name=User&background=4f46e5&color=fff" alt="Profile" className="w-11 h-11 rounded-full ml-1 cursor-pointer object-cover shadow-md ring-2 ring-indigo-50 hover:scale-105 transition-transform" />
         </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-            <Store className="w-6 h-6" />
-          </div>
-          <h4 className="text-gray-500 font-medium text-sm mb-1">Total UMKM Terdaftar</h4>
-          <div className="flex items-end justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">{countUmkm ?? 0}</h2>
-            <div className="flex items-center text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-bold">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              12%
+        {/* Card 1 */}
+        <div className="relative overflow-hidden bg-white p-6 rounded-3xl shadow-sm hover:shadow-lg border border-slate-100 group transition-all duration-300">
+          <div className="absolute -right-6 -top-6 w-32 h-32 bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-5 shadow-inner border border-indigo-100/50">
+              <Store className="w-7 h-7" />
+            </div>
+            <h4 className="text-slate-500 font-semibold text-sm mb-2">Total Produk Katalog</h4>
+            <div className="flex items-end justify-between">
+              <h2 className="text-4xl font-extrabold text-slate-800">{countProduk}</h2>
+              <Link href="/dashboard/katalog" className="text-indigo-600 hover:text-indigo-700 text-sm font-bold flex items-center gap-1">
+                Kelola <ChevronRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         </div>
         
-        <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4">
-            <Factory className="w-6 h-6" />
-          </div>
-          <h4 className="text-gray-500 font-medium text-sm mb-1">Total Industri Terdaftar</h4>
-          <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{countIndustri ?? 0}</h2>
-            <div className="flex items-center text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-bold">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              5%
+        {/* Card 2 */}
+        <div className="relative overflow-hidden bg-white p-6 rounded-3xl shadow-sm hover:shadow-lg border border-slate-100 group transition-all duration-300">
+          <div className="absolute -right-6 -top-6 w-32 h-32 bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mb-5 shadow-inner border border-amber-100/50">
+              <Bell className="w-7 h-7" />
+            </div>
+            <h4 className="text-slate-500 font-semibold text-sm mb-2">Request Menunggu</h4>
+            <div className="flex items-end justify-between">
+              <h2 className="text-4xl font-extrabold text-slate-800">{countPending}</h2>
+              {countPending > 0 && (
+                <div className="flex items-center text-white bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm animate-pulse">
+                  Perlu Aksi
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="p-6 bg-white rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-            <Handshake className="w-6 h-6" />
-          </div>
-          <h4 className="text-gray-500 font-medium text-sm mb-1">Kerjasama Aktif</h4>
-          <div className="flex items-end justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{activeCooperations ?? 0}</h2>
-            <div className="flex items-center text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs font-bold">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              24%
+        {/* Card 3 */}
+        <div className="relative overflow-hidden bg-white p-6 rounded-3xl shadow-sm hover:shadow-lg border border-slate-100 group transition-all duration-300">
+          <div className="absolute -right-6 -top-6 w-32 h-32 bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+          <div className="relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-5 shadow-inner border border-emerald-100/50">
+              <Handshake className="w-7 h-7" />
+            </div>
+            <h4 className="text-slate-500 font-semibold text-sm mb-2">Kerja Sama Aktif</h4>
+            <div className="flex items-end justify-between">
+              <h2 className="text-4xl font-extrabold text-slate-800">{activeCooperations}</h2>
+              <div className="flex items-center text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-lg text-xs font-bold shadow-sm">
+                <TrendingUp className="w-3.5 h-3.5 mr-1" />
+                Stabil
+              </div>
             </div>
           </div>
         </div>

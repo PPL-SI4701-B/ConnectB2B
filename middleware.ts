@@ -69,14 +69,32 @@ export async function middleware(request: NextRequest) {
   console.log(`[DBG:f49df7][H3] middleware:getUser path=${_dbgPath} hasUser=${!!user} authMs=${_dbgAuthMs}`);
   // #endregion
 
+  const isAuthRoute = 
+    request.nextUrl.pathname.startsWith('/login') || 
+    request.nextUrl.pathname.startsWith('/register');
   const isDashboardRoute =
     request.nextUrl.pathname.startsWith('/dashboard') ||
     request.nextUrl.pathname.startsWith('/dashboard-industri');
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
   // #region agent log
-  console.log(`[DBG:f49df7][H4] middleware:route-check path=${_dbgPath} isDashboard=${isDashboardRoute} isAdmin=${isAdminRoute} hasUser=${!!user}`);
+  console.log(`[DBG:f49df7][H4] middleware:route-check path=${_dbgPath} isAuth=${isAuthRoute} isDashboard=${isDashboardRoute} isAdmin=${isAdminRoute} hasUser=${!!user}`);
   // #endregion
+
+  // Redirect authenticated users away from auth routes
+  if (user && isAuthRoute) {
+    const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
+    const url = request.nextUrl.clone();
+    
+    if (profile?.role === 'admin') {
+      url.pathname = '/admin';
+    } else if (profile?.role === 'industri') {
+      url.pathname = '/dashboard-industri';
+    } else {
+      url.pathname = '/dashboard';
+    }
+    return NextResponse.redirect(url);
+  }
 
   // Protect dashboard and admin routes from unauthenticated users
   if (!user && (isDashboardRoute || isAdminRoute)) {
