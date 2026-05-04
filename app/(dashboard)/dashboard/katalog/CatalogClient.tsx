@@ -134,11 +134,11 @@ export default function CatalogClient({
         </div>
         
         <Link 
-          href={statusVerifikasi === 'terverifikasi' ? "/dashboard/katalog/tambah" : "#"}
+          href={statusVerifikasi === 'terverifikasi' ? (activeTab === 'produk' ? "/dashboard/katalog/tambah" : "/dashboard/katalog/tambah-alat") : "#"}
           onClick={(e) => {
             if (statusVerifikasi !== 'terverifikasi') {
               e.preventDefault();
-              alert('Harap verifikasi akun terlebih dahulu untuk menambah produk.');
+              alert('Harap verifikasi akun terlebih dahulu untuk menambah produk atau alat.');
             }
           }}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
@@ -156,7 +156,7 @@ export default function CatalogClient({
           <h3 className="text-lg font-bold text-gray-900 mb-2">Belum ada {activeTab === 'produk' ? 'produk/jasa' : 'alat/mesin'}</h3>
           <p className="text-gray-500 mb-6 max-w-md">Anda belum menambahkan {activeTab === 'produk' ? 'produk atau jasa' : 'alat atau mesin'} ke katalog Anda. Tambahkan sekarang untuk mulai menawarkan kepada mitra.</p>
           {statusVerifikasi === 'terverifikasi' && (
-            <Link href={activeTab === 'produk' ? "/dashboard/katalog/tambah" : "#"} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2">
+            <Link href={activeTab === 'produk' ? "/dashboard/katalog/tambah" : "/dashboard/katalog/tambah-alat"} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2">
               <Plus className="w-5 h-5" />
               Tambah {activeTab === 'produk' ? 'Produk' : 'Alat'} Baru
             </Link>
@@ -217,7 +217,7 @@ export default function CatalogClient({
           ))}
 
           {statusVerifikasi === 'terverifikasi' && (
-            <Link href={activeTab === 'produk' ? "/dashboard/katalog/tambah" : "#"} className="border-2 border-dashed border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-2xl flex flex-col items-center justify-center text-gray-400 hover:text-indigo-600 min-h-[300px] transition-colors group cursor-pointer">
+            <Link href={activeTab === 'produk' ? "/dashboard/katalog/tambah" : "/dashboard/katalog/tambah-alat"} className="border-2 border-dashed border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-2xl flex flex-col items-center justify-center text-gray-400 hover:text-indigo-600 min-h-[300px] transition-colors group cursor-pointer">
               <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-white flex items-center justify-center mb-3">
                 <Plus className="w-6 h-6" />
               </div>
