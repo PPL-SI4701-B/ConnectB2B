@@ -87,9 +87,8 @@ export default function AlatFormClient({ user, initialData }: AlatFormProps) {
     setIsLoading(true);
 
     try {
-      let finalGambarUrl = initialData?.gambar_url || null;
-
-      // 1. Upload Gambar jika ada
+      let finalGambarUrl = previewUrl;
+      
       if (file) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
@@ -106,6 +105,8 @@ export default function AlatFormClient({ user, initialData }: AlatFormProps) {
           .getPublicUrl(filePath);
 
         finalGambarUrl = publicUrlData.publicUrl;
+      } else if (previewUrl && previewUrl.startsWith('blob:')) {
+        finalGambarUrl = initialData?.gambar_url || null;
       }
 
       const equipmentPayload = {
@@ -115,7 +116,7 @@ export default function AlatFormClient({ user, initialData }: AlatFormProps) {
         deskripsi,
         status,
         stok: Number(stok),
-        ...(finalGambarUrl ? { gambar_url: finalGambarUrl } : {})
+        gambar_url: finalGambarUrl
       };
 
       if (initialData) {
