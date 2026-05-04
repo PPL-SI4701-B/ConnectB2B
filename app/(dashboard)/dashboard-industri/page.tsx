@@ -116,7 +116,7 @@ export default async function DashboardIndustriPage() {
       <header className="flex justify-between items-center mb-8">
         <div>
           <div className="text-sm font-medium text-gray-500 mb-1">Halaman / Dashboard Industri</div>
-          <h1 className="text-3xl font-bold text-gray-900">Dasbor Perusahaan</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard Perusahaan</h1>
         </div>
         
         <div className="flex items-center gap-4">
