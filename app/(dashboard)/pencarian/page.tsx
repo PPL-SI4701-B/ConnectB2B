@@ -26,7 +26,7 @@ export default async function PencarianPage() {
       status_verifikasi,
       umkm (id, nama_usaha, alamat, kategori_id, kategori(nama_kategori)),
       produk (id, nama, harga, gambar_url, deskripsi),
-      equipment (id, nama, harga_sewa, deskripsi)
+      equipment (id, nama, harga_sewa, deskripsi, gambar_url)
     `)
     .eq('role', 'umkm')
     .eq('status_verifikasi', 'terverifikasi')
