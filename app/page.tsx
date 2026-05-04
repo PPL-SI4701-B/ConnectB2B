@@ -17,7 +17,6 @@ export default async function LandingPage() {
     { count: jumlahProduk },
     { data: produkUnggulan },
     { data: umkmTerpercaya },
-    { data: kategoriListRaw },
     { data: ratingData }
   ] = await Promise.all([
     supabase.from('users').select('*', { count: 'exact', head: true })
@@ -33,7 +32,6 @@ export default async function LandingPage() {
     supabase.from('umkm').select('id, nama_usaha, alamat, kategori(nama_kategori), users!inner(status_verifikasi)')
       .eq('users.status_verifikasi', 'terverifikasi')
       .limit(3),
-    supabase.from('kategori').select('id, nama_kategori'),
     supabase.from('ulasan').select('rating')
   ]);
 
@@ -50,11 +48,7 @@ export default async function LandingPage() {
     }).format(value);
   };
 
-  // Mocked product count per category since aggregate queries in PostgREST are limited
-  const kategoriList = (kategoriListRaw || []).map((k: any) => ({
-    ...k,
-    jumlah_produk: Math.floor(Math.random() * 20) + 5 // fallback placeholder for count if relation fails
-  }));
+
 
   return (
     <div className="min-h-screen bg-[#FAFBFF] text-slate-800 font-sans selection:bg-blue-500/30">
@@ -71,7 +65,6 @@ export default async function LandingPage() {
             <div className="hidden md:flex space-x-8">
               <Link href="/" className="text-blue-600 font-semibold transition-colors">Beranda</Link>
               <Link href="/pencarian" className="text-slate-600 hover:text-blue-600 font-medium transition-colors">Produk</Link>
-              <Link href="/pencarian" className="text-slate-600 hover:text-blue-600 font-medium transition-colors">Kategori</Link>
               <Link href="#" className="text-slate-600 hover:text-blue-600 font-medium transition-colors">Tentang</Link>
             </div>
             <div className="flex items-center gap-4">
@@ -238,23 +231,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* 5. SECTION KATEGORI */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-extrabold text-[#1E3A5F] mb-10">Jelajahi Kategori</h2>
-          <div className="flex flex-wrap justify-center gap-4 max-w-4xl mx-auto">
-            {kategoriList && kategoriList.length > 0 ? (
-              kategoriList.map((k: any) => (
-                <Link key={k.id} href="/login" className="px-5 py-3 bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-full hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-all shadow-sm">
-                  {k.nama_kategori} <span className="text-slate-400 font-normal ml-1">({k.jumlah_produk})</span>
-                </Link>
-              ))
-            ) : (
-              <span className="text-slate-500">Kategori sedang dimuat...</span>
-            )}
-          </div>
-        </div>
-      </section>
+
 
       {/* 6. SECTION HOW IT WORKS */}
       <section className="py-24 bg-[#1E3A5F] text-white overflow-hidden relative">
