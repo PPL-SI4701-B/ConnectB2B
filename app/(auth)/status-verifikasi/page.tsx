@@ -37,6 +37,12 @@ function StatusVerifikasiContent() {
     fetchCatatan();
   }, [status, supabase]);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.refresh(); // Refresh to clear state
+    router.push("/login");
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen bg-gray-50 items-center justify-center">
@@ -47,7 +53,7 @@ function StatusVerifikasiContent() {
 
   // Jika parameter status tidak valid, kembali ke login
   if (status !== "menunggu" && status !== "ditolak") {
-    router.push("/login");
+    handleLogout();
     return null;
   }
 
@@ -66,13 +72,13 @@ function StatusVerifikasiContent() {
             <p className="text-gray-500 mb-8 leading-relaxed">
               Tim admin ConnectB2B sedang meninjau dokumen legalitas Anda. Proses ini biasanya memakan waktu 1-2 hari kerja. Kami akan memberitahu Anda ketika proses selesai.
             </p>
-            <Link
-              href="/login"
+            <button
+              onClick={handleLogout}
               className="inline-flex w-full items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-indigo-600/30"
             >
               <ArrowLeft className="w-5 h-5" />
               Kembali ke Login
-            </Link>
+            </button>
           </>
         ) : (
           <>
@@ -113,12 +119,12 @@ function StatusVerifikasiContent() {
                 <PhoneCall className="w-5 h-5" />
                 Hubungi Admin
               </button>
-              <Link
-                href="/login"
+              <button
+                onClick={handleLogout}
                 className="inline-block mt-4 text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors"
               >
                 Kembali ke Login
-              </Link>
+              </button>
             </div>
           </>
         )}
