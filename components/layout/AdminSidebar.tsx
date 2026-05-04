@@ -34,10 +34,12 @@ export default function AdminSidebar() {
         </ul>
         
         <div className="pt-6 mt-6 border-t border-indigo-800/50">
-          <Link href="/login" className="flex items-center p-3 text-red-300 rounded-xl hover:bg-red-500/10 hover:text-red-200 transition-all group">
-            <LogOut className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
-            <span className="ms-4 font-medium text-sm">Keluar</span>
-          </Link>
+          <form action="/auth/signout" method="post">
+            <button type="submit" className="w-full flex items-center p-3 text-red-300 rounded-xl hover:bg-red-500/10 hover:text-red-200 transition-all group text-left">
+              <LogOut className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+              <span className="ms-4 font-medium text-sm">Keluar</span>
+            </button>
+          </form>
         </div>
       </div>
     </aside>

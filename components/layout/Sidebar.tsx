@@ -37,7 +37,7 @@ export default async function Sidebar() {
   ];
 
   const industriLinks = [
-    { href: '/dashboard-industri', label: 'Dasbor Industri', icon: LayoutDashboard },
+    { href: '/dashboard-industri', label: 'Dashboard Industri', icon: LayoutDashboard },
     { href: '/pencarian', label: 'Cari Supplier UMKM', icon: Search },
     { href: '/dashboard-industri/transaksi', label: 'Pantau Transaksi', icon: ArrowRightLeft },
     { href: '/dashboard-industri/ulasan', label: 'Beri Ulasan', icon: Star },
