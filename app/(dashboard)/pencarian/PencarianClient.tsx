@@ -37,6 +37,7 @@ export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmItem | null>(null);
   const [activeTab, setActiveTab] = useState<'produk' | 'equipment'>('produk');
+  const [selectedItem, setSelectedItem] = useState<{ type: 'produk' | 'equipment', item: Produk | Equipment } | null>(null);
 
   const formatRupiah = (angka?: number) => {
     if (!angka) return 'Penawaran Khusus';
@@ -66,6 +67,7 @@ export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) 
 
   const handleClosePanel = () => {
     setSelectedUmkm(null);
+    setSelectedItem(null);
   };
 
   return (
@@ -242,7 +244,11 @@ export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) 
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {selectedUmkm.produk.map((p) => (
-                      <div key={p.id} className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100 hover:border-indigo-200 transition-colors">
+                      <div 
+                        key={p.id} 
+                        onClick={() => setSelectedItem({ type: 'produk', item: p })}
+                        className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100 hover:border-indigo-200 transition-colors cursor-pointer shadow-sm hover:shadow-md"
+                      >
                         {p.gambar_url ? (
                           <img src={p.gambar_url} alt={p.nama} className="w-full h-32 object-cover" />
                         ) : (
@@ -267,7 +273,11 @@ export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) 
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {selectedUmkm.equipment.map((e) => (
-                      <div key={e.id} className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100 hover:border-cyan-200 transition-colors">
+                      <div 
+                        key={e.id} 
+                        onClick={() => setSelectedItem({ type: 'equipment', item: e })}
+                        className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100 hover:border-cyan-200 transition-colors cursor-pointer shadow-sm hover:shadow-md"
+                      >
                         {e.gambar_url ? (
                           <img src={e.gambar_url} alt={e.nama} className="w-full h-32 object-cover" />
                         ) : (
@@ -316,8 +326,12 @@ export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) 
           </div>
           <div className="p-4 grid grid-cols-2 gap-3">
             {(activeTab === 'produk' ? selectedUmkm.produk : selectedUmkm.equipment).map((item: any) => (
-              <div key={item.id} className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
-                <div className="w-full h-24 bg-indigo-50 flex items-center justify-center">
+              <div 
+                key={item.id} 
+                onClick={() => setSelectedItem({ type: activeTab, item })}
+                className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100 cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-95"
+              >
+                <div className={`w-full h-24 flex items-center justify-center ${activeTab === 'produk' ? 'bg-indigo-50' : 'bg-cyan-50'}`}>
                   {activeTab === 'produk' ? <Package className="w-6 h-6 text-indigo-200" /> : <Wrench className="w-6 h-6 text-cyan-200" />}
                 </div>
                 <div className="p-2">
@@ -332,6 +346,55 @@ export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) 
             {(activeTab === 'produk' ? selectedUmkm.produk : selectedUmkm.equipment).length === 0 && (
               <div className="col-span-2 py-6 text-center text-gray-400 text-sm">Belum ada item.</div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Product Detail Modal */}
+      {selectedItem && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedItem(null)}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col transform transition-all" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-5 border-b border-gray-100">
+              <h3 className="font-bold text-lg text-gray-900">
+                Detail {selectedItem.type === 'produk' ? 'Produk & Jasa' : 'Alat/Mesin'}
+              </h3>
+              <button onClick={() => setSelectedItem(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="flex flex-col max-h-[75vh] overflow-y-auto">
+              {selectedItem.item.gambar_url ? (
+                <img src={selectedItem.item.gambar_url} alt={selectedItem.item.nama} className="w-full h-56 sm:h-72 object-cover" />
+              ) : (
+                <div className={`w-full h-56 sm:h-72 flex items-center justify-center ${selectedItem.type === 'produk' ? 'bg-indigo-50/50' : 'bg-cyan-50/50'}`}>
+                  {selectedItem.type === 'produk' ? <Package className={`w-16 h-16 text-indigo-200`} /> : <Wrench className={`w-16 h-16 text-cyan-200`} />}
+                </div>
+              )}
+              
+              <div className="p-6 sm:p-8">
+                <div className="mb-2">
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${selectedItem.type === 'produk' ? 'bg-indigo-100 text-indigo-700' : 'bg-cyan-100 text-cyan-700'}`}>
+                    {selectedItem.type === 'produk' ? 'Produk' : 'Alat/Mesin'}
+                  </span>
+                </div>
+                <h2 className="text-2xl font-extrabold text-gray-900 mb-2 leading-tight">{selectedItem.item.nama}</h2>
+                <div className={`text-3xl font-black mb-6 ${selectedItem.type === 'produk' ? 'text-indigo-600' : 'text-cyan-600'}`}>
+                  {selectedItem.type === 'produk' 
+                    ? formatRupiah((selectedItem.item as Produk).harga) 
+                    : <>{formatRupiah((selectedItem.item as Equipment).harga_sewa)}<span className="text-base text-gray-500 font-medium"> / hari</span></>}
+                </div>
+                
+                <div className="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Deskripsi Lengkap</h4>
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm">
+                      {selectedItem.item.deskripsi || 'Tidak ada deskripsi tersedia untuk item ini.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
