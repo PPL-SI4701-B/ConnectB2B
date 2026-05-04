@@ -123,15 +123,14 @@ export default function ProdukFormClient({ user, kategoriList, initialData }: Pr
     setIsLoading(true);
 
     try {
-      let finalGambarUrl = initialData?.gambar_url || null;
-
-      // 1. Upload Gambar jika ada
+      let finalGambarUrl = previewUrl;
+      
       if (file) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${user.id}-${Date.now()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        const { error: uploadError, data } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('produk-images')
           .upload(filePath, file);
 
@@ -142,8 +141,8 @@ export default function ProdukFormClient({ user, kategoriList, initialData }: Pr
           .getPublicUrl(filePath);
 
         finalGambarUrl = publicUrlData.publicUrl;
-
-        // Boleh hapus gambar lama jika ini mode Edit, tp skip dlu untuk kesederhanaan
+      } else if (previewUrl && previewUrl.startsWith('blob:')) {
+        finalGambarUrl = initialData?.gambar_url || null;
       }
 
       // 2. Siapkan data deskripsi gabungan

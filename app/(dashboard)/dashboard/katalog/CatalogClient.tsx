@@ -189,14 +189,14 @@ export default function CatalogClient({
                   <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-gray-50">
                     {/* Bug 3 Fix: Tambah tombol Lihat Detail */}
                     <Link 
-                      href={activeTab === 'produk' ? `/dashboard/katalog/${item.id}` : '#'}
+                      href={activeTab === 'produk' ? `/dashboard/katalog/${item.id}` : `/dashboard/katalog/alat/${item.id}`}
                       className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors"
                     >
                       <Eye className="w-4 h-4" /> Lihat Detail
                     </Link>
                     <div className="flex items-center gap-2">
                       <Link 
-                        href={activeTab === 'produk' ? `/dashboard/katalog/${item.id}/edit` : '#'} 
+                        href={activeTab === 'produk' ? `/dashboard/katalog/${item.id}/edit` : `/dashboard/katalog/alat/${item.id}/edit`} 
                         className="flex-1 border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-medium transition-colors"
                       >
                         <Pencil className="w-4 h-4" /> Edit
