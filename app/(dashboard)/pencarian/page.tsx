@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server';
 import PencarianClient from './PencarianClient';
 import { redirect } from 'next/navigation';
+import { searchAndClusterUmkm } from '@/lib/searchAlgorithm';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +9,15 @@ export const metadata = {
   title: 'Cari Supplier UMKM | ConnectB2B',
 };
 
-export default async function PencarianPage() {
+interface Props {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function PencarianPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const q = typeof searchParams.q === 'string' ? searchParams.q : undefined;
+  const kategori = typeof searchParams.kategori === 'string' ? searchParams.kategori : undefined;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -51,6 +60,14 @@ export default async function PencarianPage() {
     });
   }
 
+  // Fetch all categories for dropdown
+  const { data: categories } = await supabase
+    .from('kategori')
+    .select('nama_kategori')
+    .order('nama_kategori', { ascending: true });
+    
+  const categoryNames = (categories || []).map(c => c.nama_kategori);
+
   // Shape data for client
   const formattedUmkm = (usersList || []).map(u => {
     // umkm might be an array or an object depending on the relationship. Usually it's an array for 1:N
@@ -70,7 +87,15 @@ export default async function PencarianPage() {
     };
   });
 
+  // Server-side search and clustering
+  const filteredUmkm = searchAndClusterUmkm(formattedUmkm, q, kategori);
+
   return (
-    <PencarianClient umkmList={formattedUmkm} />
+    <PencarianClient 
+      umkmList={filteredUmkm} 
+      categories={categoryNames}
+      initialQuery={q || ''}
+      initialCategory={kategori || ''}
+    />
   );
 }
