@@ -1,43 +1,51 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Tag, MapPin, Phone, Package, Wrench, X, ChevronRight, Building2, Star } from 'lucide-react';
+import { UmkmItem, Produk, Equipment } from '@/types/umkm';
 
-type Produk = {
-  id: number;
-  nama: string;
-  harga?: number;
-  gambar_url?: string;
-  deskripsi?: string;
-};
+export default function PencarianClient({ 
+  umkmList,
+  categories,
+  initialQuery = '',
+  initialCategory = ''
+}: { 
+  umkmList: UmkmItem[],
+  categories: string[],
+  initialQuery?: string,
+  initialCategory?: string
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-type Equipment = {
-  id: number;
-  nama: string;
-  harga_sewa?: number;
-  gambar_url?: string;
-  deskripsi?: string;
-};
+  const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
 
-type UmkmItem = {
-  id: number;
-  user_id: string;
-  nama_usaha: string;
-  alamat: string;
-  kategori: string;
-  kontak: string;
-  nama_user: string;
-  produk: Produk[];
-  equipment: Equipment[];
-  totalProduk: number;
-};
-
-// Bug 4 Fix: PencarianClient now receives umkmList (per-UMKM data) instead of individual products
-export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) {
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmItem | null>(null);
   const [activeTab, setActiveTab] = useState<'produk' | 'equipment'>('produk');
   const [selectedItem, setSelectedItem] = useState<{ type: 'produk' | 'equipment', item: Produk | Equipment } | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchTerm) {
+        params.set('q', searchTerm);
+      } else {
+        params.delete('q');
+      }
+      
+      if (selectedCategory) {
+        params.set('kategori', selectedCategory);
+      } else {
+        params.delete('kategori');
+      }
+      
+      router.push(`?${params.toString()}`);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, selectedCategory, router, searchParams]);
 
   const formatRupiah = (angka?: number) => {
     if (!angka) return 'Penawaran Khusus';
@@ -47,18 +55,6 @@ export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) 
       minimumFractionDigits: 0
     }).format(angka);
   };
-
-  const filteredUmkm = useMemo(() => {
-    if (!searchTerm) return umkmList;
-    const lower = searchTerm.toLowerCase();
-    return umkmList.filter(u =>
-      u.nama_usaha?.toLowerCase().includes(lower) ||
-      u.kategori?.toLowerCase().includes(lower) ||
-      u.alamat?.toLowerCase().includes(lower) ||
-      u.produk.some(p => p.nama?.toLowerCase().includes(lower)) ||
-      u.equipment.some(e => e.nama?.toLowerCase().includes(lower))
-    );
-  }, [umkmList, searchTerm]);
 
   const handleSelectUmkm = (umkm: UmkmItem) => {
     setSelectedUmkm(umkm);
@@ -80,20 +76,34 @@ export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) 
         </div>
       </header>
 
-      {/* Search Bar */}
+      {/* Search Bar & Filter */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <div className="relative">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Cari nama UMKM, produk, kategori, atau lokasi..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900 bg-white"
-          />
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cari nama UMKM, produk, atau lokasi..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900 bg-white"
+            />
+          </div>
+          <div className="w-full sm:w-64">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900 bg-white cursor-pointer"
+            >
+              <option value="">Semua Kategori</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <p className="text-sm text-gray-500 mt-2">
-          Menampilkan <strong>{filteredUmkm.length}</strong> supplier UMKM{searchTerm && ` untuk "${searchTerm}"`}
+        <p className="text-sm text-gray-500 mt-4">
+          Menampilkan <strong>{umkmList.length}</strong> supplier UMKM
         </p>
       </div>
 
@@ -102,7 +112,7 @@ export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) 
         
         {/* UMKM Card Grid */}
         <div className={`transition-all duration-300 ${selectedUmkm ? 'w-full lg:w-1/2 xl:w-2/5' : 'w-full'}`}>
-          {filteredUmkm.length === 0 ? (
+          {umkmList.length === 0 ? (
             <div className="py-16 text-center bg-white rounded-2xl border border-gray-100">
               <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <h3 className="text-lg font-bold text-gray-900">Tidak ada UMKM ditemukan</h3>
@@ -110,7 +120,7 @@ export default function PencarianClient({ umkmList }: { umkmList: UmkmItem[] }) 
             </div>
           ) : (
             <div className={`grid gap-4 ${selectedUmkm ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
-              {filteredUmkm.map((umkm) => (
+              {umkmList.map((umkm) => (
                 <div
                   key={umkm.id}
                   onClick={() => handleSelectUmkm(umkm)}
