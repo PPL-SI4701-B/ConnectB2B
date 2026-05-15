@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server';
 import VerificationTable from '@/components/admin/VerificationTable';
+import PaymentValidationTable from '@/components/admin/PaymentValidationTable';
 import {
   TrendingUp,
   ShieldCheck,
@@ -33,6 +34,38 @@ export default async function AdminPage() {
 
   if (error) {
     console.error('Error fetching documents:', error);
+  }
+
+  // Fetch pending payments (FR-29)
+  const { data: pendingPayments, error: paymentError } = await supabase
+    .from('pembayaran')
+    .select(`
+      id,
+      transaksi_id,
+      tanggal_bayar,
+      bukti_transfer,
+      status,
+      transaksi (
+        id,
+        request:request_id (
+          industri:industri_id (
+            nama_perusahaan,
+            user_id
+          ),
+          umkm:umkm_id (
+            user_id
+          )
+        ),
+        detail_transaksi (
+          subtotal
+        )
+      )
+    `)
+    .eq('status', 'pending')
+    .order('tanggal_bayar', { ascending: false });
+
+  if (paymentError) {
+    console.error('Error fetching pending payments:', paymentError);
   }
 
   // Fetch stat counts
@@ -146,6 +179,15 @@ export default async function AdminPage() {
       </div>
 
       {documents && <VerificationTable documents={documents} />}
+
+      <div className="mt-12 mb-4 flex items-center justify-between">
+        <h2 className="text-xl font-bold text-slate-900">Antrean Validasi Pembayaran Escrow</h2>
+        <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
+          {pendingPayments?.length || 0} Menunggu
+        </span>
+      </div>
+
+      <PaymentValidationTable payments={pendingPayments || []} />
     </>
   );
 }
