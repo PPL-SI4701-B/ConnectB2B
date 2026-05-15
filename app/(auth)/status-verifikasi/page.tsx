@@ -15,6 +15,11 @@ function StatusVerifikasiContent() {
   const [catatanAdmin, setCatatanAdmin] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
   useEffect(() => {
     async function fetchCatatan() {
       if (status === "ditolak") {
