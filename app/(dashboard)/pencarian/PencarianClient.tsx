@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Tag, MapPin, Phone, Package, Wrench, X, ChevronRight, Building2, Star } from 'lucide-react';
+import NotificationBell from '@/components/layout/NotificationBell';
 import { UmkmItem, Produk, Equipment } from '@/types/umkm';
+import { createClient } from '@/lib/supabase';
+import { toast } from 'react-hot-toast';
 
 export default function PencarianClient({ 
   umkmList,
@@ -25,6 +28,59 @@ export default function PencarianClient({
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmItem | null>(null);
   const [activeTab, setActiveTab] = useState<'produk' | 'equipment'>('produk');
   const [selectedItem, setSelectedItem] = useState<{ type: 'produk' | 'equipment', item: Produk | Equipment } | null>(null);
+  const [isRequesting, setIsRequesting] = useState(false);
+
+  const supabase = createClient();
+
+  const handleKirimRequest = async () => {
+    if (!selectedUmkm || !selectedItem) return;
+    setIsRequesting(true);
+    
+    try {
+      // Dapatkan user aktif (industri)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Anda harus login terlebih dahulu');
+        return;
+      }
+
+      // Ambil profil industri (gunakan maybeSingle agar tidak throw error jika kosong)
+      const { data: industri, error: industriError } = await supabase
+        .from('industri')
+        .select('id, nama_perusahaan')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!industri?.id) {
+        toast.error('Profil industri Anda belum lengkap.');
+        setIsRequesting(false);
+        return;
+      }
+      
+      // FR-12: Insert ke tabel request. Notifikasi otomatis dibuat dari sisi database/trigger.
+      const pesanKerjasama = `Permintaan kerja sama untuk ${selectedItem.type === 'produk' ? 'produk' : 'alat'}: ${selectedItem.item.nama}`;
+      
+      const { error } = await supabase
+        .from('request')
+        .insert({
+          industri_id: industri.id,
+          umkm_id: selectedUmkm.id,
+          pesan: pesanKerjasama,
+          status: 'pending'
+        });
+
+      if (error) throw error;
+      
+      toast.success('Request kerja sama berhasil dikirim!');
+      setSelectedItem(null); // Tutup modal
+    } catch (err: any) {
+      console.error('Error kirim request:', err);
+      // Tampilkan detail error agar ketahuan apa masalahnya
+      toast.error(`Gagal mengirim request: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -73,6 +129,9 @@ export default function PencarianClient({
           <div className="text-sm font-medium text-gray-500 mb-1">Halaman / Cari Supplier</div>
           {/* Bug 4 Fix: Updated title to correctly describe FR-07 - finding UMKM suppliers */}
           <h1 className="text-3xl font-bold text-gray-900">Temukan Supplier UMKM</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <NotificationBell />
         </div>
       </header>
 
@@ -402,6 +461,22 @@ export default function PencarianClient({
                       {selectedItem.item.deskripsi || 'Tidak ada deskripsi tersedia untuk item ini.'}
                     </p>
                   </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end gap-3">
+                  <button 
+                    onClick={() => setSelectedItem(null)}
+                    className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    onClick={handleKirimRequest}
+                    disabled={isRequesting}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-sm shadow-indigo-200"
+                  >
+                    {isRequesting ? 'Mengirim...' : 'Kirim Request Kerja Sama'}
+                  </button>
                 </div>
               </div>
             </div>

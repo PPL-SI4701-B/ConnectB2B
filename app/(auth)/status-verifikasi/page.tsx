@@ -42,11 +42,7 @@ function StatusVerifikasiContent() {
     fetchCatatan();
   }, [status, supabase]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.refresh(); // Refresh to clear state
-    router.push("/login");
-  };
+
 
   if (loading) {
     return (
