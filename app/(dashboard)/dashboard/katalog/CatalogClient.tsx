@@ -11,6 +11,7 @@ import {
   Tag,
   Eye
 } from 'lucide-react';
+import NotificationBell from '@/components/layout/NotificationBell';
 import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
@@ -98,9 +99,7 @@ export default function CatalogClient({
               className="pl-10 pr-4 py-2 border border-gray-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm w-64"
             />
           </div>
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative transition-colors">
-            <Bell className="w-5 h-5" />
-          </button>
+          <NotificationBell />
           <img src="https://ui-avatars.com/api/?name=User&background=4318ff&color=fff" alt="Profile" className="w-10 h-10 rounded-full ml-2 cursor-pointer object-cover shadow-sm ring-2 ring-gray-100" />
         </div>
       </header>

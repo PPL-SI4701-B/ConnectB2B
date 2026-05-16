@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, Upload, Save, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, Save, X, Image as ImageIcon } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
+import NotificationBell from '@/components/layout/NotificationBell';
 
 const SATUAN_OPTIONS = ['/ Pcs', '/ Lusin', '/ Kg', '/ Unit', '/ Hari', '/ Lumpsum'];
 
@@ -200,9 +201,7 @@ export default function ProdukFormClient({ user, kategoriList, initialData }: Pr
         </div>
         
         <div className="flex items-center gap-4">
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full relative transition-colors">
-            <Bell className="w-5 h-5" />
-          </button>
+          <NotificationBell />
           <img src="https://ui-avatars.com/api/?name=User&background=4318ff&color=fff" alt="Profile" className="w-10 h-10 rounded-full ml-2 cursor-pointer object-cover shadow-sm ring-2 ring-gray-100" />
         </div>
       </header>
