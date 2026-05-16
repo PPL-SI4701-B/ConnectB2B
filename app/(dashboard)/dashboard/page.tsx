@@ -9,6 +9,7 @@ import {
   TrendingUp,
   ChevronRight
 } from 'lucide-react';
+import NotificationBell from '@/components/layout/NotificationBell';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -123,10 +124,7 @@ export default async function DashboardPage() {
               className="pl-10 pr-4 py-2 border border-slate-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-sm w-64 shadow-sm"
             />
           </div>
-          <button className="p-2 text-slate-400 bg-white hover:bg-slate-50 border border-slate-200 rounded-full relative transition-all shadow-sm">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-          </button>
+          <NotificationBell />
           <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md cursor-pointer ml-2 text-sm">
             {umkmName.substring(0, 2).toUpperCase()}
           </div>
