@@ -1,12 +1,12 @@
 import { createClient } from '@/lib/supabase-server';
 import { redirect } from 'next/navigation';
-import KeranjangClient from './KeranjangClient';
-
-export const dynamic = 'force-dynamic';
+import CartClient from './CartClient';
 
 export const metadata = {
   title: 'Keranjang Kolaborasi | ConnectB2B',
 };
+
+export const dynamic = 'force-dynamic';
 
 export default async function KeranjangPage() {
   const supabase = await createClient();
@@ -16,88 +16,83 @@ export default async function KeranjangPage() {
     redirect('/login');
   }
 
-  // Check verifikasi status
-  const { data: currentUserData } = await supabase
-    .from('users')
-    .select('status_verifikasi')
-    .eq('id', user.id)
-    .single();
-
-  const currentUserVerifikasi = currentUserData?.status_verifikasi || 'menunggu';
-
-  // Get industri_id
   const { data: industri } = await supabase
     .from('industri')
-    .select('id, nama_perusahaan')
+    .select('id')
     .eq('user_id', user.id)
-    .maybeSingle();
+    .single();
 
   if (!industri) {
-    // Maybe they are umkm but trying to access keranjang? Just pass empty
     return (
-      <div className="p-8 max-w-4xl mx-auto text-center mt-20">
-        <h2 className="text-2xl font-bold mb-4">Akses Ditolak</h2>
-        <p className="text-gray-500">Halaman ini hanya untuk pengguna industri.</p>
+      <div className="max-w-7xl mx-auto p-8 text-center text-gray-500">
+        Profil industri Anda belum lengkap atau Anda bukan entitas industri. Lengkapi profil Anda terlebih dahulu.
       </div>
     );
   }
 
-  // Fetch keranjang items
-  const { data: keranjangItems } = await supabase
+  // Fetch cart items
+  const { data: cartItems, error } = await supabase
     .from('keranjang')
     .select(`
-      id, kuantitas,
-      produk (id, nama, harga, gambar_url, user_id),
-      equipment (id, nama, harga_sewa, gambar_url, user_id)
+      id,
+      kuantitas,
+      produk_id,
+      equipment_id,
+      produk:produk_id (id, nama, harga, gambar_url, user_id),
+      equipment:equipment_id (id, nama, harga_sewa, gambar_url, user_id)
     `)
-    .eq('industri_id', industri.id);
+    .eq('industri_id', industri.id)
+    .order('created_at', { ascending: false });
 
-  const itemsList = (keranjangItems as any[]) || [];
-  // For each item, we need the UMKM info (to get umkm_id for request)
-  // Get all unique user_ids from produk and equipment
+  if (error) {
+    console.error('Error fetching cart:', error);
+  }
+
+  // Extract user_ids to find umkm details
   const userIds = new Set<string>();
-  itemsList.forEach(item => {
-    if (item.produk?.user_id) userIds.add(item.produk.user_id);
-    if (item.equipment?.user_id) userIds.add(item.equipment.user_id);
+  cartItems?.forEach(item => {
+    // Note: Supabase JS types relationships as any or array depending on schema. 
+    // We assume 1:1 for produk -> user, so it should be an object.
+    const p = Array.isArray(item.produk) ? item.produk[0] : item.produk;
+    const e = Array.isArray(item.equipment) ? item.equipment[0] : item.equipment;
+    
+    if (p?.user_id) userIds.add(p.user_id);
+    if (e?.user_id) userIds.add(e.user_id);
   });
 
-  const { data: umkms } = await supabase
-    .from('umkm')
-    .select('id, user_id, nama_usaha')
-    .in('user_id', Array.from(userIds));
+  let umkmMap: Record<string, any> = {};
+  if (userIds.size > 0) {
+    const { data: umkms } = await supabase
+      .from('umkm')
+      .select('id, nama_usaha, user_id')
+      .in('user_id', Array.from(userIds));
+    
+    umkms?.forEach(u => {
+      umkmMap[u.user_id] = u;
+    });
+  }
 
-  const umkmMap = new Map();
-  umkms?.forEach(u => umkmMap.set(u.user_id, u));
+  const formattedCartItems = (cartItems || []).map(item => {
+    const p = Array.isArray(item.produk) ? item.produk[0] : item.produk;
+    const e = Array.isArray(item.equipment) ? item.equipment[0] : item.equipment;
+    
+    const isProduk = !!item.produk_id;
+    const detail = isProduk ? p : e;
+    
+    const umkm = umkmMap[detail?.user_id] || { id: 0, nama_usaha: 'UMKM Tidak Ditemukan' };
 
-  // Format data for client
-  const formattedItems = itemsList.map(item => {
-    const isProduk = !!item.produk;
-    const refItem = item.produk || item.equipment;
-    const umkmInfo = umkmMap.get(refItem.user_id);
-    const typeString: 'produk' | 'equipment' = isProduk ? 'produk' : 'equipment';
     return {
       id: item.id,
       kuantitas: item.kuantitas,
-      type: typeString,
-      item_id: refItem.id,
-      nama: refItem.nama,
-      harga: isProduk ? refItem.harga : refItem.harga_sewa,
-      gambar_url: refItem.gambar_url,
-      umkm_id: umkmInfo?.id,
-      nama_usaha: umkmInfo?.nama_usaha,
-      umkm_user_id: refItem.user_id
+      type: isProduk ? 'produk' : 'equipment',
+      item_id: isProduk ? item.produk_id : item.equipment_id,
+      nama: detail?.nama || 'Item tidak tersedia',
+      harga: isProduk ? detail?.harga : detail?.harga_sewa,
+      gambar_url: detail?.gambar_url,
+      umkm_id: umkm.id,
+      umkm_nama: umkm.nama_usaha
     };
   });
 
-  return (
-    <div className="max-w-4xl mx-auto p-4 md:p-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Keranjang Kolaborasi</h1>
-      <KeranjangClient 
-        items={formattedItems} 
-        industriId={industri.id} 
-        industriName={industri.nama_perusahaan}
-        currentUserVerifikasi={currentUserVerifikasi} 
-      />
-    </div>
-  );
+  return <CartClient initialItems={formattedCartItems as any[]} />;
 }
