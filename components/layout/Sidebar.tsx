@@ -32,6 +32,7 @@ export default async function Sidebar() {
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/katalog', label: 'Katalog Produk', icon: Store },
     { href: '/pencarian', label: 'Cari Supplier / Alat', icon: Search },
+    { href: '/sewa-alat', label: 'Sewa Alat', icon: Search },
     { href: '/dashboard/transaksi', label: 'Transaksi', icon: ArrowRightLeft },
     { href: '/dashboard/ulasan', label: 'Ulasan', icon: Star },
   ];
@@ -39,18 +40,19 @@ export default async function Sidebar() {
   const industriLinks = [
     { href: '/dashboard-industri', label: 'Dashboard Industri', icon: LayoutDashboard },
     { href: '/pencarian', label: 'Cari Supplier UMKM', icon: Search },
+    { href: '/keranjang', label: 'Keranjang Kolaborasi', icon: Store },
     { href: '/dashboard-industri/transaksi', label: 'Pantau Transaksi', icon: ArrowRightLeft },
     { href: '/dashboard-industri/ulasan', label: 'Beri Ulasan', icon: Star },
   ];
 
   const links = isIndustri ? industriLinks : umkmLinks;
-  const brandColor = isIndustri ? 'text-cyan-500' : 'text-indigo-600';
+  const brandColor = isIndustri ? 'text-secondary' : 'text-primary';
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex min-h-screen">
-      <div className="h-full px-4 py-6 flex flex-col">
-        <div className="mb-10 px-2 flex items-center gap-2">
-          <div className={`p-1.5 rounded-lg bg-gray-100 ${brandColor}`}>
+    <aside className="w-[280px] bg-card-bg shadow-sm flex flex-col hidden md:flex min-h-screen transition-all">
+      <div className="h-full px-5 py-[30px] flex flex-col">
+        <div className="mb-[50px] px-2 flex items-center gap-2.5">
+          <div className={`${brandColor}`}>
             {isIndustri ? <LayoutDashboard className="w-6 h-6" /> : <Store className="w-6 h-6" />}
           </div>
           <span className="text-xl font-bold text-gray-900">
@@ -58,29 +60,31 @@ export default async function Sidebar() {
           </span>
         </div>
 
-        <ul className="space-y-2 font-medium flex-1">
+        <ul className="space-y-2.5 flex-1">
           {links.map((link) => {
             const Icon = link.icon;
+            // Next.js App Router Sidebar doesn't have an `active` state right now since it's a Server Component.
+            // We'll give it a hover effect mimicking the active state in mockup.
             return (
-              <li key={link.href}>
-                <Link href={link.href} className="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors group">
-                  <Icon className={`w-5 h-5 text-gray-400 group-hover:${brandColor} transition-colors`} />
-                  <span className="ms-3">{link.label}</span>
+              <li key={link.href} className="rounded-lg overflow-hidden relative">
+                <Link href={link.href} className="flex items-center gap-[15px] px-5 py-[14px] text-text-muted hover:bg-[#f4f7fe] hover:text-primary transition-all font-semibold text-[15px] group">
+                  <Icon className="w-5 h-5 group-hover:text-primary transition-colors" />
+                  <span>{link.label}</span>
                 </Link>
               </li>
             );
           })}
         </ul>
 
-        <div className="pt-6 mt-6 border-t border-gray-100 space-y-2">
-          <Link href="/profil" className="flex items-center p-3 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors group">
-            <User className={`w-5 h-5 text-gray-400 group-hover:${brandColor} transition-colors`} />
-            <span className="ms-3">{isIndustri ? 'Profil Eksekutif' : 'Profil'}</span>
+        <div className="pt-6 mt-6 space-y-2.5">
+          <Link href="/profil" className="flex items-center gap-[15px] px-5 py-[14px] text-text-muted hover:bg-[#f4f7fe] hover:text-primary rounded-lg transition-all font-semibold text-[15px] group">
+            <User className="w-5 h-5 group-hover:text-primary transition-colors" />
+            <span>{isIndustri ? 'Profil Eksekutif' : 'Profil'}</span>
           </Link>
           <form action="/auth/signout" method="post">
-            <button type="submit" className="w-full flex items-center p-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors group">
-              <LogOut className="w-5 h-5 text-red-500 group-hover:text-red-700 transition-colors" />
-              <span className="ms-3">{isIndustri ? 'Ganti Peran (Log Out)' : 'Keluar'}</span>
+            <button type="submit" className="w-full flex items-center gap-[15px] px-5 py-[14px] text-danger hover:bg-[#feeceb] rounded-lg transition-all font-semibold text-[15px] group">
+              <LogOut className="w-5 h-5 group-hover:text-danger transition-colors" />
+              <span>{isIndustri ? 'Ganti Peran (Log Out)' : 'Keluar'}</span>
             </button>
           </form>
         </div>

@@ -25,6 +25,15 @@ export default async function PencarianPage(props: Props) {
     redirect('/login');
   }
 
+  const { data: currentUserData } = await supabase
+    .from('users')
+    .select('status_verifikasi')
+    .eq('id', user.id)
+    .single();
+
+  const currentUserVerifikasi = currentUserData?.status_verifikasi || 'menunggu';
+
+
   // Bug Fix: Fetch from users table to correctly join produk, equipment, and umkm profiles
   const { data: usersList, error } = await supabase
     .from('users')
@@ -60,21 +69,31 @@ export default async function PencarianPage(props: Props) {
     });
   }
 
-  // Fetch all categories for dropdown
+  // Fetch all categories for dropdown — deduplicate to avoid duplicate React keys
   const { data: categories } = await supabase
     .from('kategori')
-    .select('nama_kategori')
+    .select('id, nama_kategori')
     .order('nama_kategori', { ascending: true });
     
-  const categoryNames = (categories || []).map(c => c.nama_kategori);
+  // Use id-based dedup to prevent same-name categories from appearing twice
+  const seen = new Set<string>();
+  const categoryNames = (categories || [])
+    .filter(c => {
+      if (seen.has(c.nama_kategori)) return false;
+      seen.add(c.nama_kategori);
+      return true;
+    })
+    .map(c => c.nama_kategori);
 
   // Shape data for client
   const formattedUmkm = (usersList || []).map(u => {
     // umkm might be an array or an object depending on the relationship. Usually it's an array for 1:N
     const umkmData = Array.isArray(u.umkm) ? u.umkm[0] : u.umkm;
+    const umkmNumericId = umkmData?.id ? Number(umkmData.id) : null;
     
     return {
-      id: umkmData?.id || u.id, // Fallback to user id if umkm id is missing
+      // Use umkm numeric id if available, otherwise keep user_id for key (avoid NaN)
+      id: umkmNumericId ?? u.id, // can be number or string — both work as React keys
       user_id: u.id,
       nama_usaha: umkmData?.nama_usaha || u.nama,
       alamat: umkmData?.alamat || '-',
@@ -96,6 +115,7 @@ export default async function PencarianPage(props: Props) {
       categories={categoryNames}
       initialQuery={q || ''}
       initialCategory={kategori || ''}
+      currentUserVerifikasi={currentUserVerifikasi}
     />
   );
 }

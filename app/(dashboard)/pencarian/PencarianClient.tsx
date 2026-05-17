@@ -12,12 +12,14 @@ export default function PencarianClient({
   umkmList,
   categories,
   initialQuery = '',
-  initialCategory = ''
+  initialCategory = '',
+  currentUserVerifikasi = ''
 }: { 
   umkmList: UmkmItem[],
   categories: string[],
   initialQuery?: string,
-  initialCategory?: string
+  initialCategory?: string,
+  currentUserVerifikasi?: string
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,24 +30,38 @@ export default function PencarianClient({
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmItem | null>(null);
   const [activeTab, setActiveTab] = useState<'produk' | 'equipment'>('produk');
   const [selectedItem, setSelectedItem] = useState<{ type: 'produk' | 'equipment', item: Produk | Equipment } | null>(null);
+  
+  // Request Form States
+  const [requestJenis, setRequestJenis] = useState('Pesan Maklon (Jasa)');
+  const [requestDetail, setRequestDetail] = useState('');
   const [isRequesting, setIsRequesting] = useState(false);
 
   const supabase = createClient();
 
-  const handleKirimRequest = async () => {
-    if (!selectedUmkm || !selectedItem) return;
+  const handleKirimRequest = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!selectedUmkm) return;
+    
+    if (currentUserVerifikasi !== 'terverifikasi') {
+      toast.error('Lengkapi verifikasi akun terlebih dahulu.');
+      return;
+    }
+
+    if (!requestDetail.trim()) {
+      toast.error('Detail spesifikasi harus diisi.');
+      return;
+    }
+
     setIsRequesting(true);
     
     try {
-      // Dapatkan user aktif (industri)
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error('Anda harus login terlebih dahulu');
         return;
       }
 
-      // Ambil profil industri (gunakan maybeSingle agar tidak throw error jika kosong)
-      const { data: industri, error: industriError } = await supabase
+      const { data: industri } = await supabase
         .from('industri')
         .select('id, nama_perusahaan')
         .eq('user_id', user.id)
@@ -57,25 +73,31 @@ export default function PencarianClient({
         return;
       }
       
-      // FR-12: Insert ke tabel request. Notifikasi otomatis dibuat dari sisi database/trigger.
-      const pesanKerjasama = `Permintaan kerja sama untuk ${selectedItem.type === 'produk' ? 'produk' : 'alat'}: ${selectedItem.item.nama}`;
+      const pesanLengkap = `[${requestJenis}] ${requestDetail}`;
       
       const { error } = await supabase
         .from('request')
         .insert({
           industri_id: industri.id,
-          umkm_id: selectedUmkm.id,
-          pesan: pesanKerjasama,
+          umkm_id: Number(selectedUmkm.id),
+          pesan: pesanLengkap,
           status: 'pending'
-        });
+        } as any);
 
       if (error) throw error;
       
-      toast.success('Request kerja sama berhasil dikirim!');
-      setSelectedItem(null); // Tutup modal
+      // Notifikasi ke UMKM penerima
+      await supabase.from('notifikasi').insert({
+        user_id: selectedUmkm.user_id,
+        pesan: `Anda menerima permintaan kerja sama baru dari ${industri.nama_perusahaan}`,
+        status: 'belum dibaca'
+      });
+      
+      toast.success('Request berhasil dikirim!');
+      setRequestDetail('');
+      router.push('/dashboard-industri/transaksi'); // Redirect ke halaman pantau transaksi
     } catch (err: any) {
       console.error('Error kirim request:', err);
-      // Tampilkan detail error agar ketahuan apa masalahnya
       toast.error(`Gagal mengirim request: ${err.message || 'Unknown error'}`);
     } finally {
       setIsRequesting(false);
@@ -155,8 +177,8 @@ export default function PencarianClient({
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900 bg-white cursor-pointer"
             >
               <option value="">Semua Kategori</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+              {categories.map((cat, index) => (
+                <option key={`cat-${index}`} value={cat}>{cat}</option>
               ))}
             </select>
           </div>
@@ -364,6 +386,52 @@ export default function PencarianClient({
                 )
               )}
             </div>
+            
+            {/* Request Form Panel */}
+            <div className="p-6 border-t border-gray-100 bg-gray-50 mt-auto">
+              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="text-indigo-600">🤝</span> Ajukan Request Kerjasama
+              </h3>
+              
+              {currentUserVerifikasi !== 'terverifikasi' ? (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm">
+                  Lengkapi verifikasi akun terlebih dahulu untuk mengirim request. 
+                  <a href="/profil" className="ml-1 font-bold underline">Ke Halaman Profil</a>
+                </div>
+              ) : (
+                <form onSubmit={handleKirimRequest} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Permintaan</label>
+                    <select 
+                      value={requestJenis}
+                      onChange={(e) => setRequestJenis(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent bg-white text-gray-900"
+                    >
+                      <option>Pesan Maklon (Jasa)</option>
+                      <option>Suplai Bahan Baku</option>
+                      <option>Sewa Alat</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Detail Spesifikasi / Durasi</label>
+                    <textarea 
+                      value={requestDetail}
+                      onChange={(e) => setRequestDetail(e.target.value)}
+                      rows={3} 
+                      placeholder="Sebutkan target waktu, kuantitas order, spesifikasi, atau durasi..."
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900 resize-none bg-white"
+                    ></textarea>
+                  </div>
+                  <button 
+                    type="submit"
+                    disabled={isRequesting}
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    {isRequesting ? 'Mengirim...' : 'Kirim Request'}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -414,6 +482,50 @@ export default function PencarianClient({
             ))}
             {(activeTab === 'produk' ? selectedUmkm.produk : selectedUmkm.equipment).length === 0 && (
               <div className="col-span-2 py-6 text-center text-gray-400 text-sm">Belum ada item.</div>
+            )}
+          </div>
+          
+          {/* Mobile Request Form */}
+          <div className="p-5 border-t border-gray-100 bg-gray-50 mt-auto">
+            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-sm">
+              <span className="text-indigo-600">🤝</span> Ajukan Request Kerjasama
+            </h3>
+            
+            {currentUserVerifikasi !== 'terverifikasi' ? (
+              <div className="bg-red-50 text-red-600 p-3 rounded-xl border border-red-100 text-xs">
+                Lengkapi verifikasi akun terlebih dahulu. 
+                <a href="/profil" className="ml-1 font-bold underline">Ke Profil</a>
+              </div>
+            ) : (
+              <form onSubmit={handleKirimRequest} className="space-y-3">
+                <div>
+                  <select 
+                    value={requestJenis}
+                    onChange={(e) => setRequestJenis(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white"
+                  >
+                    <option>Pesan Maklon (Jasa)</option>
+                    <option>Suplai Bahan Baku</option>
+                    <option>Sewa Alat</option>
+                  </select>
+                </div>
+                <div>
+                  <textarea 
+                    value={requestDetail}
+                    onChange={(e) => setRequestDetail(e.target.value)}
+                    rows={2} 
+                    placeholder="Sebutkan detail spesifikasi / durasi..."
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 resize-none bg-white"
+                  ></textarea>
+                </div>
+                <button 
+                  type="submit"
+                  disabled={isRequesting}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-colors disabled:opacity-50"
+                >
+                  {isRequesting ? 'Mengirim...' : 'Kirim Request'}
+                </button>
+              </form>
             )}
           </div>
         </div>
@@ -471,11 +583,14 @@ export default function PencarianClient({
                     Batal
                   </button>
                   <button 
-                    onClick={handleKirimRequest}
-                    disabled={isRequesting}
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-sm shadow-indigo-200"
+                    onClick={() => {
+                      setRequestJenis(selectedItem?.type === 'produk' ? 'Pesan Maklon (Jasa)' : 'Sewa Alat');
+                      setRequestDetail(`Tertarik dengan ${selectedItem?.type === 'produk' ? 'produk' : 'alat'}: ${selectedItem?.item.nama}`);
+                      setSelectedItem(null);
+                    }}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-200"
                   >
-                    {isRequesting ? 'Mengirim...' : 'Kirim Request Kerja Sama'}
+                    Pilih Item
                   </button>
                 </div>
               </div>
