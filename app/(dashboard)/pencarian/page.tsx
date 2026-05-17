@@ -16,7 +16,14 @@ interface Props {
 export default async function PencarianPage(props: Props) {
   const searchParams = await props.searchParams;
   const q = typeof searchParams.q === 'string' ? searchParams.q : undefined;
-  const kategori = typeof searchParams.kategori === 'string' ? searchParams.kategori : undefined;
+  const kategoriParam = searchParams.kategori;
+  const kategori = Array.isArray(kategoriParam) ? kategoriParam : typeof kategoriParam === 'string' ? [kategoriParam] : undefined;
+  
+  const lokasi = typeof searchParams.lokasi === 'string' ? searchParams.lokasi : undefined;
+  const minHarga = typeof searchParams.minHarga === 'string' ? parseInt(searchParams.minHarga) : undefined;
+  const maxHarga = typeof searchParams.maxHarga === 'string' ? parseInt(searchParams.maxHarga) : undefined;
+  // If not set, default to verifiedOnly = true to match previous behavior
+  const verifiedOnly = searchParams.verifiedOnly !== 'false';
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -47,7 +54,6 @@ export default async function PencarianPage(props: Props) {
       equipment (id, nama, harga_sewa, deskripsi, gambar_url)
     `)
     .eq('role', 'umkm')
-    .eq('status_verifikasi', 'terverifikasi')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -100,21 +106,46 @@ export default async function PencarianPage(props: Props) {
       kategori: umkmData?.kategori?.nama_kategori || 'Umum',
       kontak: profileMap[u.id] || '',
       nama_user: u.nama || '',
+      status_verifikasi: u.status_verifikasi,
       produk: (u.produk as any[]) || [],
       equipment: (u.equipment as any[]) || [],
       totalProduk: ((u.produk as any[]) || []).length + ((u.equipment as any[]) || []).length,
     };
   });
 
+  // Extract unique locations for the dropdown
+  const uniqueLocationsSet = new Set<string>();
+  formattedUmkm.forEach(u => {
+    if (u.alamat && u.alamat !== '-') {
+      // Basic extraction of city/province if needed, but here we just use the raw string or let the user search.
+      // For simplicity, we just use the unique raw alamat values for now or let the user type in.
+      // If we want a dropdown, we should pass unique non-empty addresses.
+      uniqueLocationsSet.add(u.alamat);
+    }
+  });
+  const locations = Array.from(uniqueLocationsSet).sort();
+
   // Server-side search and clustering
-  const filteredUmkm = searchAndClusterUmkm(formattedUmkm, q, kategori);
+  const filteredUmkm = searchAndClusterUmkm(formattedUmkm, {
+    keyword: q,
+    kategoriList: kategori,
+    lokasi,
+    minHarga,
+    maxHarga,
+    verifiedOnly
+  });
 
   return (
     <PencarianClient 
       umkmList={filteredUmkm} 
       categories={categoryNames}
+      locations={locations}
       initialQuery={q || ''}
-      initialCategory={kategori || ''}
+      initialCategoryList={kategori || []}
+      initialLokasi={lokasi || ''}
+      initialMinHarga={minHarga}
+      initialMaxHarga={maxHarga}
+      initialVerifiedOnly={verifiedOnly}
       currentUserVerifikasi={currentUserVerifikasi}
     />
   );
