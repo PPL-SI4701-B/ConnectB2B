@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
-import { Bell, Check, CheckCircle2 } from "lucide-react";
+import { Bell, CheckCircle2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import toast from "react-hot-toast";
@@ -22,7 +22,11 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [userRole, setUserRole] = useState<string>("umkm");
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const supabase = createClient();
+  // Stabilize supabase instance — never recreated
+  const supabaseRef = useRef(createClient());
+  const supabase = supabaseRef.current;
+  // Keep reference to active channel so we can remove it on cleanup
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const router = useRouter();
 
   const fetchNotifications = async () => {
@@ -62,8 +66,16 @@ export default function NotificationBell() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Remove previous channel before creating a new one
+      if (channelRef.current) {
+        await supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+
+      // Use unique channel name per user to avoid "same key" collision
+      const channelName = `notifikasi_changes_${user.id}`;
       const channel = supabase
-        .channel("notifikasi_changes")
+        .channel(channelName)
         .on(
           "postgres_changes",
           {
@@ -118,13 +130,20 @@ export default function NotificationBell() {
         )
         .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
+      channelRef.current = channel;
     };
 
     setupRealtime();
-  }, [supabase]);
+
+    // Cleanup: remove channel when component unmounts
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array: setup only once on mount
 
   // Handle click outside to close dropdown
   useEffect(() => {
