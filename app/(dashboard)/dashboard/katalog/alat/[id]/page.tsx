@@ -26,16 +26,18 @@ export default async function DetailAlatPage({ params }: { params: Promise<{ id:
   }
 
   // Fetch equipment
-  const { data: alat } = await supabase
+  const { data: alatRaw } = await supabase
     .from('equipment')
     .select('*')
     .eq('id', Number(id))
     .eq('user_id', user.id)
     .single();
 
-  if (!alat) {
+  if (!alatRaw) {
     notFound();
   }
+
+  const alat = alatRaw as any;
 
   return (
     <div className="max-w-4xl mx-auto pb-12 text-black">
