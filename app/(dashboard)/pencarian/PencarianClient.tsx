@@ -2,128 +2,122 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Tag, MapPin, Phone, Package, Wrench, X, ChevronRight, Building2, Star } from 'lucide-react';
+import { Search, Tag, MapPin, Phone, Package, Wrench, X, ChevronRight, Building2, Star, ShoppingCart, Filter } from 'lucide-react';
 import NotificationBell from '@/components/layout/NotificationBell';
 import { UmkmItem, Produk, Equipment } from '@/types/umkm';
 import { createClient } from '@/lib/supabase';
 import { toast } from 'react-hot-toast';
+import { addToCart } from '@/app/actions/cart-actions';
 
 export default function PencarianClient({ 
   umkmList,
   categories,
+  locations,
   initialQuery = '',
-  initialCategory = '',
+  initialCategoryList = [],
+  initialLokasi = '',
+  initialMinHarga,
+  initialMaxHarga,
+  initialVerifiedOnly = true,
   currentUserVerifikasi = ''
 }: { 
   umkmList: UmkmItem[],
   categories: string[],
+  locations: string[],
   initialQuery?: string,
-  initialCategory?: string,
+  initialCategoryList?: string[],
+  initialLokasi?: string,
+  initialMinHarga?: number,
+  initialMaxHarga?: number,
+  initialVerifiedOnly?: boolean,
   currentUserVerifikasi?: string
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [searchTerm, setSearchTerm] = useState(initialQuery);
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [selectedCategoryList, setSelectedCategoryList] = useState<string[]>(initialCategoryList);
+  const [selectedLokasi, setSelectedLokasi] = useState(initialLokasi);
+  const [minHarga, setMinHarga] = useState(initialMinHarga?.toString() || '');
+  const [maxHarga, setMaxHarga] = useState(initialMaxHarga?.toString() || '');
+  const [verifiedOnly, setVerifiedOnly] = useState(initialVerifiedOnly);
+  const [showFilters, setShowFilters] = useState(false);
 
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmItem | null>(null);
   const [activeTab, setActiveTab] = useState<'produk' | 'equipment'>('produk');
   const [selectedItem, setSelectedItem] = useState<{ type: 'produk' | 'equipment', item: Produk | Equipment } | null>(null);
   
-  // Request Form States
-  const [requestJenis, setRequestJenis] = useState('Pesan Maklon (Jasa)');
-  const [requestDetail, setRequestDetail] = useState('');
-  const [isRequesting, setIsRequesting] = useState(false);
+  // Cart States
+  const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
 
-  const supabase = createClient();
-
-  const handleKirimRequest = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!selectedUmkm) return;
+  // Function to apply filters
+  const applyFilters = () => {
+    const params = new URLSearchParams(searchParams.toString());
     
-    if (currentUserVerifikasi !== 'terverifikasi') {
-      toast.error('Lengkapi verifikasi akun terlebih dahulu.');
-      return;
-    }
-
-    if (!requestDetail.trim()) {
-      toast.error('Detail spesifikasi harus diisi.');
-      return;
-    }
-
-    setIsRequesting(true);
+    if (searchTerm) params.set('q', searchTerm);
+    else params.delete('q');
     
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('Anda harus login terlebih dahulu');
-        return;
-      }
+    params.delete('kategori');
+    selectedCategoryList.forEach(c => params.append('kategori', c));
+    
+    if (selectedLokasi) params.set('lokasi', selectedLokasi);
+    else params.delete('lokasi');
+    
+    if (minHarga) params.set('minHarga', minHarga);
+    else params.delete('minHarga');
+    
+    if (maxHarga) params.set('maxHarga', maxHarga);
+    else params.delete('maxHarga');
+    
+    params.set('verifiedOnly', verifiedOnly.toString());
+    
+    router.push(`?${params.toString()}`);
+  };
 
-      const { data: industri } = await supabase
-        .from('industri')
-        .select('id, nama_perusahaan')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!industri?.id) {
-        toast.error('Profil industri Anda belum lengkap.');
-        setIsRequesting(false);
-        return;
-      }
-      
-      const pesanLengkap = `[${requestJenis}] ${requestDetail}`;
-      
-      const { error } = await supabase
-        .from('request')
-        .insert({
-          industri_id: industri.id,
-          umkm_id: Number(selectedUmkm.id),
-          pesan: pesanLengkap,
-          status: 'pending'
-        } as any);
-
-      if (error) throw error;
-      
-      // Notifikasi ke UMKM penerima
-      await supabase.from('notifikasi').insert({
-        user_id: selectedUmkm.user_id,
-        pesan: `Anda menerima permintaan kerja sama baru dari ${industri.nama_perusahaan}`,
-        status: 'belum dibaca'
-      });
-      
-      toast.success('Request berhasil dikirim!');
-      setRequestDetail('');
-      router.push('/dashboard-industri/transaksi'); // Redirect ke halaman pantau transaksi
-    } catch (err: any) {
-      console.error('Error kirim request:', err);
-      toast.error(`Gagal mengirim request: ${err.message || 'Unknown error'}`);
-    } finally {
-      setIsRequesting(false);
-    }
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSelectedCategoryList([]);
+    setSelectedLokasi('');
+    setMinHarga('');
+    setMaxHarga('');
+    setVerifiedOnly(true);
+    router.push('?');
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      // Auto-apply search term only, other filters applied via button
       const params = new URLSearchParams(searchParams.toString());
-      if (searchTerm) {
-        params.set('q', searchTerm);
-      } else {
-        params.delete('q');
+      if (searchTerm !== initialQuery) {
+        if (searchTerm) params.set('q', searchTerm);
+        else params.delete('q');
+        router.push(`?${params.toString()}`);
       }
-      
-      if (selectedCategory) {
-        params.set('kategori', selectedCategory);
-      } else {
-        params.delete('kategori');
-      }
-      
-      router.push(`?${params.toString()}`);
-    }, 300);
-
+    }, 500);
     return () => clearTimeout(timer);
-  }, [searchTerm, selectedCategory, router, searchParams]);
+  }, [searchTerm, initialQuery, router, searchParams]);
+
+  const handleAddToCart = async () => {
+    if (!selectedItem || !selectedUmkm) return;
+    
+    setIsAdding(true);
+    try {
+      await addToCart({
+        produk_id: selectedItem.type === 'produk' ? selectedItem.item.id : null,
+        equipment_id: selectedItem.type === 'equipment' ? selectedItem.item.id : null,
+        kuantitas: quantity,
+        umkm_id: Number(selectedUmkm.id)
+      });
+      toast.success('Berhasil ditambahkan ke keranjang!');
+      setSelectedItem(null);
+      setQuantity(1);
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menambahkan ke keranjang');
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   const formatRupiah = (angka?: number) => {
     if (!angka) return 'Penawaran Khusus';
@@ -159,29 +153,125 @@ export default function PencarianClient({
 
       {/* Search Bar & Filter */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Cari nama UMKM, produk, atau lokasi..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900 bg-white"
-            />
-          </div>
-          <div className="w-full sm:w-64">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900 bg-white cursor-pointer"
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari nama UMKM, produk, atau lokasi..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900 bg-white"
+              />
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-6 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl flex items-center justify-center gap-2 font-medium text-gray-700 transition-colors"
             >
-              <option value="">Semua Kategori</option>
-              {categories.map((cat, index) => (
-                <option key={`cat-${index}`} value={cat}>{cat}</option>
-              ))}
-            </select>
+              <Filter className="w-5 h-5" />
+              Filter Lanjutan
+            </button>
           </div>
+          
+          {showFilters && (
+            <div className="pt-4 border-t border-gray-100 mt-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Lokasi */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Lokasi Operasional</label>
+                <select
+                  value={selectedLokasi}
+                  onChange={(e) => setSelectedLokasi(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white text-gray-900"
+                >
+                  <option value="">Semua Lokasi</option>
+                  {locations.map((loc, idx) => (
+                    <option key={`loc-${idx}`} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Harga */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Range Harga (Rp)</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={minHarga}
+                    onChange={(e) => setMinHarga(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white text-gray-900 text-sm"
+                  />
+                  <span className="text-gray-400">-</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={maxHarga}
+                    onChange={(e) => setMaxHarga(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white text-gray-900 text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Verifikasi */}
+              <div className="flex items-center h-full pt-6">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className={`w-6 h-6 rounded border flex items-center justify-center transition-colors ${verifiedOnly ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-gray-300 group-hover:border-indigo-400'}`}>
+                    {verifiedOnly && <Star className="w-4 h-4 text-white" />}
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="hidden"
+                    checked={verifiedOnly}
+                    onChange={(e) => setVerifiedOnly(e.target.checked)}
+                  />
+                  <span className="text-sm font-medium text-gray-700">Hanya UMKM Terverifikasi</span>
+                </label>
+              </div>
+
+              {/* Kategori */}
+              <div className="md:col-span-3">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Jenis Usaha / Kategori</label>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((cat, idx) => (
+                    <button
+                      key={`catbtn-${idx}`}
+                      onClick={() => {
+                        if (selectedCategoryList.includes(cat)) {
+                          setSelectedCategoryList(selectedCategoryList.filter(c => c !== cat));
+                        } else {
+                          setSelectedCategoryList([...selectedCategoryList, cat]);
+                        }
+                      }}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
+                        selectedCategoryList.includes(cat)
+                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                          : 'bg-white border-gray-200 text-gray-600 hover:border-indigo-200 hover:bg-indigo-50/50'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="md:col-span-3 pt-4 border-t border-gray-100 flex justify-end gap-3">
+                <button
+                  onClick={resetFilters}
+                  className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Reset Filter
+                </button>
+                <button
+                  onClick={applyFilters}
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-sm"
+                >
+                  Terapkan Filter
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         <p className="text-sm text-gray-500 mt-4">
           Menampilkan <strong>{umkmList.length}</strong> supplier UMKM
@@ -387,50 +477,11 @@ export default function PencarianClient({
               )}
             </div>
             
-            {/* Request Form Panel */}
-            <div className="p-6 border-t border-gray-100 bg-gray-50 mt-auto">
-              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-indigo-600">🤝</span> Ajukan Request Kerjasama
-              </h3>
-              
-              {currentUserVerifikasi !== 'terverifikasi' ? (
-                <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm">
-                  Lengkapi verifikasi akun terlebih dahulu untuk mengirim request. 
-                  <a href="/profil" className="ml-1 font-bold underline">Ke Halaman Profil</a>
-                </div>
-              ) : (
-                <form onSubmit={handleKirimRequest} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Permintaan</label>
-                    <select 
-                      value={requestJenis}
-                      onChange={(e) => setRequestJenis(e.target.value)}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent bg-white text-gray-900"
-                    >
-                      <option>Pesan Maklon (Jasa)</option>
-                      <option>Suplai Bahan Baku</option>
-                      <option>Sewa Alat</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Detail Spesifikasi / Durasi</label>
-                    <textarea 
-                      value={requestDetail}
-                      onChange={(e) => setRequestDetail(e.target.value)}
-                      rows={3} 
-                      placeholder="Sebutkan target waktu, kuantitas order, spesifikasi, atau durasi..."
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-gray-900 resize-none bg-white"
-                    ></textarea>
-                  </div>
-                  <button 
-                    type="submit"
-                    disabled={isRequesting}
-                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50"
-                  >
-                    {isRequesting ? 'Mengirim...' : 'Kirim Request'}
-                  </button>
-                </form>
-              )}
+            {/* Cart helper text */}
+            <div className="p-6 border-t border-gray-100 bg-gray-50 mt-auto flex items-center justify-center text-center">
+              <p className="text-gray-500 text-sm">
+                Klik produk atau alat untuk melihat detail dan menambahkannya ke <span className="font-bold text-gray-700">Keranjang Kolaborasi</span>.
+              </p>
             </div>
           </div>
         )}
@@ -485,48 +536,11 @@ export default function PencarianClient({
             )}
           </div>
           
-          {/* Mobile Request Form */}
-          <div className="p-5 border-t border-gray-100 bg-gray-50 mt-auto">
-            <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-sm">
-              <span className="text-indigo-600">🤝</span> Ajukan Request Kerjasama
-            </h3>
-            
-            {currentUserVerifikasi !== 'terverifikasi' ? (
-              <div className="bg-red-50 text-red-600 p-3 rounded-xl border border-red-100 text-xs">
-                Lengkapi verifikasi akun terlebih dahulu. 
-                <a href="/profil" className="ml-1 font-bold underline">Ke Profil</a>
-              </div>
-            ) : (
-              <form onSubmit={handleKirimRequest} className="space-y-3">
-                <div>
-                  <select 
-                    value={requestJenis}
-                    onChange={(e) => setRequestJenis(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white"
-                  >
-                    <option>Pesan Maklon (Jasa)</option>
-                    <option>Suplai Bahan Baku</option>
-                    <option>Sewa Alat</option>
-                  </select>
-                </div>
-                <div>
-                  <textarea 
-                    value={requestDetail}
-                    onChange={(e) => setRequestDetail(e.target.value)}
-                    rows={2} 
-                    placeholder="Sebutkan detail spesifikasi / durasi..."
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 resize-none bg-white"
-                  ></textarea>
-                </div>
-                <button 
-                  type="submit"
-                  disabled={isRequesting}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-colors disabled:opacity-50"
-                >
-                  {isRequesting ? 'Mengirim...' : 'Kirim Request'}
-                </button>
-              </form>
-            )}
+          {/* Cart helper text */}
+          <div className="p-5 border-t border-gray-100 bg-gray-50 mt-auto text-center">
+            <p className="text-gray-500 text-xs">
+              Klik item untuk menambahkan ke Keranjang.
+            </p>
           </div>
         </div>
       )}
@@ -575,23 +589,41 @@ export default function PencarianClient({
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end gap-3">
-                  <button 
-                    onClick={() => setSelectedItem(null)}
-                    className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setRequestJenis(selectedItem?.type === 'produk' ? 'Pesan Maklon (Jasa)' : 'Sewa Alat');
-                      setRequestDetail(`Tertarik dengan ${selectedItem?.type === 'produk' ? 'produk' : 'alat'}: ${selectedItem?.item.nama}`);
-                      setSelectedItem(null);
-                    }}
-                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-200"
-                  >
-                    Pilih Item
-                  </button>
+                <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div className="flex items-center gap-3 w-full sm:w-auto bg-gray-50 p-2 rounded-xl border border-gray-200">
+                    <button 
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-10 h-10 flex items-center justify-center bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 font-bold"
+                    >-</button>
+                    <input 
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-16 h-10 text-center bg-transparent font-bold text-gray-900 border-none focus:ring-0"
+                      min="1"
+                    />
+                    <button 
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="w-10 h-10 flex items-center justify-center bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 font-bold"
+                    >+</button>
+                  </div>
+                  
+                  <div className="flex w-full sm:w-auto gap-3">
+                    <button 
+                      onClick={() => { setSelectedItem(null); setQuantity(1); }}
+                      className="flex-1 sm:flex-none px-5 py-3 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                    >
+                      Batal
+                    </button>
+                    <button 
+                      onClick={handleAddToCart}
+                      disabled={isAdding}
+                      className="flex-1 sm:flex-none px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-200 disabled:opacity-50"
+                    >
+                      <ShoppingCart className="w-5 h-5" />
+                      {isAdding ? 'Loading...' : 'Tambah'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

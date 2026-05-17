@@ -1,21 +1,61 @@
 import { UmkmItem } from '@/types/umkm';
 
+export interface SearchFilterOptions {
+  keyword?: string;
+  kategoriList?: string[];
+  lokasi?: string;
+  minHarga?: number;
+  maxHarga?: number;
+  verifiedOnly?: boolean;
+}
+
 export function searchAndClusterUmkm(
   umkmList: UmkmItem[],
-  keyword?: string,
-  kategoriFilter?: string
+  filters?: SearchFilterOptions
 ): UmkmItem[] {
   let results = [...umkmList];
+  
+  if (!filters) return results;
 
-  // 1. Filter by category if provided
-  if (kategoriFilter && kategoriFilter.trim() !== '') {
-    const lowerCategory = kategoriFilter.toLowerCase();
-    results = results.filter((umkm) => umkm.kategori.toLowerCase() === lowerCategory);
+  // 0. Filter by verification status
+  if (filters.verifiedOnly) {
+    results = results.filter((umkm: any) => umkm.status_verifikasi === 'terverifikasi');
   }
 
-  // 2. Filter and score by keyword if provided
-  if (keyword && keyword.trim() !== '') {
-    const lowerKeyword = keyword.toLowerCase().trim();
+  // 1. Filter by category list (OR logic within categories)
+  if (filters.kategoriList && filters.kategoriList.length > 0) {
+    const lowerCategories = filters.kategoriList.map(c => c.toLowerCase());
+    results = results.filter((umkm) => lowerCategories.includes(umkm.kategori.toLowerCase()));
+  }
+
+  // 2. Filter by location
+  if (filters.lokasi && filters.lokasi.trim() !== '') {
+    const lowerLokasi = filters.lokasi.toLowerCase();
+    results = results.filter((umkm) => umkm.alamat && umkm.alamat.toLowerCase().includes(lowerLokasi));
+  }
+
+  // 3. Filter by price range
+  if (filters.minHarga !== undefined || filters.maxHarga !== undefined) {
+    const min = filters.minHarga ?? 0;
+    const max = filters.maxHarga ?? Infinity;
+    
+    results = results.filter((umkm) => {
+      // Check if UMKM has AT LEAST ONE product or equipment within price range
+      const hasValidProduct = umkm.produk.some(p => {
+        const price = p.harga || 0;
+        return price >= min && price <= max;
+      });
+      const hasValidEquipment = umkm.equipment.some(e => {
+        const price = e.harga_sewa || 0;
+        return price >= min && price <= max;
+      });
+      return hasValidProduct || hasValidEquipment;
+    });
+  }
+
+  // 4. Filter and score by keyword if provided
+  if (filters.keyword && filters.keyword.trim() !== '') {
+    const lowerKeyword = filters.keyword.toLowerCase().trim();
 
     const scoredResults = results.map((umkm) => {
       let score = 0;
