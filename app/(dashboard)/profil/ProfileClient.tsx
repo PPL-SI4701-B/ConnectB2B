@@ -92,6 +92,54 @@ export default function ProfileClient({
     }
   };
 
+  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>, docType: string) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${docType}_${Date.now()}.${fileExt}`;
+
+    setIsLoading(true);
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage.from('documents').getPublicUrl(fileName);
+      const fileUrl = publicUrlData.publicUrl;
+
+      const existingDoc = documents.find((d: any) => d.jenis_dokumen === docType);
+      
+      if (existingDoc) {
+        const { error: dbError } = await supabase
+          .from('dokumen_legalitas')
+          .update({ file_url: fileUrl, status_verifikasi: 'menunggu' })
+          .eq('id', existingDoc.id);
+        if (dbError) throw dbError;
+      } else {
+        const { error: dbError } = await supabase
+          .from('dokumen_legalitas')
+          .insert([{
+            user_id: userId,
+            jenis_dokumen: docType,
+            file_url: fileUrl,
+            status_verifikasi: 'menunggu'
+          }]);
+        if (dbError) throw dbError;
+      }
+
+      showToast(`Dokumen ${docType} berhasil diunggah.`, 'success');
+      router.refresh();
+    } catch (error: any) {
+      console.error('Error uploading document:', error);
+      showToast(`Gagal mengunggah dokumen: ${error.message}`, 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSave = async () => {
     setIsLoading(true);
     try {
@@ -337,19 +385,31 @@ export default function ProfileClient({
               {/* Note: This is an overview as per mockup, full document upload would typically go through a different component or route as per FR-27. */}
               {['NIB', 'NPWP'].map((docType) => {
                 const existingDoc = documents.find((d: any) => d.jenis_dokumen === docType);
+                const fileInputRef = useRef<HTMLInputElement>(null);
+                
                 return (
-                  <div key={docType} className={`border-2 border-dashed ${existingDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'} rounded-xl p-6 text-center transition-all`}>
+                  <div key={docType} className={`relative border-2 border-dashed ${existingDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'} rounded-xl p-6 text-center transition-all hover:bg-gray-100 cursor-pointer group`} onClick={() => fileInputRef.current?.click()}>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={(e) => handleDocumentUpload(e, docType)} 
+                      className="hidden" 
+                      accept=".pdf,.jpg,.jpeg,.png" 
+                    />
                     {existingDoc ? (
                       <>
                         <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-3" />
                         <h4 className="font-semibold text-gray-900 mb-1">{docType} Terunggah</h4>
                         <p className="text-xs text-green-600 font-medium capitalize">Status: {existingDoc.status_verifikasi}</p>
+                        <div className="mt-3 text-xs text-indigo-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity flex justify-center items-center gap-1">
+                          <Upload className="w-3 h-3" /> Perbarui Dokumen
+                        </div>
                       </>
                     ) : (
                       <>
-                        <FileText className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                        <FileText className="w-8 h-8 text-gray-400 mx-auto mb-3 group-hover:text-indigo-500 transition-colors" />
                         <h4 className="font-semibold text-gray-900 mb-1">Unggah {docType}</h4>
-                        <p className="text-xs text-gray-500">Belum ada dokumen</p>
+                        <p className="text-xs text-gray-500">Pilih file PDF atau Gambar</p>
                       </>
                     )}
                   </div>

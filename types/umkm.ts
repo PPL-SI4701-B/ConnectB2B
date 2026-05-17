@@ -15,7 +15,7 @@ export type Equipment = {
 };
 
 export type UmkmItem = {
-  id: number;
+  id: number | string;
   user_id: string;
   nama_usaha: string;
   alamat: string;
