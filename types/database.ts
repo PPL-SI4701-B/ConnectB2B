@@ -224,23 +224,26 @@ export type Database = {
         Row: {
           equipment_id: number | null
           id: number
-          industri_id: number
+          industri_id: number | null
           kuantitas: number
           produk_id: number | null
+          umkm_id: number | null
         }
         Insert: {
           equipment_id?: number | null
           id?: number
-          industri_id: number
+          industri_id?: number | null
           kuantitas?: number
           produk_id?: number | null
+          umkm_id?: number | null
         }
         Update: {
           equipment_id?: number | null
           id?: number
-          industri_id?: number
+          industri_id?: number | null
           kuantitas?: number
           produk_id?: number | null
+          umkm_id?: number | null
         }
         Relationships: [
           {
@@ -264,6 +267,13 @@ export type Database = {
             referencedRelation: "produk"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "keranjang_umkm_id_fkey"
+            columns: ["umkm_id"]
+            isOneToOne: false
+            referencedRelation: "umkm"
+            referencedColumns: ["id"]
+          }
         ]
       }
       notifikasi: {

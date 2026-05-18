@@ -34,11 +34,23 @@ export default async function PencarianPage(props: Props) {
 
   const { data: currentUserData } = await supabase
     .from('users')
-    .select('status_verifikasi')
+    .select('status_verifikasi, role')
     .eq('id', user.id)
     .single();
 
   const currentUserVerifikasi = currentUserData?.status_verifikasi || 'menunggu';
+  const userRole = currentUserData?.role || 'umkm';
+
+  // Fetch UMKM ID if user is UMKM (needed for direct request)
+  let currentUmkmId: number | null = null;
+  if (userRole === 'umkm') {
+    const { data: umkmData } = await supabase
+      .from('umkm')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+    currentUmkmId = umkmData?.id || null;
+  }
 
 
   // Bug Fix: Fetch from users table to correctly join produk, equipment, and umkm profiles
@@ -147,6 +159,8 @@ export default async function PencarianPage(props: Props) {
       initialMaxHarga={maxHarga}
       initialVerifiedOnly={verifiedOnly}
       currentUserVerifikasi={currentUserVerifikasi}
+      userRole={userRole}
+      currentUmkmId={currentUmkmId}
     />
   );
 }

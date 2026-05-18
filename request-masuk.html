@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Masuk - ConnectB2B</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            </div>
+            <span style="color: var(--primary-color);">Connect<span style="color: var(--text-primary);">B2B</span></span>
+        </div>
+        
+        <ul class="nav-menu">
+            <li>
+                <a href="dashboard.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="katalog-saya.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    Katalog Produk
+                </a>
+            </li>
+            <li>
+                <a href="katalog-publik.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    Cari Supplier / Alat
+                </a>
+            </li>
+            <li>
+                <a href="transaksi.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    Transaksi
+                </a>
+            </li>
+            <li>
+                <!-- Active since we navigate from notification usually, but let's make a dedicated tab for Request Masuk -->
+                <a href="request-masuk.html" class="nav-item active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    Request Masuk
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="profil.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                Profil
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="header">
+            <div class="header-title">
+                <h1>Request Kerja Sama Masuk</h1>
+                <span class="subtitle">Tinjau dan respon permintaan kolaborasi dari Industri atau UMKM lain.</span>
+            </div>
+            <div class="header-actions">
+                <div class="search-bar">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" style="color: var(--text-secondary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" placeholder="Cari nama pemohon...">
+                </div>
+            </div>
+        </header>
+
+        <div class="d-flex flex-column gap-3">
+            <!-- Request Card (FR-14) -->
+            <div class="card" style="margin-bottom: 0;" id="reqCard1">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3" style="border-bottom: 1px solid var(--border-color);">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="user-avatar" style="width: 40px; height: 40px; background-color: #1e3a8a; font-size: 14px;">PT</div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 16px;">PT Industri Maju</div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">Meminta: <span style="font-weight: 500; color: var(--text-primary);">Produksi Barang (Maklon/Custom)</span></div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <span class="status-badge warning mb-1">Menunggu Respon</span>
+                        <div style="font-size: 12px; color: var(--text-secondary);">Masuk: 2 Jam lalu</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-4 mb-4">
+                    <div style="flex: 2;">
+                        <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary);">Detail Permintaan:</div>
+                        <p style="font-size: 14px; line-height: 1.6; color: var(--text-primary); margin: 0; background-color: var(--bg-color); padding: 12px; border-radius: var(--radius-md);">
+                            Halo, kami membutuhkan pasokan seragam karyawan sebanyak 2.500 pcs untuk cabang baru kami. Spesifikasi bahan katun drill standar, dengan bordir logo perusahaan di dada kiri. Target selesai dalam waktu 3 minggu. Apakah sanggup? Terlampir referensi desainnya.
+                        </p>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary);">Lampiran:</div>
+                        <a href="#" class="d-flex align-items-center gap-2 p-2" style="border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 13px; color: var(--text-primary);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" style="color: var(--danger);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            Design_Seragam_PTIM.pdf
+                        </a>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-3 pt-3" style="border-top: 1px dashed var(--border-color);" id="actionBtnGroup1">
+                    <button class="btn btn-outline" style="border-color: var(--danger); color: var(--danger);" onclick="tolakRequest('reqCard1')">Tolak Request</button>
+                    <button class="btn btn-primary" onclick="terimaRequest('reqCard1')">Terima & Buat Transaksi</button>
+                </div>
+            </div>
+
+            <!-- Simulation for Empty State -->
+            <!-- <div class="card text-center" style="padding: 48px;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="48" height="48" style="color: var(--border-color); margin: 0 auto 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                <div style="font-weight: 600; font-size: 16px; color: var(--text-secondary);">Belum ada request masuk</div>
+            </div> -->
+        </div>
+    </main>
+</div>
+
+<script>
+    function terimaRequest(cardId) {
+        const actionGrp = document.getElementById('actionBtnGroup1');
+        actionGrp.innerHTML = '<div class="d-flex align-items-center gap-2"><span class="status-badge success">Request Diterima</span> <span style="font-size: 13px; color: var(--text-secondary);">Transaksi otomatis dibuat.</span></div>';
+        alert('Request diterima! Silakan cek menu Transaksi untuk update progresnya.');
+    }
+
+    function tolakRequest(cardId) {
+        const actionGrp = document.getElementById('actionBtnGroup1');
+        actionGrp.innerHTML = '<div class="d-flex align-items-center gap-2"><span class="status-badge danger">Request Ditolak</span> <span style="font-size: 13px; color: var(--text-secondary);">Penolakan dikirim ke mitra.</span></div>';
+    }
+</script>
+
+</body>
+</html>
