@@ -508,6 +508,7 @@ export type Database = {
           status_validasi: Database["public"]["Enums"]["validasi_status"]
           tanggal_mulai: string
           tanggal_selesai: string | null
+          progress_status: string
         }
         Insert: {
           admin_id?: string | null
@@ -517,6 +518,7 @@ export type Database = {
           status_validasi?: Database["public"]["Enums"]["validasi_status"]
           tanggal_mulai?: string
           tanggal_selesai?: string | null
+          progress_status?: string
         }
         Update: {
           admin_id?: string | null
@@ -526,6 +528,7 @@ export type Database = {
           status_validasi?: Database["public"]["Enums"]["validasi_status"]
           tanggal_mulai?: string
           tanggal_selesai?: string | null
+          progress_status?: string
         }
         Relationships: [
           {
@@ -547,6 +550,38 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "request"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaksi_history: {
+        Row: {
+          id: number
+          transaksi_id: number
+          status_progress: string
+          pesan: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          transaksi_id: number
+          status_progress: string
+          pesan?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          transaksi_id?: number
+          status_progress?: string
+          pesan?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaksi_history_transaksi_id_fkey"
+            columns: ["transaksi_id"]
+            isOneToOne: false
+            referencedRelation: "transaksi"
             referencedColumns: ["id"]
           },
         ]
