@@ -444,6 +444,7 @@ export type Database = {
           status: Database["public"]["Enums"]["request_status"]
           tanggal_request: string
           umkm_id: number
+          sender_umkm_id: number | null
         }
         Insert: {
           equipment_id?: number | null
@@ -454,6 +455,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["request_status"]
           tanggal_request?: string
           umkm_id: number
+          sender_umkm_id?: number | null
         }
         Update: {
           equipment_id?: number | null
@@ -464,6 +466,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["request_status"]
           tanggal_request?: string
           umkm_id?: number
+          sender_umkm_id?: number | null
         }
         Relationships: [
           {
