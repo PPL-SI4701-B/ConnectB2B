@@ -35,7 +35,7 @@ export default async function RequestMasukPage() {
   // Fetch all requests targeting this UMKM
   const { data: requestsRaw, error } = await supabase
     .from('request')
-    .select('id, industri_id, pesan, status, tanggal_request, produk_id, equipment_id')
+    .select('id, industri_id, sender_umkm_id, pesan, status, tanggal_request, produk_id, equipment_id')
     .eq('umkm_id', umkm.id)
     .order('tanggal_request', { ascending: false });
 
@@ -45,9 +45,11 @@ export default async function RequestMasukPage() {
 
   const requests = (requestsRaw || []) as any[];
 
-  // Fetch industri details for sender info
+  // Fetch industri and umkm details for sender info
   const industriIds = Array.from(new Set(requests.map(r => r.industri_id).filter(Boolean))) as number[];
-  let industriMap: Record<number, { nama_perusahaan: string; lokasi: string | null }> = {};
+  const umkmSenderIds = Array.from(new Set(requests.map(r => r.sender_umkm_id).filter(Boolean))) as number[];
+  
+  let senderMap: Record<string, { nama: string; lokasi: string | null }> = {};
 
   if (industriIds.length > 0) {
     const { data: industris } = await supabase
@@ -56,21 +58,38 @@ export default async function RequestMasukPage() {
       .in('id', industriIds);
 
     (industris || []).forEach((ind: any) => {
-      industriMap[ind.id] = { nama_perusahaan: ind.nama_perusahaan, lokasi: ind.lokasi };
+      senderMap[`ind_${ind.id}`] = { nama: ind.nama_perusahaan, lokasi: ind.lokasi };
+    });
+  }
+
+  if (umkmSenderIds.length > 0) {
+    const { data: umkms } = await supabase
+      .from('umkm')
+      .select('id, nama_usaha, alamat')
+      .in('id', umkmSenderIds);
+
+    (umkms || []).forEach((u: any) => {
+      senderMap[`umkm_${u.id}`] = { nama: u.nama_usaha, lokasi: u.alamat };
     });
   }
 
   // Format requests for the client component
   const formattedRequests = requests.map(req => {
-    const industri = industriMap[req.industri_id] || { nama_perusahaan: 'Pengirim Tidak Diketahui', lokasi: null };
+    let sender: { nama: string; lokasi: string | null } = { nama: 'Pengirim Tidak Diketahui', lokasi: null };
+    if (req.industri_id) {
+      sender = senderMap[`ind_${req.industri_id}`] || sender;
+    } else if (req.sender_umkm_id) {
+      sender = senderMap[`umkm_${req.sender_umkm_id}`] || sender;
+    }
+
     return {
       id: req.id,
       pesan: req.pesan,
       status: req.status,
       tanggal_request: req.tanggal_request,
-      industri_nama: industri.nama_perusahaan,
-      industri_lokasi: industri.lokasi,
-      initials: industri.nama_perusahaan.substring(0, 2).toUpperCase(),
+      industri_nama: sender.nama,
+      industri_lokasi: sender.lokasi,
+      initials: sender.nama.substring(0, 2).toUpperCase(),
     };
   });
 
