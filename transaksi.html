@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaksi - ConnectB2B</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            </div>
+            <span style="color: var(--primary-color);">Connect<span style="color: var(--text-primary);">B2B</span></span>
+        </div>
+        
+        <ul class="nav-menu">
+            <li>
+                <a href="dashboard.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="katalog-saya.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    Katalog Produk
+                </a>
+            </li>
+            <li>
+                <a href="katalog-publik.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    Cari Supplier / Alat
+                </a>
+            </li>
+            <li>
+                <a href="transaksi.html" class="nav-item active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    Transaksi
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="profil.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                Profil
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="header">
+            <div class="header-title">
+                <h1>Manajemen Transaksi</h1>
+                <span class="subtitle">Pantau progres kerja sama, pembayaran, dan ulasan proyek.</span>
+            </div>
+            <div class="header-actions">
+                <div class="search-bar">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" style="color: var(--text-secondary);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <input type="text" placeholder="Cari ID Transaksi...">
+                </div>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <div class="tab active">Sedang Berjalan (1)</div>
+            <div class="tab">Menunggu Pembayaran (1)</div>
+            <div class="tab">Selesai (1)</div>
+        </div>
+
+        <!-- Transaction 1: Active (FR-15 Update Status Simulation) -->
+        <div class="card" style="margin-bottom: 16px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="font-weight: 700; color: var(--primary-color);">TRX-9982</div>
+                    <span class="status-badge warning">Diproses</span>
+                    <span style="font-size: 13px; color: var(--text-secondary);">12 Mei 2026</span>
+                </div>
+                <div style="font-weight: 700;">Rp 85.000.000</div>
+            </div>
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Produksi Seragam Karyawan (1000 pcs)</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">Mitra: PT Industri Maju</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline" style="padding: 8px 16px;" onclick="document.getElementById('updateStatusModal').classList.add('active')">Update Progres (UMKM)</button>
+                    <button class="btn btn-success" style="padding: 8px 16px;" onclick="document.getElementById('confirmModal').classList.add('active')">Konfirmasi Selesai (Industri)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction 2: Waiting Payment (FR-28 Upload Pembayaran Simulation) -->
+        <div class="card" style="margin-bottom: 16px;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="font-weight: 700; color: var(--primary-color);">TRX-9983</div>
+                    <span class="status-badge" style="background-color: #fee2e2; color: var(--danger);">Belum Dibayar</span>
+                    <span style="font-size: 13px; color: var(--text-secondary);">10 Mei 2026</span>
+                </div>
+                <div style="font-weight: 700;">Rp 15.000.000</div>
+            </div>
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Sewa Mesin Jahit Industri (1 Bulan)</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">Mitra: CV Maju Bersama</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" style="padding: 8px 16px;" onclick="document.getElementById('paymentModal').classList.add('active')">Upload Bukti Bayar</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transaction 3: Completed (FR-17 Give Rating Simulation) -->
+        <div class="card" style="margin-bottom: 16px; opacity: 0.8;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="font-weight: 700; color: var(--primary-color);">TRX-9980</div>
+                    <span class="status-badge success">Selesai</span>
+                    <span style="font-size: 13px; color: var(--text-secondary);">01 Mei 2026</span>
+                </div>
+                <div style="font-weight: 700;">Rp 5.000.000</div>
+            </div>
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Pembelian 100 Roll Kain Katun</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">Mitra: PT Tekstil Jaya</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline" style="padding: 8px 16px; color: #f59e0b; border-color: #f59e0b;" onclick="document.getElementById('ratingModal').classList.add('active')">
+                        <svg fill="currentColor" viewBox="0 0 20 20" width="16" height="16" style="margin-right: 4px;"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                        Beri Ulasan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Modal Update Status (FR-15) -->
+<div class="modal-overlay" id="updateStatusModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="font-size: 18px; font-weight: 600;">Update Status Kerja Sama</h3>
+            <button class="close-btn" onclick="document.getElementById('updateStatusModal').classList.remove('active')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Status Progres</label>
+                <select class="form-control">
+                    <option>Menunggu Material</option>
+                    <option selected>Diproses (Produksi)</option>
+                    <option>Dikemas</option>
+                    <option>Dikirim</option>
+                    <option>Barang Tiba / Selesai</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Pesan Tambahan (Opsional)</label>
+                <textarea class="form-control" rows="3" placeholder="Contoh: Produksi telah mencapai 50%..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="document.getElementById('updateStatusModal').classList.remove('active')">Batal</button>
+            <button class="btn btn-primary" onclick="alert('Status berhasil diupdate! Notifikasi dikirim ke mitra.'); document.getElementById('updateStatusModal').classList.remove('active')">Kirim Update</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Upload Bukti Bayar (FR-28) -->
+<div class="modal-overlay" id="paymentModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="font-size: 18px; font-weight: 600;">Upload Bukti Pembayaran</h3>
+            <button class="close-btn" onclick="document.getElementById('paymentModal').classList.remove('active')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="background-color: #eef2ff; padding: 16px; border-radius: var(--radius-md); margin-bottom: 24px;">
+                <div style="font-size: 13px; color: var(--text-secondary);">Transfer ke Rekening:</div>
+                <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);">Bank Mandiri - 1300012345678</div>
+                <div style="font-size: 13px; color: var(--text-primary);">a.n ConnectB2B Escrow</div>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">Total Tagihan: <strong style="color: var(--primary-color);">Rp 15.000.000</strong></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Foto Bukti Transfer (JPG/PNG)</label>
+                <div class="upload-area" style="padding: 16px;">
+                    <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <p class="upload-text" style="font-size: 12px;">Klik untuk unggah foto</p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nominal Transfer Sesuai Bukti</label>
+                <input type="number" class="form-control" placeholder="15000000">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="document.getElementById('paymentModal').classList.remove('active')">Batal</button>
+            <button class="btn btn-primary" onclick="alert('Bukti pembayaran berhasil diunggah dan sedang divalidasi admin.'); document.getElementById('paymentModal').classList.remove('active')">Submit Pembayaran</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Selesai (FR-16) -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <div class="modal-body" style="padding: 32px;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background-color: var(--success-bg); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="32" height="32"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">Pesanan Sesuai & Selesai?</h3>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 24px;">Dengan mengonfirmasi, dana escrow akan diteruskan ke mitra dan transaksi dianggap selesai.</p>
+            <div class="d-flex gap-3">
+                <button class="btn btn-outline w-100" onclick="document.getElementById('confirmModal').classList.remove('active')">Batal</button>
+                <button class="btn btn-success w-100" onclick="alert('Transaksi selesai! Anda sekarang bisa memberikan ulasan.'); document.getElementById('confirmModal').classList.remove('active'); document.getElementById('ratingModal').classList.add('active');">Konfirmasi</button>
+            </div>
+            <div class="mt-3">
+                <a href="#" style="font-size: 12px; color: var(--text-secondary); text-decoration: underline;">Ajukan Komplain (Ada masalah?)</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Beri Ulasan (FR-17) -->
+<div class="modal-overlay" id="ratingModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="font-size: 18px; font-weight: 600;">Berikan Ulasan untuk Mitra</h3>
+            <button class="close-btn" onclick="document.getElementById('ratingModal').classList.remove('active')">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group text-center">
+                <label class="form-label mb-3">Bagaimana pengalaman Anda bekerja sama dengan PT Tekstil Jaya?</label>
+                <div style="color: #f59e0b; display: flex; justify-content: center; gap: 8px; cursor: pointer;">
+                    <!-- 5 Stars SVG -->
+                    <svg fill="currentColor" viewBox="0 0 20 20" width="32" height="32"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    <svg fill="currentColor" viewBox="0 0 20 20" width="32" height="32"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    <svg fill="currentColor" viewBox="0 0 20 20" width="32" height="32"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    <svg fill="currentColor" viewBox="0 0 20 20" width="32" height="32"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    <svg fill="currentColor" viewBox="0 0 20 20" width="32" height="32" style="color: var(--border-color);"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tuliskan Komentar (Opsional)</label>
+                <textarea class="form-control" rows="4" placeholder="Bagikan detail pengalaman kerja sama Anda..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="document.getElementById('ratingModal').classList.remove('active')">Nanti Saja</button>
+            <button class="btn btn-primary" onclick="alert('Terima kasih atas ulasan Anda!'); document.getElementById('ratingModal').classList.remove('active')">Kirim Ulasan</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

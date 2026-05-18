@@ -1,0 +1,180 @@
+'use client';
+
+import { useState } from 'react';
+import { Search, ArrowRightLeft, Clock, CheckCircle, AlertCircle, Inbox } from 'lucide-react';
+import NotificationBell from '@/components/layout/NotificationBell';
+
+interface TransaksiItem {
+  id: number;
+  trxCode: string;
+  status: string;
+  statusValidasi: string;
+  tanggalMulai: string;
+  tanggalSelesai: string | null;
+  pesan: string;
+  industriNama: string;
+}
+
+export default function TransaksiClient({
+  transaksi,
+  umkmName,
+}: {
+  transaksi: TransaksiItem[];
+  umkmName: string;
+}) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'berjalan' | 'pembayaran' | 'selesai'>('berjalan');
+
+  const filtered = transaksi.filter(t =>
+    t.trxCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.industriNama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.pesan.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Group by category
+  const sedangBerjalan = filtered.filter(t => t.status === 'belum lunas' && t.statusValidasi === 'menunggu');
+  const menungguPembayaran = filtered.filter(t => t.status === 'belum lunas' && t.statusValidasi !== 'menunggu');
+  const selesai = filtered.filter(t => t.status === 'lunas');
+
+  const tabs = [
+    { key: 'berjalan' as const, label: 'Sedang Berjalan', count: sedangBerjalan.length },
+    { key: 'pembayaran' as const, label: 'Menunggu Pembayaran', count: menungguPembayaran.length },
+    { key: 'selesai' as const, label: 'Selesai', count: selesai.length },
+  ];
+
+  const currentList = activeTab === 'berjalan' ? sedangBerjalan
+    : activeTab === 'pembayaran' ? menungguPembayaran
+    : selesai;
+
+  const getStatusBadge = (t: TransaksiItem) => {
+    if (t.status === 'lunas') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-semibold">
+          <CheckCircle className="w-3 h-3" />
+          Selesai
+        </span>
+      );
+    }
+    if (t.statusValidasi === 'menunggu') {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-xs font-semibold">
+          <Clock className="w-3 h-3" />
+          Diproses
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-xs font-semibold">
+        <AlertCircle className="w-3 h-3" />
+        Belum Dibayar
+      </span>
+    );
+  };
+
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  return (
+    <div className="w-full bg-bg-color min-h-screen">
+      <div className="p-10">
+        {/* Header */}
+        <header className="flex justify-between items-center mb-8 bg-transparent">
+          <div>
+            <div className="text-[14px] font-medium text-text-muted mb-1">Halaman / Transaksi</div>
+            <h1 className="text-[32px] font-bold text-text-main">Manajemen Transaksi</h1>
+            <p className="text-text-muted text-[15px] mt-1">Pantau progres kerja sama, pembayaran, dan ulasan proyek.</p>
+          </div>
+
+          <div className="flex items-center gap-5 bg-card-bg px-5 py-2.5 rounded-[30px] shadow-sm">
+            <div className="flex items-center bg-bg-color px-5 py-2.5 rounded-[20px] gap-2.5">
+              <Search className="w-5 h-5 text-text-muted" />
+              <input
+                type="text"
+                placeholder="Cari ID Transaksi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent border-none outline-none text-text-main font-medium w-[160px] text-[15px] placeholder:text-text-muted"
+              />
+            </div>
+            <NotificationBell />
+            <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold cursor-pointer border-2 border-white shadow-sm">
+              {umkmName.substring(0, 2).toUpperCase()}
+            </div>
+          </div>
+        </header>
+
+        {/* Tabs */}
+        <div className="flex gap-1 bg-card-bg rounded-xl p-1.5 shadow-sm mb-8 w-fit">
+          {tabs.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-5 py-2.5 rounded-lg font-semibold text-[14px] transition-all ${
+                activeTab === tab.key
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-text-muted hover:bg-bg-color hover:text-text-main'
+              }`}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
+
+        {/* Transaction List */}
+        <div className="space-y-4">
+          {currentList.length > 0 ? (
+            currentList.map(t => (
+              <div
+                key={t.id}
+                className={`bg-card-bg rounded-xl shadow-sm p-6 transition-all hover:shadow-md border border-transparent hover:border-indigo-100 ${
+                  t.status === 'lunas' ? 'opacity-80' : ''
+                }`}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="font-bold text-primary text-[15px]">{t.trxCode}</div>
+                    {getStatusBadge(t)}
+                    <span className="text-[13px] text-text-muted">{formatDate(t.tanggalMulai)}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <div className="text-[14px] font-bold text-text-main mb-1 line-clamp-1 max-w-[500px]">
+                      {t.pesan}
+                    </div>
+                    <div className="text-[13px] text-text-muted">
+                      Mitra: {t.industriNama}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-bg-color rounded-lg text-[13px] font-medium text-text-muted">
+                      <ArrowRightLeft className="w-4 h-4" />
+                      {t.status === 'lunas' ? 'Transaksi Selesai' : 'Sedang Berlangsung'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-card-bg rounded-xl shadow-sm p-16 text-center">
+              <div className="w-20 h-20 bg-bg-color rounded-full flex items-center justify-center mx-auto mb-5">
+                <Inbox className="w-10 h-10 text-border-color" />
+              </div>
+              <div className="font-bold text-[18px] text-text-muted mb-2">
+                Belum ada transaksi
+              </div>
+              <p className="text-text-muted text-[14px]">
+                Transaksi akan muncul di sini setelah Anda menerima request kerja sama.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

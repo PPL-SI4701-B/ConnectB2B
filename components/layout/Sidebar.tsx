@@ -7,7 +7,8 @@ import {
   ArrowRightLeft,
   Star,
   User,
-  LogOut
+  LogOut,
+  Bell
 } from 'lucide-react';
 
 export default async function Sidebar() {
@@ -33,6 +34,7 @@ export default async function Sidebar() {
     { href: '/dashboard/katalog', label: 'Katalog Produk', icon: Store },
     { href: '/pencarian', label: 'Cari Supplier / Alat', icon: Search },
     { href: '/sewa-alat', label: 'Sewa Alat', icon: Search },
+    { href: '/request-masuk', label: 'Request Masuk', icon: Bell },
     { href: '/dashboard/transaksi', label: 'Transaksi', icon: ArrowRightLeft },
     { href: '/dashboard/ulasan', label: 'Ulasan', icon: Star },
   ];

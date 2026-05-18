@@ -11,18 +11,39 @@ export async function addToCart(data: { produk_id?: number | null; equipment_id?
     throw new Error('Anda harus login terlebih dahulu');
   }
 
-  const { data: industri } = await supabase
-    .from('industri')
-    .select('id, nama_perusahaan')
-    .eq('user_id', user.id)
+  const { data: userData } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
     .single();
 
-  if (!industri) {
-    throw new Error('Profil industri Anda belum lengkap.');
+  const role = userData?.role?.toLowerCase();
+  
+  let industriId: number | null = null;
+  let umkmId: number | null = null;
+
+  if (role === 'industri') {
+    const { data: industri } = await supabase
+      .from('industri')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+    if (!industri) throw new Error('Profil industri Anda belum lengkap.');
+    industriId = industri.id;
+  } else {
+    const { data: umkm } = await supabase
+      .from('umkm')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+    if (!umkm) throw new Error('Profil UMKM Anda belum lengkap.');
+    umkmId = umkm.id;
   }
 
-  // Check if item already exists in cart for this industri
-  let query = supabase.from('keranjang').select('id, kuantitas').eq('industri_id', industri.id);
+  // Check if item already exists in cart
+  let query = supabase.from('keranjang').select('id, kuantitas');
+  if (industriId) query = query.eq('industri_id', industriId);
+  if (umkmId) query = query.eq('umkm_id', umkmId);
   
   if (data.produk_id) {
     query = query.eq('produk_id', data.produk_id);
@@ -47,13 +68,12 @@ export async function addToCart(data: { produk_id?: number | null; equipment_id?
     const { error } = await supabase
       .from('keranjang')
       .insert({
-        industri_id: industri.id,
+        industri_id: industriId,
+        umkm_id: umkmId,
         produk_id: data.produk_id || null,
         equipment_id: data.equipment_id || null,
         kuantitas: data.kuantitas,
-        // We will store umkm_id implicitly through the product/equipment, but let's just make sure we don't need umkm_id in keranjang. 
-        // Based on the user prompt: keranjang (id, industri_id, produk_id, equipment_id, kuantitas)
-      });
+      } as any);
 
     if (error) throw error;
   }
