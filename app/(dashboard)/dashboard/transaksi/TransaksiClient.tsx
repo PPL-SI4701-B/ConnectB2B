@@ -1,17 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, ArrowRightLeft, Clock, CheckCircle, AlertCircle, Inbox } from 'lucide-react';
+import { Search, ArrowRightLeft, Clock, CheckCircle, AlertCircle, Inbox, History } from 'lucide-react';
 import NotificationBell from '@/components/layout/NotificationBell';
+import { updateTransaksiProgress } from '@/app/actions/transaksi-actions';
 
 interface TransaksiItem {
   id: number;
   trxCode: string;
   status: string;
   statusValidasi: string;
-  tanggalMulai: string;
   tanggalSelesai: string | null;
+  progressStatus: string;
+  history: any[];
   pesan: string;
+  industriId: number;
   industriNama: string;
 }
 
@@ -24,6 +27,14 @@ export default function TransaksiClient({
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'berjalan' | 'pembayaran' | 'selesai'>('berjalan');
+
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [selectedTransaksi, setSelectedTransaksi] = useState<TransaksiItem | null>(null);
+  const [newProgressStatus, setNewProgressStatus] = useState('Mesin Sedang Disiapkan (Inspeksi)');
+  const [progressPesan, setProgressPesan] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
   const filtered = transaksi.filter(t =>
     t.trxCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -76,6 +87,22 @@ export default function TransaksiClient({
       return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch {
       return dateStr;
+    }
+  };
+
+  const handleUpdateSubmit = async () => {
+    if (!selectedTransaksi) return;
+    setIsUpdating(true);
+    const result = await updateTransaksiProgress(selectedTransaksi.id, newProgressStatus, progressPesan, selectedTransaksi.industriId);
+    setIsUpdating(false);
+    
+    if (result.success) {
+      alert('Status progres berhasil diperbarui dan notifikasi telah dikirim ke Industri.');
+      setUpdateModalOpen(false);
+      setSelectedTransaksi(null);
+      setProgressPesan('');
+    } else {
+      alert(result.error || 'Terjadi kesalahan.');
     }
   };
 
@@ -152,6 +179,28 @@ export default function TransaksiClient({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {activeTab === 'berjalan' && (
+                      <button 
+                        onClick={() => {
+                          setSelectedTransaksi(t);
+                          setNewProgressStatus(t.progressStatus || 'Mesin Sedang Disiapkan (Inspeksi)');
+                          setProgressPesan('');
+                          setUpdateModalOpen(true);
+                        }}
+                        className="px-4 py-2 border border-primary text-primary hover:bg-primary/10 rounded-lg text-[13px] font-semibold transition-colors"
+                      >
+                        Update Progres
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setSelectedTransaksi(t);
+                        setHistoryModalOpen(true);
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 border border-border-color text-text-muted hover:bg-bg-color rounded-lg text-[13px] font-semibold transition-colors"
+                    >
+                      <History className="w-4 h-4" /> History
+                    </button>
                     <div className="flex items-center gap-2 px-4 py-2 bg-bg-color rounded-lg text-[13px] font-medium text-text-muted">
                       <ArrowRightLeft className="w-4 h-4" />
                       {t.status === 'lunas' ? 'Transaksi Selesai' : 'Sedang Berlangsung'}
@@ -175,6 +224,98 @@ export default function TransaksiClient({
           )}
         </div>
       </div>
+
+      {/* Update Progress Modal */}
+      {updateModalOpen && selectedTransaksi && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-5 border-b border-border-color">
+              <h3 className="font-bold text-[18px]">Update Status Kerja Sama</h3>
+              <button onClick={() => setUpdateModalOpen(false)} className="text-text-muted hover:text-text-main">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div className="p-5">
+              <div className="mb-4">
+                <label className="block text-[14px] font-semibold text-text-main mb-2">Status Progres</label>
+                <select 
+                  className="w-full px-4 py-2.5 rounded-lg border border-border-color bg-bg-color text-[14px] focus:outline-none focus:border-primary"
+                  value={newProgressStatus}
+                  onChange={(e) => setNewProgressStatus(e.target.value)}
+                >
+                  <option value="Mesin Sedang Disiapkan (Inspeksi)">Mesin Sedang Disiapkan (Inspeksi)</option>
+                  <option value="Sedang Diproses">Sedang Diproses</option>
+                  <option value="Pengerjaan Selesai">Pengerjaan Selesai</option>
+                  <option value="Barang Dikirim">Barang Dikirim</option>
+                  <option value="Menunggu Konfirmasi Industri">Menunggu Konfirmasi Industri</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-[14px] font-semibold text-text-main mb-2">Pesan Tambahan (Opsional)</label>
+                <textarea 
+                  rows={3}
+                  className="w-full px-4 py-2.5 rounded-lg border border-border-color bg-bg-color text-[14px] focus:outline-none focus:border-primary"
+                  placeholder="Contoh: Produksi telah mencapai 50%..."
+                  value={progressPesan}
+                  onChange={(e) => setProgressPesan(e.target.value)}
+                ></textarea>
+              </div>
+            </div>
+            <div className="p-5 border-t border-border-color flex justify-end gap-3">
+              <button 
+                onClick={() => setUpdateModalOpen(false)}
+                className="px-4 py-2 rounded-lg font-semibold text-[14px] border border-border-color hover:bg-bg-color"
+                disabled={isUpdating}
+              >
+                Batal
+              </button>
+              <button 
+                onClick={handleUpdateSubmit}
+                disabled={isUpdating}
+                className="px-4 py-2 rounded-lg font-semibold text-[14px] bg-primary text-white hover:bg-primary-hover disabled:opacity-50"
+              >
+                {isUpdating ? 'Mengirim...' : 'Kirim Update ke Industri'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {historyModalOpen && selectedTransaksi && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-5 border-b border-border-color">
+              <h3 className="font-bold text-[18px]">Timeline Progres</h3>
+              <button onClick={() => setHistoryModalOpen(false)} className="text-text-muted hover:text-text-main">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div className="p-5 max-h-[400px] overflow-y-auto">
+              {selectedTransaksi.history && selectedTransaksi.history.length > 0 ? (
+                <div className="space-y-4">
+                  {selectedTransaksi.history.map((h, i) => (
+                    <div key={h.id} className="relative pl-6 border-l-2 border-border-color pb-4 last:border-0 last:pb-0">
+                      <div className="absolute w-3 h-3 bg-primary rounded-full -left-[7px] top-1"></div>
+                      <div className="font-bold text-[14px] text-text-main">{h.status_progress}</div>
+                      <div className="text-[12px] text-text-muted mb-1">{new Date(h.created_at).toLocaleString('id-ID')}</div>
+                      {h.pesan && (
+                        <div className="bg-bg-color p-3 rounded-lg text-[13px] text-text-main mt-2">
+                          "{h.pesan}"
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-text-muted text-[14px]">
+                  Belum ada update histori progres.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
