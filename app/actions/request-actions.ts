@@ -173,6 +173,7 @@ export async function sendDirectRequest(data: {
   // Insert request — industri_id is set only when sender is industri
   const { error: reqError } = await supabase.from('request').insert({
     industri_id: isIndustri ? senderId : null,
+    sender_umkm_id: !isIndustri ? senderId : null,
     umkm_id: data.targetUmkmId,
     produk_id: data.produk_id || null,
     equipment_id: data.equipment_id || null,
