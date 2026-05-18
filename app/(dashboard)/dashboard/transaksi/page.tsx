@@ -42,12 +42,19 @@ export default async function TransaksiPage() {
       status_validasi,
       tanggal_mulai,
       tanggal_selesai,
+      progress_status,
       request:request_id (
         id,
         industri_id,
         pesan,
         status,
         umkm_id
+      ),
+      transaksi_history (
+        id,
+        status_progress,
+        pesan,
+        created_at
       )
     `)
     .order('tanggal_mulai', { ascending: false });
@@ -94,9 +101,12 @@ export default async function TransaksiPage() {
       trxCode: `TRX-${t.id.toString().padStart(4, '0')}`,
       status: t.status,
       statusValidasi: t.status_validasi,
+      progressStatus: t.progress_status || 'Menunggu Material',
+      history: (t.transaksi_history || []).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
       tanggalMulai: t.tanggal_mulai,
       tanggalSelesai: t.tanggal_selesai,
       pesan: req?.pesan || '-',
+      industriId: req?.industri_id,
       industriNama,
     };
   });
