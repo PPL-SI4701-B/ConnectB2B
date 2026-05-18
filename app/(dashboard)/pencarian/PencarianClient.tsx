@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Tag, MapPin, Phone, Package, Wrench, X, ChevronRight, Building2, Star, ShoppingCart, Filter } from 'lucide-react';
+import { Search, Tag, MapPin, Phone, Package, Wrench, X, ChevronRight, Building2, Star, ShoppingCart, Filter, Send } from 'lucide-react';
 import NotificationBell from '@/components/layout/NotificationBell';
 import { UmkmItem, Produk, Equipment } from '@/types/umkm';
 import { createClient } from '@/lib/supabase';
 import { toast } from 'react-hot-toast';
 import { addToCart } from '@/app/actions/cart-actions';
+import { sendDirectRequest } from '@/app/actions/request-actions';
 
 export default function PencarianClient({ 
   umkmList,
@@ -19,7 +20,9 @@ export default function PencarianClient({
   initialMinHarga,
   initialMaxHarga,
   initialVerifiedOnly = true,
-  currentUserVerifikasi = ''
+  currentUserVerifikasi = '',
+  userRole = 'umkm',
+  currentUmkmId = null
 }: { 
   umkmList: UmkmItem[],
   categories: string[],
@@ -30,7 +33,9 @@ export default function PencarianClient({
   initialMinHarga?: number,
   initialMaxHarga?: number,
   initialVerifiedOnly?: boolean,
-  currentUserVerifikasi?: string
+  currentUserVerifikasi?: string,
+  userRole?: string,
+  currentUmkmId?: number | null
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,6 +55,11 @@ export default function PencarianClient({
   // Cart States
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+
+  // Request Form States
+  const [jenisPermintaan, setJenisPermintaan] = useState('Pesan Maklon (Jasa)');
+  const [pesanRequest, setPesanRequest] = useState('');
+  const [isSendingRequest, setIsSendingRequest] = useState(false);
 
   // Function to apply filters
   const applyFilters = () => {
@@ -97,6 +107,32 @@ export default function PencarianClient({
     }, 500);
     return () => clearTimeout(timer);
   }, [searchTerm, initialQuery, router, searchParams]);
+
+  const isUmkm = userRole === 'umkm';
+
+  const handleDirectRequest = async () => {
+    if (!selectedUmkm) return;
+    if (!pesanRequest.trim()) {
+      toast.error('Detail spesifikasi harus diisi');
+      return;
+    }
+    
+    setIsSendingRequest(true);
+    try {
+      await sendDirectRequest({
+        targetUmkmId: Number(selectedUmkm.id),
+        produk_id: null,
+        equipment_id: null,
+        pesan: `[${jenisPermintaan}] ${pesanRequest}`,
+      });
+      toast.success('Request berhasil dikirim!');
+      setPesanRequest('');
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal mengirim request');
+    } finally {
+      setIsSendingRequest(false);
+    }
+  };
 
   const handleAddToCart = async () => {
     if (!selectedItem || !selectedUmkm) return;
@@ -477,11 +513,46 @@ export default function PencarianClient({
               )}
             </div>
             
-            {/* Cart helper text */}
-            <div className="p-6 border-t border-gray-100 bg-gray-50 mt-auto flex items-center justify-center text-center">
-              <p className="text-gray-500 text-sm">
-                Klik produk atau alat untuk melihat detail dan menambahkannya ke <span className="font-bold text-gray-700">Keranjang Kolaborasi</span>.
-              </p>
+            {/* Request Kerjasama Form */}
+            <div className="p-6 border-t border-gray-100 bg-gray-50 mt-auto">
+              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-[15px]">
+                <span className="text-xl">🤝</span> Ajukan Request Kerjasama
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Jenis Permintaan</label>
+                  <select 
+                    value={jenisPermintaan}
+                    onChange={(e) => setJenisPermintaan(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white"
+                  >
+                    <option value="Pesan Maklon (Jasa)">Pesan Maklon (Jasa)</option>
+                    <option value="Pembelian Grosir">Pembelian Grosir</option>
+                    <option value="Sewa Alat">Sewa Alat</option>
+                    <option value="Kolaborasi Proyek">Kolaborasi Proyek</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Detail Spesifikasi / Durasi</label>
+                  <textarea 
+                    value={pesanRequest}
+                    onChange={(e) => setPesanRequest(e.target.value)}
+                    placeholder="Sebutkan target waktu, kuantitas order, spesifikasi, atau durasi..."
+                    rows={3}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white resize-none"
+                  />
+                </div>
+                
+                <button 
+                  onClick={handleDirectRequest}
+                  disabled={isSendingRequest || currentUserVerifikasi !== 'terverifikasi'}
+                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 text-sm shadow-sm"
+                >
+                  {isSendingRequest ? 'Mengirim...' : 'Kirim Request'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -536,11 +607,44 @@ export default function PencarianClient({
             )}
           </div>
           
-          {/* Cart helper text */}
-          <div className="p-5 border-t border-gray-100 bg-gray-50 mt-auto text-center">
-            <p className="text-gray-500 text-xs">
-              Klik item untuk menambahkan ke Keranjang.
-            </p>
+          {/* Request Kerjasama Form */}
+          <div className="p-5 border-t border-gray-100 bg-gray-50 mt-auto">
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-[14px]">
+              <span className="text-lg">🤝</span> Ajukan Request Kerjasama
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <select 
+                  value={jenisPermintaan}
+                  onChange={(e) => setJenisPermintaan(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white"
+                >
+                  <option value="Pesan Maklon (Jasa)">Pesan Maklon (Jasa)</option>
+                  <option value="Pembelian Grosir">Pembelian Grosir</option>
+                  <option value="Sewa Alat">Sewa Alat</option>
+                  <option value="Kolaborasi Proyek">Kolaborasi Proyek</option>
+                </select>
+              </div>
+              
+              <div>
+                <textarea 
+                  value={pesanRequest}
+                  onChange={(e) => setPesanRequest(e.target.value)}
+                  placeholder="Sebutkan spesifikasi..."
+                  rows={2}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white resize-none"
+                />
+              </div>
+              
+              <button 
+                onClick={handleDirectRequest}
+                disabled={isSendingRequest || currentUserVerifikasi !== 'terverifikasi'}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 text-sm shadow-sm"
+              >
+                {isSendingRequest ? 'Mengirim...' : 'Kirim Request'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -621,7 +725,7 @@ export default function PencarianClient({
                       className="flex-1 sm:flex-none px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-200 disabled:opacity-50"
                     >
                       <ShoppingCart className="w-5 h-5" />
-                      {isAdding ? 'Loading...' : 'Tambah'}
+                      {isAdding ? '...' : 'Tambah ke Keranjang'}
                     </button>
                   </div>
                 </div>
