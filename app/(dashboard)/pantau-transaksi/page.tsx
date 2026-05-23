@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase-server";
 import { redirect } from "next/navigation";
-import { Search } from "lucide-react";
 import NotificationBell from "@/components/layout/NotificationBell";
 import PantauTransaksiClient, { TransaksiItem } from "./PantauTransaksiClient";
 
@@ -122,14 +121,6 @@ export default async function PantauTransaksiPage() {
           </div>
 
           <div className="flex items-center gap-5 bg-white px-5 py-2.5 rounded-[30px] shadow-sm">
-            <div className="flex items-center bg-[#f4f7fe] px-4 py-2.5 rounded-[20px] gap-2.5">
-              <Search className="w-4 h-4 text-[#a3aed1]" />
-              <input
-                type="text"
-                placeholder="Cari ID Request..."
-                className="bg-transparent border-none outline-none text-[#2b3674] font-medium w-[140px] text-[14px] placeholder:text-[#a3aed1]"
-              />
-            </div>
             <NotificationBell />
             <div className="w-10 h-10 rounded-full bg-[#00b5d8] text-white flex items-center justify-center font-bold text-sm shadow-sm">
               {industriNama.substring(0, 2).toUpperCase()}

@@ -1,11 +1,8 @@
 import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
-import { 
-  Store, 
-  Factory, 
-  Handshake, 
-  Search, 
-  Bell, 
+import {
+  Store,
+  Handshake,
   Clock,
   TrendingUp,
   ChevronRight
@@ -128,14 +125,6 @@ export default async function DashboardIndustriPage() {
         </div>
         
         <div className="flex items-center gap-5 bg-card-bg px-5 py-2.5 rounded-[30px] shadow-sm">
-          <div className="flex items-center bg-bg-color px-5 py-2.5 rounded-[20px] gap-2.5">
-            <Search className="w-5 h-5 text-text-muted" />
-            <input 
-              type="text" 
-              placeholder="Cari sesuatu..." 
-              className="bg-transparent border-none outline-none text-text-main font-medium w-[150px] text-[15px] placeholder:text-text-muted"
-            />
-          </div>
           <NotificationBell />
           <div className="w-10 h-10 rounded-full bg-secondary text-white flex items-center justify-center font-bold cursor-pointer border-2 border-white shadow-sm">
             {industriName.substring(0, 2).toUpperCase()}

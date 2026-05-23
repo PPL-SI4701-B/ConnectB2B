@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, ArrowRightLeft, Clock, CheckCircle, AlertCircle, Inbox, History } from 'lucide-react';
 import NotificationBell from '@/components/layout/NotificationBell';
 import { updateTransaksiProgress } from '@/app/actions/transaksi-actions';
@@ -34,6 +35,7 @@ export default function TransaksiClient({
   const [newProgressStatus, setNewProgressStatus] = useState('Mesin Sedang Disiapkan (Inspeksi)');
   const [progressPesan, setProgressPesan] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const router = useRouter();
 
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
@@ -102,6 +104,7 @@ export default function TransaksiClient({
       setUpdateModalOpen(false);
       setSelectedTransaksi(null);
       setProgressPesan('');
+      router.refresh();
     } else {
       alert(result.error || 'Terjadi kesalahan.');
     }
@@ -295,7 +298,7 @@ export default function TransaksiClient({
             <div className="p-5 max-h-[400px] overflow-y-auto">
               {selectedTransaksi.history && selectedTransaksi.history.length > 0 ? (
                 <div className="space-y-4">
-                  {selectedTransaksi.history.map((h, i) => (
+                  {selectedTransaksi.history.map((h) => (
                     <div key={h.id} className="relative pl-6 border-l-2 border-border-color pb-4 last:border-0 last:pb-0">
                       <div className="absolute w-3 h-3 bg-primary rounded-full -left-[7px] top-1"></div>
                       <div className="font-bold text-[14px] text-text-main">{h.status_progress}</div>

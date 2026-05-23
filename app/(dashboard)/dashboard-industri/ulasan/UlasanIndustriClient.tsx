@@ -59,10 +59,11 @@ export default function UlasanIndustriClient({
   items: TransaksiSelesai[];
   defaultTransaksiId?: number;
 }) {
+  const [localItems, setLocalItems] = useState<TransaksiSelesai[]>(items);
   const [selected, setSelected] = useState<TransaksiSelesai | null>(
-    items.find((i) => i.transaksi_id === defaultTransaksiId) ??
-      items.find((i) => !i.has_ulasan) ??
-      (items.length > 0 ? items[0] : null)
+    localItems.find((i) => i.transaksi_id === defaultTransaksiId) ??
+      localItems.find((i) => !i.has_ulasan) ??
+      (localItems.length > 0 ? localItems[0] : null)
   );
   const [rating, setRating] = useState(
     selected?.existing_rating ?? 0
@@ -91,10 +92,26 @@ export default function UlasanIndustriClient({
     }
     setError(null);
 
+    const submittedTransaksiId = selected.transaksi_id;
+    const submittedRating = rating;
+    const submittedKomentar = komentar;
+
     startTransition(async () => {
-      const result = await submitUlasan(selected.transaksi_id, rating, komentar);
+      const result = await submitUlasan(submittedTransaksiId, submittedRating, submittedKomentar);
       if (result.success) {
-        setSuccessId(selected.transaksi_id);
+        setLocalItems(prev =>
+          prev.map(i =>
+            i.transaksi_id === submittedTransaksiId
+              ? { ...i, has_ulasan: true, existing_rating: submittedRating, existing_komentar: submittedKomentar }
+              : i
+          )
+        );
+        setSelected(prev =>
+          prev?.transaksi_id === submittedTransaksiId
+            ? { ...prev, has_ulasan: true, existing_rating: submittedRating, existing_komentar: submittedKomentar }
+            : prev
+        );
+        setSuccessId(submittedTransaksiId);
         setTimeout(() => router.push("/dashboard-industri"), 2000);
       } else {
         setError(result.error || "Gagal mengirim ulasan.");
@@ -131,7 +148,7 @@ export default function UlasanIndustriClient({
           Permintaan Selesai (Butuh Feedback Anda)
         </h2>
         <div className="space-y-3">
-          {items.map((item) => {
+          {localItems.map((item) => {
             const isActive = selected?.transaksi_id === item.transaksi_id;
             return (
               <div
