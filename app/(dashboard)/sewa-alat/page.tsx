@@ -41,12 +41,11 @@ export default async function SewaAlatPage() {
       nama,
       deskripsi,
       harga_sewa,
-      gambar_url,
       status,
       user_id
     `)
     .eq('status', 'tersedia')
-    .order('created_at', { ascending: false });
+    .order('id', { ascending: false });
 
   if (error) {
     console.error('Error fetching equipments:', error);

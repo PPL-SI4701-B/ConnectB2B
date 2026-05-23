@@ -1,12 +1,10 @@
 import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
-import { 
-  Store, 
-  Factory, 
-  Handshake, 
-  Search, 
-  Bell, 
-  TrendingUp,
+import {
+  Store,
+  Factory,
+  Handshake,
+  Package,
   ChevronRight
 } from 'lucide-react';
 import NotificationBell from '@/components/layout/NotificationBell';
@@ -28,23 +26,25 @@ export default async function DashboardPage() {
     umkmName = umkmData?.nama_usaha || umkmName;
   }
 
-  // Get global metrics
+  // Get global metrics — count from umkm/industri tables (source of truth)
   const { count: countUMKM } = await supabase
-    .from('users')
-    .select('*', { count: 'exact', head: true })
-    .eq('role', 'umkm')
-    .eq('status_verifikasi', 'terverifikasi');
-    
+    .from('umkm')
+    .select('*', { count: 'exact', head: true });
+
   const { count: countIndustri } = await supabase
-    .from('users')
-    .select('*', { count: 'exact', head: true })
-    .eq('role', 'industri')
-    .eq('status_verifikasi', 'terverifikasi');
+    .from('industri')
+    .select('*', { count: 'exact', head: true });
 
   let activeCooperations = 0;
+  let productCount = 0;
   let requests: any[] = [];
 
   if (umkmId) {
+    const { count: pc } = await supabase
+      .from('produk')
+      .select('*', { count: 'exact', head: true })
+      .eq('umkm_id', umkmId);
+    productCount = pc ?? 0;
     // Active cooperations for this UMKM
     const { count: ca } = await supabase
       .from('request')
@@ -117,14 +117,6 @@ export default async function DashboardPage() {
         </div>
         
         <div className="flex items-center gap-5 bg-card-bg px-5 py-2.5 rounded-[30px] shadow-sm">
-          <div className="flex items-center bg-bg-color px-5 py-2.5 rounded-[20px] gap-2.5">
-            <Search className="w-5 h-5 text-text-muted" />
-            <input 
-              type="text" 
-              placeholder="Cari sesuatu..." 
-              className="bg-transparent border-none outline-none text-text-main font-medium w-[150px] text-[15px] placeholder:text-text-muted"
-            />
-          </div>
           <NotificationBell />
           <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold cursor-pointer border-2 border-white shadow-sm">
             {umkmName.substring(0, 2).toUpperCase()}
@@ -132,8 +124,8 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      {/* 3 Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-[25px] mb-[30px]">
+      {/* 4 Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-[25px] mb-[30px]">
         {/* Card 1: Total UMKM */}
         <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
           <div className="w-[60px] h-[60px] rounded-full bg-bg-color text-primary flex items-center justify-center shrink-0">
@@ -141,15 +133,10 @@ export default async function DashboardPage() {
           </div>
           <div>
             <h4 className="text-text-muted font-medium text-[14px] mb-1">Total UMKM Terdaftar</h4>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-[24px] font-bold text-text-main leading-none flex items-center">{countUMKM?.toLocaleString() || 0}</h2>
-              <span className="flex items-center text-success bg-[#e6f9f4] px-2 py-1 rounded-lg text-[12px] font-semibold">
-                <TrendingUp className="w-3.5 h-3.5 mr-1" /> 12%
-              </span>
-            </div>
+            <h2 className="text-[24px] font-bold text-text-main leading-none">{countUMKM?.toLocaleString() || 0}</h2>
           </div>
         </div>
-        
+
         {/* Card 2: Total Industri */}
         <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
           <div className="w-[60px] h-[60px] rounded-full bg-[#fffbdf] text-warning flex items-center justify-center shrink-0">
@@ -157,12 +144,7 @@ export default async function DashboardPage() {
           </div>
           <div>
             <h4 className="text-text-muted font-medium text-[14px] mb-1">Total Industri Terdaftar</h4>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-[24px] font-bold text-text-main leading-none flex items-center">{countIndustri?.toLocaleString() || 0}</h2>
-              <span className="flex items-center text-success bg-[#e6f9f4] px-2 py-1 rounded-lg text-[12px] font-semibold">
-                <TrendingUp className="w-3.5 h-3.5 mr-1" /> 5%
-              </span>
-            </div>
+            <h2 className="text-[24px] font-bold text-text-main leading-none">{countIndustri?.toLocaleString() || 0}</h2>
           </div>
         </div>
 
@@ -173,12 +155,18 @@ export default async function DashboardPage() {
           </div>
           <div>
             <h4 className="text-text-muted font-medium text-[14px] mb-1">Kerjasama Aktif</h4>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-[24px] font-bold text-text-main leading-none flex items-center">{activeCooperations}</h2>
-              <span className="flex items-center text-success bg-[#e6f9f4] px-2 py-1 rounded-lg text-[12px] font-semibold">
-                <TrendingUp className="w-3.5 h-3.5 mr-1" /> 24%
-              </span>
-            </div>
+            <h2 className="text-[24px] font-bold text-text-main leading-none">{activeCooperations}</h2>
+          </div>
+        </div>
+
+        {/* Card 4: Produk Saya */}
+        <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
+          <div className="w-[60px] h-[60px] rounded-full bg-[#ede7ff] text-primary flex items-center justify-center shrink-0">
+            <Package className="w-7 h-7" />
+          </div>
+          <div>
+            <h4 className="text-text-muted font-medium text-[14px] mb-1">Produk Saya</h4>
+            <h2 className="text-[24px] font-bold text-text-main leading-none">{productCount}</h2>
           </div>
         </div>
       </div>

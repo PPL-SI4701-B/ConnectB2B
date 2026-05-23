@@ -51,9 +51,10 @@ export default async function Sidebar() {
   const brandColor = isIndustri ? 'text-secondary' : 'text-primary';
 
   return (
-    <aside className="w-[280px] bg-card-bg shadow-sm flex flex-col hidden md:flex min-h-screen transition-all">
-      <div className="h-full px-5 py-[30px] flex flex-col">
-        <div className="mb-[50px] px-2 flex items-center gap-2.5">
+    <aside className="w-[280px] bg-card-bg shadow-sm flex-col hidden md:flex h-screen sticky top-0 transition-all">
+      <div className="flex flex-col h-full px-5 py-[30px] overflow-hidden">
+        {/* Logo */}
+        <div className="mb-[50px] px-2 flex items-center gap-2.5 shrink-0">
           <div className={`${brandColor}`}>
             {isIndustri ? <LayoutDashboard className="w-6 h-6" /> : <Store className="w-6 h-6" />}
           </div>
@@ -62,11 +63,10 @@ export default async function Sidebar() {
           </span>
         </div>
 
-        <ul className="space-y-2.5 flex-1">
+        {/* Nav links — scrollable if content overflows */}
+        <ul className="space-y-2.5 flex-1 overflow-y-auto min-h-0">
           {links.map((link) => {
             const Icon = link.icon;
-            // Next.js App Router Sidebar doesn't have an `active` state right now since it's a Server Component.
-            // We'll give it a hover effect mimicking the active state in mockup.
             return (
               <li key={link.href} className="rounded-lg overflow-hidden relative">
                 <Link href={link.href} className="flex items-center gap-[15px] px-5 py-[14px] text-text-muted hover:bg-[#f4f7fe] hover:text-primary transition-all font-semibold text-[15px] group">
@@ -78,7 +78,8 @@ export default async function Sidebar() {
           })}
         </ul>
 
-        <div className="pt-6 mt-6 space-y-2.5">
+        {/* Profile + Logout — always pinned at bottom */}
+        <div className="pt-4 mt-4 border-t border-gray-100 space-y-2.5 shrink-0">
           <Link href="/profil" className="flex items-center gap-[15px] px-5 py-[14px] text-text-muted hover:bg-[#f4f7fe] hover:text-primary rounded-lg transition-all font-semibold text-[15px] group">
             <User className="w-5 h-5 group-hover:text-primary transition-colors" />
             <span>{isIndustri ? 'Profil Eksekutif' : 'Profil'}</span>
