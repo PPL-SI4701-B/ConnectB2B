@@ -32,49 +32,64 @@ export default async function TransaksiPage() {
     );
   }
 
-  // Fetch transaksi linked to this UMKM's requests
-  const { data: transaksiRaw, error } = await supabase
-    .from('transaksi')
-    .select(`
+  const selectFragment = `
+    id,
+    request_id,
+    status,
+    status_validasi,
+    tanggal_mulai,
+    tanggal_selesai,
+    progress_status,
+    request:request_id (
       id,
-      request_id,
+      industri_id,
+      sender_umkm_id,
+      pesan,
       status,
-      status_validasi,
-      tanggal_mulai,
-      tanggal_selesai,
-      progress_status,
-      request:request_id (
-        id,
-        industri_id,
-        pesan,
-        status,
-        umkm_id
-      ),
-      transaksi_history (
-        id,
-        status_progress,
-        pesan,
-        created_at
-      )
-    `)
-    .order('tanggal_mulai', { ascending: false });
+      umkm_id
+    ),
+    transaksi_history (
+      id,
+      status_progress,
+      pesan,
+      created_at
+    )
+  `;
 
-  if (error) {
-    console.error('Error fetching transaksi:', error);
-  }
+  // Fetch transaksi where UMKM is the recipient
+  const { data: transaksiAsReceiver } = await supabase
+    .from('transaksi')
+    .select(selectFragment)
+    .order('tanggal_mulai', { ascending: false }) as any;
 
-  // Filter transaksi that belong to this UMKM
-  const transaksiFiltered = (transaksiRaw || []).filter((t: any) => {
+  const allTranaksi = (transaksiAsReceiver || []) as any[];
+
+  // Filter: show transaksi where this UMKM is recipient OR sender
+  const transaksiFiltered = allTranaksi.filter((t: any) => {
     const req = Array.isArray(t.request) ? t.request[0] : t.request;
-    return req?.umkm_id === umkm.id;
+    return req?.umkm_id === umkm.id || req?.sender_umkm_id === umkm.id;
   });
 
-  // Fetch industri details
+  // Fetch industri details for requests with industri_id
   const industriIds = Array.from(
     new Set(
       transaksiFiltered.map((t: any) => {
         const req = Array.isArray(t.request) ? t.request[0] : t.request;
         return req?.industri_id;
+      }).filter(Boolean)
+    )
+  ) as number[];
+
+  // Fetch UMKM details for sender_umkm_id (UMKM-to-UMKM requests)
+  const senderUmkmIds = Array.from(
+    new Set(
+      transaksiFiltered.map((t: any) => {
+        const req = Array.isArray(t.request) ? t.request[0] : t.request;
+        // If current UMKM is receiver, sender_umkm_id is the mitra
+        if (req?.umkm_id === umkm.id && req?.sender_umkm_id) return req.sender_umkm_id;
+        // If current UMKM is sender, umkm_id is the mitra
+        if (req?.sender_umkm_id === umkm.id) return req.umkm_id;
+        return null;
       }).filter(Boolean)
     )
   ) as number[];
@@ -85,16 +100,34 @@ export default async function TransaksiPage() {
       .from('industri')
       .select('id, nama_perusahaan')
       .in('id', industriIds);
+    (industris || []).forEach((ind: any) => { industriMap[ind.id] = ind.nama_perusahaan; });
+  }
 
-    (industris || []).forEach((ind: any) => {
-      industriMap[ind.id] = ind.nama_perusahaan;
-    });
+  let umkmMitraMap: Record<number, string> = {};
+  if (senderUmkmIds.length > 0) {
+    const { data: umkmMitras } = await supabase
+      .from('umkm')
+      .select('id, nama_usaha')
+      .in('id', senderUmkmIds);
+    (umkmMitras || []).forEach((u: any) => { umkmMitraMap[u.id] = u.nama_usaha; });
   }
 
   // Format for client
   const formattedTransaksi = transaksiFiltered.map((t: any) => {
     const req = Array.isArray(t.request) ? t.request[0] : t.request;
-    const industriNama = industriMap[req?.industri_id] || 'Mitra Tidak Diketahui';
+    const isSender = req?.sender_umkm_id === umkm.id;
+    let mitraNama = 'Mitra Tidak Diketahui';
+    let mitraId = req?.industri_id;
+
+    if (req?.industri_id) {
+      mitraNama = industriMap[req.industri_id] || mitraNama;
+    } else if (isSender) {
+      // Current UMKM sent to another UMKM — mitra is umkm_id
+      mitraNama = umkmMitraMap[req?.umkm_id] || mitraNama;
+    } else if (req?.sender_umkm_id) {
+      // Current UMKM received from another UMKM — mitra is sender_umkm_id
+      mitraNama = umkmMitraMap[req?.sender_umkm_id] || mitraNama;
+    }
 
     return {
       id: t.id,
@@ -106,8 +139,8 @@ export default async function TransaksiPage() {
       tanggalMulai: t.tanggal_mulai,
       tanggalSelesai: t.tanggal_selesai,
       pesan: req?.pesan || '-',
-      industriId: req?.industri_id,
-      industriNama,
+      industriId: mitraId,
+      industriNama: mitraNama,
     };
   });
 

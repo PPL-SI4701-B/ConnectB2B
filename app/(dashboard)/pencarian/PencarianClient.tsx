@@ -116,17 +116,22 @@ export default function PencarianClient({
       toast.error('Detail spesifikasi harus diisi');
       return;
     }
-    
+
     setIsSendingRequest(true);
     try {
+      const produkId = selectedItem?.type === 'produk' ? selectedItem.item.id : null;
+      const equipmentId = selectedItem?.type === 'equipment' ? selectedItem.item.id : null;
+      const itemLabel = selectedItem ? ` — Item: ${selectedItem.item.nama}` : '';
+
       await sendDirectRequest({
         targetUmkmId: Number(selectedUmkm.id),
-        produk_id: null,
-        equipment_id: null,
-        pesan: `[${jenisPermintaan}] ${pesanRequest}`,
+        produk_id: produkId,
+        equipment_id: equipmentId,
+        pesan: `[${jenisPermintaan}]${itemLabel} ${pesanRequest}`,
       });
       toast.success('Request berhasil dikirim!');
       setPesanRequest('');
+      setSelectedItem(null);
     } catch (err: any) {
       toast.error(err.message || 'Gagal mengirim request');
     } finally {
@@ -518,11 +523,22 @@ export default function PencarianClient({
               <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-[15px]">
                 <span className="text-xl">🤝</span> Ajukan Request Kerjasama
               </h3>
-              
+
+              {selectedItem && (
+                <div className="mb-3 px-3 py-2.5 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between gap-2">
+                  <span className="text-xs text-indigo-700 font-semibold line-clamp-1">
+                    {selectedItem.type === 'produk' ? '📦' : '🔧'} {selectedItem.item.nama}
+                  </span>
+                  <button onClick={() => setSelectedItem(null)} className="shrink-0 text-indigo-400 hover:text-indigo-600">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5">Jenis Permintaan</label>
-                  <select 
+                  <select
                     value={jenisPermintaan}
                     onChange={(e) => setJenisPermintaan(e.target.value)}
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white"
@@ -533,10 +549,10 @@ export default function PencarianClient({
                     <option value="Kolaborasi Proyek">Kolaborasi Proyek</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5">Detail Spesifikasi / Durasi</label>
-                  <textarea 
+                  <textarea
                     value={pesanRequest}
                     onChange={(e) => setPesanRequest(e.target.value)}
                     placeholder="Sebutkan target waktu, kuantitas order, spesifikasi, atau durasi..."
@@ -544,8 +560,8 @@ export default function PencarianClient({
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white resize-none"
                   />
                 </div>
-                
-                <button 
+
+                <button
                   onClick={handleDirectRequest}
                   disabled={isSendingRequest || currentUserVerifikasi !== 'terverifikasi'}
                   className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 text-sm shadow-sm"
@@ -652,7 +668,7 @@ export default function PencarianClient({
       {/* Product Detail Modal */}
       {selectedItem && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setSelectedItem(null)}>
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col transform transition-all" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] transform transition-all" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center p-5 border-b border-gray-100">
               <h3 className="font-bold text-lg text-gray-900">
                 Detail {selectedItem.type === 'produk' ? 'Produk & Jasa' : 'Alat/Mesin'}
@@ -662,7 +678,7 @@ export default function PencarianClient({
               </button>
             </div>
             
-            <div className="flex flex-col max-h-[75vh] overflow-y-auto">
+            <div className="overflow-y-auto flex-1">
               {selectedItem.item.gambar_url ? (
                 <img src={selectedItem.item.gambar_url} alt={selectedItem.item.nama} className="w-full h-56 sm:h-72 object-cover" />
               ) : (
@@ -670,7 +686,7 @@ export default function PencarianClient({
                   {selectedItem.type === 'produk' ? <Package className={`w-16 h-16 text-indigo-200`} /> : <Wrench className={`w-16 h-16 text-cyan-200`} />}
                 </div>
               )}
-              
+
               <div className="p-6 sm:p-8">
                 <div className="mb-2">
                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${selectedItem.type === 'produk' ? 'bg-indigo-100 text-indigo-700' : 'bg-cyan-100 text-cyan-700'}`}>
@@ -679,11 +695,11 @@ export default function PencarianClient({
                 </div>
                 <h2 className="text-2xl font-extrabold text-gray-900 mb-2 leading-tight">{selectedItem.item.nama}</h2>
                 <div className={`text-3xl font-black mb-6 ${selectedItem.type === 'produk' ? 'text-indigo-600' : 'text-cyan-600'}`}>
-                  {selectedItem.type === 'produk' 
-                    ? formatRupiah((selectedItem.item as Produk).harga) 
+                  {selectedItem.type === 'produk'
+                    ? formatRupiah((selectedItem.item as Produk).harga)
                     : <>{formatRupiah((selectedItem.item as Equipment).harga_sewa)}<span className="text-base text-gray-500 font-medium"> / hari</span></>}
                 </div>
-                
+
                 <div className="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
                   <div>
                     <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Deskripsi Lengkap</h4>
@@ -692,43 +708,44 @@ export default function PencarianClient({
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <div className="flex items-center gap-3 w-full sm:w-auto bg-gray-50 p-2 rounded-xl border border-gray-200">
-                    <button 
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="w-10 h-10 flex items-center justify-center bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 font-bold"
-                    >-</button>
-                    <input 
-                      type="number"
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-16 h-10 text-center bg-transparent font-bold text-gray-900 border-none focus:ring-0"
-                      min="1"
-                    />
-                    <button 
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="w-10 h-10 flex items-center justify-center bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 font-bold"
-                    >+</button>
-                  </div>
-                  
-                  <div className="flex w-full sm:w-auto gap-3">
-                    <button 
-                      onClick={() => { setSelectedItem(null); setQuantity(1); }}
-                      className="flex-1 sm:flex-none px-5 py-3 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
-                    >
-                      Batal
-                    </button>
-                    <button 
-                      onClick={handleAddToCart}
-                      disabled={isAdding}
-                      className="flex-1 sm:flex-none px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-200 disabled:opacity-50"
-                    >
-                      <ShoppingCart className="w-5 h-5" />
-                      {isAdding ? '...' : 'Tambah ke Keranjang'}
-                    </button>
-                  </div>
-                </div>
+            {/* Sticky action footer — always visible inside modal */}
+            <div className="shrink-0 px-6 py-4 border-t border-gray-100 bg-white flex flex-col sm:flex-row justify-between items-center gap-3">
+              <div className="flex items-center gap-3 w-full sm:w-auto bg-gray-50 p-2 rounded-xl border border-gray-200">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-10 h-10 flex items-center justify-center bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 font-bold"
+                >-</button>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-16 h-10 text-center bg-transparent font-bold text-gray-900 border-none focus:ring-0"
+                  min="1"
+                />
+                <button
+                  onClick={() => setQuantity(quantity + 1)}
+                  className="w-10 h-10 flex items-center justify-center bg-white rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 font-bold"
+                >+</button>
+              </div>
+
+              <div className="flex w-full sm:w-auto gap-3">
+                <button
+                  onClick={() => { setSelectedItem(null); setQuantity(1); }}
+                  className="flex-1 sm:flex-none px-5 py-3 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isAdding}
+                  className="flex-1 sm:flex-none px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-sm shadow-indigo-200 disabled:opacity-50"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  {isAdding ? '...' : 'Tambah ke Keranjang'}
+                </button>
               </div>
             </div>
           </div>

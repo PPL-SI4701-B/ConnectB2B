@@ -11,7 +11,6 @@ interface EquipmentWithUmkm {
   nama: string;
   deskripsi: string;
   harga_sewa: number;
-  gambar_url: string;
   status: string;
   user_id: string;
   owner_umkm_id: number;
@@ -114,13 +113,9 @@ export default function SewaAlatClient({
                   selectedEq?.id === eq.id ? 'border-cyan-500 shadow-md' : 'border-gray-100 hover:border-cyan-200'
                 }`}
               >
-                {eq.gambar_url ? (
-                  <img src={eq.gambar_url} alt={eq.nama} className="w-full h-40 object-cover" />
-                ) : (
-                  <div className="w-full h-40 bg-cyan-50 flex items-center justify-center">
-                    <Wrench className="w-10 h-10 text-cyan-200" />
-                  </div>
-                )}
+                <div className="w-full h-40 bg-cyan-50 flex items-center justify-center">
+                  <Wrench className="w-10 h-10 text-cyan-200" />
+                </div>
                 
                 <div className="p-4">
                   <div className="text-xs text-cyan-600 font-bold mb-1 flex items-center gap-1">

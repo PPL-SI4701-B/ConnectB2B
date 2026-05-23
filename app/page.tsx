@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
-import { 
+import {
   Building2, Store, Package, Star, ArrowRight,
-  ShieldCheck, Search, Handshake, MapPin
+  ShieldCheck, Search, Handshake, MapPin, Zap, TrendingUp, CheckCircle
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,6 @@ export const dynamic = 'force-dynamic';
 export default async function LandingPage() {
   const supabase = await createClient();
 
-  // Fetch semua data secara paralel
   const [
     { count: jumlahUMKM },
     { count: jumlahIndustri },
@@ -19,11 +18,8 @@ export default async function LandingPage() {
     { data: umkmTerpercaya },
     { data: ratingData }
   ] = await Promise.all([
-    supabase.from('users').select('*', { count: 'exact', head: true })
-      .eq('role', 'umkm').eq('status_verifikasi', 'terverifikasi'),
-    supabase.from('users').select('*', { count: 'exact', head: true })
-      .eq('role', 'industri').eq('status_verifikasi', 'terverifikasi'),
-    // We join users to ensure the products belong to verified users
+    supabase.from('umkm').select('*', { count: 'exact', head: true }),
+    supabase.from('industri').select('*', { count: 'exact', head: true }),
     supabase.from('produk').select('id, users!inner(status_verifikasi)', { count: 'exact', head: true })
       .eq('users.status_verifikasi', 'terverifikasi'),
     supabase.from('produk').select('id, nama, harga, gambar_url, kategori, users!inner(nama, status_verifikasi)')
@@ -39,137 +35,240 @@ export default async function LandingPage() {
     ? (ratingData.reduce((sum, u) => sum + u.rating, 0) / ratingData.length).toFixed(1)
     : '0';
 
-  const formatIDR = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
+  const formatIDR = (value: number) =>
+    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 
-
+  const GRADIENT_PAIRS = [
+    'from-violet-500 to-purple-700',
+    'from-cyan-400 to-blue-600',
+    'from-rose-400 to-pink-600',
+    'from-amber-400 to-orange-600',
+    'from-emerald-400 to-teal-600',
+    'from-indigo-400 to-violet-600',
+  ];
 
   return (
-    <div className="min-h-screen bg-[#FAFBFF] text-slate-800 font-sans selection:bg-blue-500/30">
-      {/* 1. NAVBAR */}
-      <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-20 items-center">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl">
-                C
-              </div>
-              <span className="text-2xl font-extrabold text-[#1E3A5F] tracking-tight">ConnectB2B</span>
+    <div className="min-h-screen bg-white text-slate-800 overflow-x-hidden">
+
+      {/* ── NAVBAR ── */}
+      <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-slate-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 flex justify-between h-18 items-center py-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4318ff] to-[#00b5d8] flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-indigo-500/30">
+              C
             </div>
-            <div className="hidden md:flex space-x-8">
-              <Link href="/" className="text-blue-600 font-semibold transition-colors">Beranda</Link>
-              <Link href="/pencarian" className="text-slate-600 hover:text-blue-600 font-medium transition-colors">Produk</Link>
-              <Link href="#" className="text-slate-600 hover:text-blue-600 font-medium transition-colors">Tentang</Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link href="/login" className="hidden sm:inline-flex px-5 py-2.5 border-2 border-blue-600 text-blue-600 font-semibold rounded-xl hover:bg-blue-50 transition-colors">
-                Masuk
-              </Link>
-              <Link href="/register" className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all">
-                Daftar
-              </Link>
-            </div>
+            <span className="text-[22px] font-extrabold bg-gradient-to-r from-[#4318ff] to-[#00b5d8] bg-clip-text text-transparent tracking-tight">
+              ConnectB2B
+            </span>
+          </div>
+          <div className="hidden md:flex gap-8 items-center">
+            <Link href="/" className="text-[#4318ff] font-semibold text-[15px]">Beranda</Link>
+            <Link href="/pencarian" className="text-slate-600 hover:text-[#4318ff] font-medium text-[15px] transition-colors">Produk</Link>
+            <Link href="#how-it-works" className="text-slate-600 hover:text-[#4318ff] font-medium text-[15px] transition-colors">Cara Kerja</Link>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="hidden sm:inline-flex px-5 py-2.5 border-2 border-[#4318ff] text-[#4318ff] font-semibold rounded-xl hover:bg-indigo-50 transition-colors text-[14px]">
+              Masuk
+            </Link>
+            <Link href="/register" className="px-5 py-2.5 bg-gradient-to-r from-[#4318ff] to-[#6C3EFF] text-white font-semibold rounded-xl hover:opacity-90 shadow-lg shadow-indigo-500/30 transition-all text-[14px]">
+              Daftar Gratis
+            </Link>
           </div>
         </div>
       </nav>
 
-      {/* 2. HERO SECTION */}
-      <section className="relative pt-24 pb-32 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white -z-10"></div>
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl -z-10"></div>
-        <div className="absolute top-40 -left-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl -z-10"></div>
+      {/* ── HERO ── */}
+      <section className="relative pt-24 pb-28 overflow-hidden bg-gradient-to-br from-[#f4f7fe] via-white to-[#eef2ff]">
+        {/* Animated blob backgrounds */}
+        <div className="absolute top-0 left-[-10%] w-[600px] h-[600px] bg-gradient-to-br from-[#4318ff]/20 to-[#00b5d8]/10 rounded-full blur-3xl animate-blob" />
+        <div className="absolute bottom-0 right-[-10%] w-[500px] h-[500px] bg-gradient-to-br from-[#00b5d8]/20 to-[#4318ff]/10 rounded-full blur-3xl animate-blob delay-400" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-5xl md:text-7xl font-extrabold text-[#1E3A5F] tracking-tight mb-6 leading-tight">
-            Hubungkan Bisnis <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Anda</span>
-          </h1>
-          <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Platform digital terintegrasi untuk menyatukan UMKM dan Industri. Temukan mitra terbaik, jalin kerja sama, dan tingkatkan skala bisnis Anda sekarang.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-20">
-            <Link href="/register?role=umkm" className="px-8 py-4 bg-blue-600 text-white font-bold rounded-2xl shadow-xl shadow-blue-600/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-              Daftar sebagai UMKM <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link href="/register?role=industri" className="px-8 py-4 bg-white border border-slate-200 text-[#1E3A5F] font-bold rounded-2xl shadow-sm hover:border-blue-200 hover:bg-blue-50 transition-all flex items-center justify-center">
-              Daftar sebagai Industri
-            </Link>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
 
-          {/* Stats Real */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
-                <Store className="w-6 h-6" />
+            {/* Left — text */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-[#4318ff] px-4 py-1.5 rounded-full text-[13px] font-semibold mb-6 animate-fade-up">
+                <Zap className="w-3.5 h-3.5" />
+                Platform B2B #1 untuk UMKM & Industri Indonesia
               </div>
-              <h3 className="text-3xl font-extrabold text-[#1E3A5F] mb-1">{jumlahUMKM || 0}+</h3>
-              <p className="text-sm font-medium text-slate-500">UMKM Aktif</p>
+              <h1 className="text-5xl lg:text-6xl font-extrabold text-[#2b3674] leading-tight mb-6 animate-fade-up delay-100">
+                Jembatan Bisnis <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4318ff] to-[#00b5d8] animate-gradient-x">
+                  UMKM &amp; Industri
+                </span>
+              </h1>
+              <p className="text-lg text-slate-500 max-w-lg mx-auto lg:mx-0 mb-10 leading-relaxed animate-fade-up delay-200">
+                ConnectB2B menghadirkan ekosistem digital terpercaya yang menghubungkan ribuan UMKM lokal dengan mitra industri. Temukan peluang, jalin kerja sama, dan tumbuh bersama.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-up delay-300">
+                <Link href="/register?role=umkm" className="group px-8 py-4 bg-gradient-to-r from-[#4318ff] to-[#6C3EFF] text-white font-bold rounded-2xl shadow-xl shadow-indigo-500/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 animate-pulse-ring">
+                  Daftar sebagai UMKM
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link href="/register?role=industri" className="px-8 py-4 bg-white border-2 border-slate-200 text-[#2b3674] font-bold rounded-2xl shadow-sm hover:border-[#4318ff]/30 hover:bg-indigo-50/50 transition-all flex items-center justify-center">
+                  Daftar sebagai Industri
+                </Link>
+              </div>
+              <div className="mt-8 flex items-center gap-6 justify-center lg:justify-start text-sm text-slate-500 animate-fade-up delay-400">
+                <div className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-emerald-500" /> Verifikasi Terjamin</div>
+                <div className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-emerald-500" /> Tanpa Biaya Pendaftaran</div>
+                <div className="flex items-center gap-1.5"><CheckCircle className="w-4 h-4 text-emerald-500" /> Keamanan Data</div>
+              </div>
             </div>
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4">
-                <Building2 className="w-6 h-6" />
+
+            {/* Right — floating visual */}
+            <div className="flex-1 relative flex items-center justify-center min-h-[380px] animate-fade-right delay-200">
+              {/* Central glowing card */}
+              <div className="relative w-[320px] z-10 animate-float">
+                <div className="bg-white rounded-3xl shadow-2xl shadow-indigo-200 p-7 border border-indigo-50">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#4318ff] to-[#00b5d8] flex items-center justify-center text-white font-bold text-lg">C</div>
+                    <div>
+                      <div className="font-bold text-[#2b3674] text-[15px]">ConnectB2B</div>
+                      <div className="text-xs text-slate-400">Platform B2B Terpercaya</div>
+                    </div>
+                  </div>
+                  <div className="space-y-3 mb-5">
+                    <div className="flex justify-between items-center bg-indigo-50 rounded-xl px-4 py-2.5">
+                      <span className="text-[13px] font-semibold text-[#2b3674]">UMKM Terverifikasi</span>
+                      <span className="text-[13px] font-extrabold text-[#4318ff]">{jumlahUMKM ?? 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-cyan-50 rounded-xl px-4 py-2.5">
+                      <span className="text-[13px] font-semibold text-[#2b3674]">Mitra Industri</span>
+                      <span className="text-[13px] font-extrabold text-[#00b5d8]">{jumlahIndustri ?? 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center bg-emerald-50 rounded-xl px-4 py-2.5">
+                      <span className="text-[13px] font-semibold text-[#2b3674]">Produk Tersedia</span>
+                      <span className="text-[13px] font-extrabold text-emerald-600">{jumlahProduk ?? 0}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 bg-amber-50 rounded-xl px-4 py-2.5">
+                    <div className="flex gap-0.5">
+                      {[1,2,3,4,5].map(s => (
+                        <Star key={s} className={`w-3.5 h-3.5 ${parseFloat(avgRating) >= s ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                      ))}
+                    </div>
+                    <span className="text-[13px] font-bold text-amber-600">{avgRating}/5 Rating</span>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-3xl font-extrabold text-[#1E3A5F] mb-1">{jumlahIndustri || 0}+</h3>
-              <p className="text-sm font-medium text-slate-500">Mitra Industri</p>
-            </div>
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
-                <Package className="w-6 h-6" />
-              </div>
-              <h3 className="text-3xl font-extrabold text-[#1E3A5F] mb-1">{jumlahProduk || 0}+</h3>
-              <p className="text-sm font-medium text-slate-500">Produk Tersedia</p>
-            </div>
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-              <div className="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-4">
-                <Star className="w-6 h-6" />
-              </div>
-              <h3 className="text-3xl font-extrabold text-[#1E3A5F] mb-1">{avgRating}/5</h3>
-              <p className="text-sm font-medium text-slate-500">Rating Platform</p>
+              {/* Floating decorators */}
+              <div className="absolute top-4 right-4 w-20 h-20 bg-gradient-to-br from-[#4318ff] to-indigo-800 rounded-2xl opacity-20 animate-float-slow" />
+              <div className="absolute bottom-8 left-4 w-14 h-14 bg-gradient-to-br from-[#00b5d8] to-cyan-700 rounded-xl opacity-20 animate-float delay-300" />
+              <div className="absolute top-1/2 -left-8 w-16 h-16 bg-gradient-to-br from-violet-400 to-purple-600 rounded-full opacity-20 animate-float-slow delay-200" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* 3. SECTION PRODUK UNGGULAN */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ── STAT STRIP ── */}
+      <section className="bg-gradient-to-r from-[#4318ff] to-[#00b5d8] py-12">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { icon: Store, value: `${jumlahUMKM ?? 0}+`, label: 'UMKM Aktif' },
+              { icon: Building2, value: `${jumlahIndustri ?? 0}+`, label: 'Mitra Industri' },
+              { icon: Package, value: `${jumlahProduk ?? 0}+`, label: 'Produk Tersedia' },
+              { icon: Star, value: `${avgRating}/5`, label: 'Rating Platform' },
+            ].map(({ icon: Icon, value, label }) => (
+              <div key={label} className="text-center text-white animate-fade-up">
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <Icon className="w-6 h-6" />
+                </div>
+                <div className="text-3xl font-extrabold mb-1">{value}</div>
+                <div className="text-sm font-medium text-white/80">{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURES ── */}
+      <section className="py-24 bg-[#f4f7fe]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
+          <div className="text-center mb-16 animate-fade-up">
+            <span className="text-[#4318ff] font-bold text-[13px] uppercase tracking-widest">Mengapa ConnectB2B?</span>
+            <h2 className="text-4xl font-extrabold text-[#2b3674] mt-3 mb-4">Platform Lengkap untuk Kolaborasi B2B</h2>
+            <p className="text-slate-500 max-w-xl mx-auto">Semua yang Anda butuhkan untuk membangun kerja sama bisnis yang kuat, aman, dan menguntungkan — dalam satu platform.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: ShieldCheck,
+                color: 'from-[#4318ff] to-indigo-700',
+                bg: 'bg-indigo-50',
+                title: 'Terverifikasi & Terpercaya',
+                desc: 'Setiap UMKM dan mitra industri melewati proses verifikasi ketat. Anda hanya bertransaksi dengan bisnis yang telah terbukti kredibilitasnya.',
+                delay: '',
+              },
+              {
+                icon: Search,
+                color: 'from-[#00b5d8] to-cyan-600',
+                bg: 'bg-cyan-50',
+                title: 'Pencarian Cerdas',
+                desc: 'Temukan mitra bisnis yang tepat berdasarkan kategori produk, lokasi, dan spesifikasi kebutuhan Anda dengan teknologi pencarian canggih.',
+                delay: 'delay-200',
+              },
+              {
+                icon: TrendingUp,
+                color: 'from-emerald-500 to-teal-600',
+                bg: 'bg-emerald-50',
+                title: 'Pantau Progres Real-time',
+                desc: 'Kelola semua kerja sama dalam satu dashboard. Pantau status produksi, kirim update progres, dan terima notifikasi otomatis.',
+                delay: 'delay-400',
+              },
+            ].map(({ icon: Icon, color, bg, title, desc, delay }) => (
+              <div key={title} className={`bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl hover:shadow-indigo-100 border border-slate-100 transition-all hover:-translate-y-1 animate-fade-up ${delay}`}>
+                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center mb-6 shadow-lg`}>
+                  <Icon className="w-7 h-7 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-[#2b3674] mb-3">{title}</h3>
+                <p className="text-slate-500 text-[15px] leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRODUK UNGGULAN ── */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
           <div className="flex justify-between items-end mb-12">
-            <div>
-              <h2 className="text-3xl font-extrabold text-[#1E3A5F] mb-2">Produk Unggulan</h2>
-              <p className="text-slate-500 font-medium">Temukan produk terbaik dari UMKM terverifikasi</p>
+            <div className="animate-fade-left">
+              <span className="text-[#00b5d8] font-bold text-[13px] uppercase tracking-widest">Katalog</span>
+              <h2 className="text-4xl font-extrabold text-[#2b3674] mt-2 mb-2">Produk Unggulan</h2>
+              <p className="text-slate-500 font-medium">Temukan produk terbaik dari UMKM terverifikasi kami</p>
             </div>
-            <Link href="/login" className="hidden sm:inline-flex text-blue-600 font-semibold hover:text-blue-700 items-center gap-1">
-              Lihat Semua Produk <ArrowRight className="w-4 h-4" />
+            <Link href="/pencarian" className="hidden sm:inline-flex items-center gap-2 text-[#4318ff] font-semibold hover:gap-3 transition-all animate-fade-right">
+              Lihat Semua <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
           {produkUnggulan && produkUnggulan.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {produkUnggulan.map((produk: any) => (
-                <div key={produk.id} className="group border border-slate-100 rounded-3xl overflow-hidden bg-white hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
-                  <div className="aspect-square bg-slate-100 relative overflow-hidden">
+              {produkUnggulan.map((produk: any, i: number) => (
+                <div key={produk.id} className={`group rounded-3xl overflow-hidden bg-white border border-slate-100 hover:shadow-2xl hover:shadow-indigo-100 transition-all duration-300 hover:-translate-y-1 animate-fade-up delay-${(i + 1) * 100}`}>
+                  <div className="aspect-square relative overflow-hidden">
                     {produk.gambar_url ? (
-                      <img src={produk.gambar_url} alt={produk.nama} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img src={produk.gambar_url} alt={produk.nama} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 font-bold text-2xl">
+                      <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${GRADIENT_PAIRS[i % GRADIENT_PAIRS.length]} text-white font-extrabold text-3xl`}>
                         {produk.nama.substring(0, 2).toUpperCase()}
                       </div>
                     )}
+                    <div className="absolute top-3 left-3">
+                      <span className="text-[10px] uppercase tracking-wider font-bold text-white bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                        {produk.kategori || 'Umum'}
+                      </span>
+                    </div>
                   </div>
                   <div className="p-5">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md mb-2 inline-block">
-                      {produk.kategori || 'Umum'}
-                    </span>
-                    <h3 className="font-bold text-[#1E3A5F] text-lg mb-1 truncate">{produk.nama}</h3>
-                    <p className="text-xs text-slate-500 font-medium mb-3 flex items-center gap-1">
-                      <Store className="w-3 h-3" /> {produk.users?.nama || 'UMKM Mitra'}
+                    <h3 className="font-bold text-[#2b3674] text-[15px] mb-1 truncate">{produk.nama}</h3>
+                    <p className="text-xs text-slate-400 font-medium mb-3 flex items-center gap-1">
+                      <Store className="w-3 h-3" /> {(produk.users as any)?.nama || 'UMKM Mitra'}
                     </p>
-                    <div className="text-lg font-extrabold text-[#1E3A5F]">
+                    <div className="text-[16px] font-extrabold text-[#4318ff]">
                       {formatIDR(produk.harga)}
                     </div>
                   </div>
@@ -177,124 +276,150 @@ export default async function LandingPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-              <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">Belum ada produk tersedia</p>
+            <div className="text-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+              <Package className="w-14 h-14 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-400 font-medium text-lg">Belum ada produk tersedia</p>
+              <p className="text-slate-400 text-sm mt-1">Daftar sebagai UMKM dan tambahkan produk pertama Anda</p>
             </div>
           )}
-          
-          <div className="mt-8 text-center sm:hidden">
-            <Link href="/login" className="inline-flex text-blue-600 font-semibold items-center gap-1">
-              Lihat Semua Produk <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* 4. SECTION UMKM TERPERCAYA */}
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-extrabold text-[#1E3A5F] mb-4">UMKM Terpercaya Kami</h2>
-            <p className="text-slate-500 font-medium max-w-2xl mx-auto">Bermitra dengan UMKM terbaik yang telah melewati proses verifikasi ketat untuk menjamin kualitas dan keamanan kerja sama.</p>
+      {/* ── UMKM TERPERCAYA ── */}
+      <section className="py-24 bg-[#f4f7fe]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
+          <div className="text-center mb-16 animate-fade-up">
+            <span className="text-[#4318ff] font-bold text-[13px] uppercase tracking-widest">Mitra Kami</span>
+            <h2 className="text-4xl font-extrabold text-[#2b3674] mt-3 mb-4">UMKM Terverifikasi</h2>
+            <p className="text-slate-500 max-w-xl mx-auto">Bermitra dengan UMKM terbaik yang telah melewati proses verifikasi ketat untuk menjamin kualitas dan keamanan kerja sama Anda.</p>
           </div>
 
           {umkmTerpercaya && umkmTerpercaya.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {umkmTerpercaya.map((umkm: any) => (
-                <div key={umkm.id} className="bg-white p-8 rounded-3xl shadow-sm hover:shadow-lg border border-slate-100 transition-shadow">
+              {umkmTerpercaya.map((umkm: any, i: number) => (
+                <div key={umkm.id} className={`bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-indigo-100 border border-slate-100 transition-all hover:-translate-y-1 animate-fade-up delay-${(i + 1) * 200}`}>
                   <div className="flex justify-between items-start mb-6">
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-inner">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${GRADIENT_PAIRS[i % GRADIENT_PAIRS.length]} flex items-center justify-center text-white font-extrabold text-xl shadow-lg`}>
                       {umkm.nama_usaha?.substring(0, 2).toUpperCase()}
                     </div>
-                    <span className="flex items-center text-[10px] uppercase tracking-wider font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-100">
+                    <span className="flex items-center text-[11px] uppercase tracking-wider font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
                       <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Terverifikasi
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold text-[#1E3A5F] mb-2">{umkm.nama_usaha}</h3>
-                  <div className="flex items-center text-xs font-medium text-slate-500 mb-4 gap-4">
-                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {umkm.alamat || 'Indonesia'}</span>
-                    <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" /> {umkm.kategori?.nama_kategori || 'Umum'}</span>
+                  <h3 className="text-[18px] font-bold text-[#2b3674] mb-3">{umkm.nama_usaha}</h3>
+                  <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500 mb-4">
+                    {umkm.alamat && (
+                      <span className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg">
+                        <MapPin className="w-3.5 h-3.5" /> {umkm.alamat}
+                      </span>
+                    )}
+                    {umkm.kategori?.nama_kategori && (
+                      <span className="flex items-center gap-1 bg-indigo-50 text-[#4318ff] px-2.5 py-1 rounded-lg">
+                        <Package className="w-3.5 h-3.5" /> {umkm.kategori.nama_kategori}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    {umkm.deskripsi ? (umkm.deskripsi.length > 100 ? `${umkm.deskripsi.substring(0, 100)}...` : umkm.deskripsi) : 'UMKM unggulan terverifikasi yang siap memenuhi kebutuhan produksi industri Anda dengan standar terbaik.'}
+                  <p className="text-sm text-slate-500 leading-relaxed">
+                    UMKM unggulan terverifikasi yang siap memenuhi kebutuhan produksi industri Anda dengan standar kualitas terbaik.
                   </p>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100">
-              <Store className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">Belum ada UMKM terdaftar</p>
+            <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-slate-100">
+              <Store className="w-14 h-14 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-400 font-medium text-lg">Belum ada UMKM terdaftar</p>
             </div>
           )}
         </div>
       </section>
 
-
-
-      {/* 6. SECTION HOW IT WORKS */}
-      <section className="py-24 bg-[#1E3A5F] text-white overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Cara Kerja ConnectB2B</h2>
-            <p className="text-blue-200 max-w-2xl mx-auto font-medium">Tiga langkah mudah untuk memulai kolaborasi bisnis yang saling menguntungkan.</p>
+      {/* ── HOW IT WORKS ── */}
+      <section id="how-it-works" className="py-24 bg-gradient-to-br from-[#2b3674] to-[#4318ff] text-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#00b5d8]/10 rounded-full blur-3xl animate-blob" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 rounded-full blur-3xl animate-blob delay-400" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
+          <div className="text-center mb-16 animate-fade-up">
+            <span className="text-[#00b5d8] font-bold text-[13px] uppercase tracking-widest">Mulai Sekarang</span>
+            <h2 className="text-4xl font-extrabold mt-3 mb-4">Cara Kerja ConnectB2B</h2>
+            <p className="text-indigo-200 max-w-xl mx-auto">Tiga langkah mudah untuk memulai kolaborasi bisnis yang saling menguntungkan dan berkelanjutan.</p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
-            <div className="hidden md:block absolute top-12 left-1/6 right-1/6 h-0.5 bg-blue-800 -z-10"></div>
-            
-            <div className="text-center relative">
-              <div className="w-24 h-24 mx-auto bg-blue-600 rounded-full flex items-center justify-center mb-6 shadow-xl border-4 border-[#1E3A5F]">
-                <ShieldCheck className="w-10 h-10 text-white" />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative">
+            {[
+              { num: '01', icon: ShieldCheck, color: 'bg-[#4318ff]', title: 'Daftar & Verifikasi', desc: 'Buat akun sebagai UMKM atau Industri. Lengkapi profil bisnis Anda dan tunggu proses verifikasi tim kami yang cepat dan aman.' },
+              { num: '02', icon: Search, color: 'bg-[#00b5d8]', title: 'Temukan Mitra', desc: 'Jelajahi katalog produk UMKM terverifikasi, cari sesuai spesifikasi kebutuhan produksi, atau terima request langsung dari industri.' },
+              { num: '03', icon: Handshake, color: 'bg-emerald-500', title: 'Jalin Kerja Sama', desc: 'Lakukan negosiasi transparan, setujui kesepakatan, dan pantau progres produksi secara real-time hingga selesai.' },
+            ].map(({ num, icon: Icon, color, title, desc }, i) => (
+              <div key={num} className={`relative text-center animate-fade-up delay-${(i + 1) * 200}`}>
+                <div className="relative inline-block mb-6">
+                  <div className={`w-20 h-20 mx-auto ${color} rounded-3xl flex items-center justify-center shadow-2xl`}>
+                    <Icon className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="absolute -top-3 -right-3 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-[11px] font-extrabold text-white border-2 border-white/30">
+                    {num}
+                  </div>
+                </div>
+                <h3 className="text-xl font-extrabold mb-3">{title}</h3>
+                <p className="text-indigo-200 text-[15px] leading-relaxed max-w-xs mx-auto">{desc}</p>
               </div>
-              <h3 className="text-xl font-bold mb-3">1. Daftar & Verifikasi</h3>
-              <p className="text-blue-200 text-sm leading-relaxed max-w-xs mx-auto">Buat akun sebagai UMKM atau Industri. Lengkapi profil dan tunggu proses verifikasi tim kami.</p>
-            </div>
-            
-            <div className="text-center relative">
-              <div className="w-24 h-24 mx-auto bg-cyan-500 rounded-full flex items-center justify-center mb-6 shadow-xl border-4 border-[#1E3A5F]">
-                <Search className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">2. Temukan Mitra</h3>
-              <p className="text-blue-200 text-sm leading-relaxed max-w-xs mx-auto">Jelajahi katalog produk, cari spesifikasi yang dibutuhkan, atau ajukan request penawaran.</p>
-            </div>
-            
-            <div className="text-center relative">
-              <div className="w-24 h-24 mx-auto bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-xl border-4 border-[#1E3A5F]">
-                <Handshake className="w-10 h-10 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">3. Kerja Sama</h3>
-              <p className="text-blue-200 text-sm leading-relaxed max-w-xs mx-auto">Lakukan negosiasi, setujui kontrak kerja sama, dan pantau progres produksi hingga selesai.</p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* 7. SECTION CTA BOTTOM */}
-      <section className="py-20 bg-gradient-to-b from-[#1E3A5F] to-[#0f2139] text-center border-t border-white/10">
-        <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-4xl font-extrabold text-white mb-6">Siap Bersinergi dan Tumbuh Bersama?</h2>
-          <p className="text-xl text-blue-200 mb-10">Bergabunglah dengan ribuan bisnis lainnya yang telah mempercepat pertumbuhan mereka melalui ConnectB2B.</p>
+      {/* ── CTA ── */}
+      <section className="py-24 bg-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/60 to-cyan-50/40" />
+        <div className="max-w-4xl mx-auto px-4 text-center relative z-10 animate-fade-up">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-[#4318ff] px-4 py-1.5 rounded-full text-[13px] font-semibold mb-6">
+            <Zap className="w-3.5 h-3.5" /> Bergabung Sekarang — Gratis!
+          </div>
+          <h2 className="text-4xl md:text-5xl font-extrabold text-[#2b3674] mb-6 leading-tight">
+            Siap Tumbuh Bersama <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4318ff] to-[#00b5d8]">ConnectB2B?</span>
+          </h2>
+          <p className="text-lg text-slate-500 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Bergabunglah dengan ratusan bisnis yang telah mempercepat pertumbuhan mereka melalui ekosistem digital ConnectB2B.
+          </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link href="/register?role=umkm" className="px-8 py-4 bg-white text-[#1E3A5F] font-bold rounded-2xl shadow-xl hover:-translate-y-1 transition-all">
-              Daftar Sekarang
+            <Link href="/register?role=umkm" className="px-8 py-4 bg-gradient-to-r from-[#4318ff] to-[#6C3EFF] text-white font-bold rounded-2xl shadow-xl shadow-indigo-500/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+              Mulai sebagai UMKM <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link href="/register?role=industri" className="px-8 py-4 bg-white border-2 border-slate-200 text-[#2b3674] font-bold rounded-2xl shadow-sm hover:border-[#4318ff]/30 hover:bg-indigo-50/50 transition-all flex items-center justify-center">
+              Mulai sebagai Industri
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 8. FOOTER */}
-      <footer className="bg-[#0a1526] py-12 text-center text-slate-400 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-500 font-bold text-2xl mx-auto mb-6">
-            C
+      {/* ── FOOTER ── */}
+      <footer className="bg-[#1a1f3c] py-14 border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div>
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4318ff] to-[#00b5d8] flex items-center justify-center text-white font-extrabold text-lg">
+                  C
+                </div>
+                <span className="text-xl font-extrabold text-white tracking-tight">ConnectB2B</span>
+              </div>
+              <p className="text-slate-400 text-sm max-w-xs leading-relaxed">
+                Platform digital yang menghubungkan UMKM dan Industri untuk kolaborasi bisnis yang lebih baik.
+              </p>
+            </div>
+            <div className="flex flex-col items-center md:items-end gap-2">
+              <div className="flex gap-6 text-sm text-slate-400">
+                <Link href="/pencarian" className="hover:text-white transition-colors">Produk</Link>
+                <Link href="/login" className="hover:text-white transition-colors">Masuk</Link>
+                <Link href="/register" className="hover:text-white transition-colors">Daftar</Link>
+              </div>
+              <p className="text-slate-500 text-sm">© 2026 ConnectB2B — Kelompok B PPL</p>
+            </div>
           </div>
-          <p className="font-medium">© 2026 ConnectB2B — Kelompok B PPL</p>
-          <p className="text-sm mt-2 text-slate-500">Membangun ekosistem bisnis yang lebih baik untuk Indonesia.</p>
         </div>
       </footer>
+
     </div>
   );
 }

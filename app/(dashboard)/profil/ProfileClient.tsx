@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 import { Camera, Pencil, CheckCircle, FileText, Upload, AlertCircle, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -34,9 +34,17 @@ export default function ProfileClient({
   // Image State
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [coverUrl, setCoverUrl] = useState<string>('');
-  
+
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // Document refs — must be at top level, not inside .map()
+  const nibInputRef = useRef<HTMLInputElement>(null);
+  const npwpInputRef = useRef<HTMLInputElement>(null);
+  const docInputRefs: Record<string, React.RefObject<HTMLInputElement>> = {
+    NIB: nibInputRef,
+    NPWP: npwpInputRef,
+  };
 
   useEffect(() => {
     // Check if images exist by getting their public URLs and appending a timestamp to bypass cache
@@ -385,16 +393,16 @@ export default function ProfileClient({
               {/* Note: This is an overview as per mockup, full document upload would typically go through a different component or route as per FR-27. */}
               {['NIB', 'NPWP'].map((docType) => {
                 const existingDoc = documents.find((d: any) => d.jenis_dokumen === docType);
-                const fileInputRef = useRef<HTMLInputElement>(null);
-                
+                const fileInputRef = docInputRefs[docType];
+
                 return (
                   <div key={docType} className={`relative border-2 border-dashed ${existingDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'} rounded-xl p-6 text-center transition-all hover:bg-gray-100 cursor-pointer group`} onClick={() => fileInputRef.current?.click()}>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={(e) => handleDocumentUpload(e, docType)} 
-                      className="hidden" 
-                      accept=".pdf,.jpg,.jpeg,.png" 
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={(e) => handleDocumentUpload(e, docType)}
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png"
                     />
                     {existingDoc ? (
                       <>
