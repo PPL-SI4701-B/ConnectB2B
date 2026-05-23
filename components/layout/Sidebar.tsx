@@ -43,7 +43,7 @@ export default async function Sidebar() {
     { href: '/dashboard-industri', label: 'Dashboard Industri', icon: LayoutDashboard },
     { href: '/pencarian', label: 'Cari Supplier UMKM', icon: Search },
     { href: '/keranjang', label: 'Keranjang Kolaborasi', icon: Store },
-    { href: '/dashboard-industri/transaksi', label: 'Pantau Transaksi', icon: ArrowRightLeft },
+    { href: '/pantau-transaksi', label: 'Pantau Transaksi', icon: ArrowRightLeft },
     { href: '/dashboard-industri/ulasan', label: 'Beri Ulasan', icon: Star },
   ];
 
