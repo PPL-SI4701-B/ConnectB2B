@@ -141,6 +141,7 @@ export default function PantauTransaksiClient({
   items: TransaksiItem[];
   industriNama: string;
 }) {
+  const [confirmedIds, setConfirmedIds] = useState<Set<number>>(new Set());
   const [selected, setSelected] = useState<TransaksiItem | null>(
     items.length > 0 ? items[0] : null
   );
@@ -153,18 +154,19 @@ export default function PantauTransaksiClient({
     if (!selected) return;
     setError(null);
 
+    const transaksiId = selected.transaksi_id;
     startTransition(async () => {
       const result = await konfirmasiSelesai(
-        selected.transaksi_id,
+        transaksiId,
         selected.umkm_user_id,
         industriNama
       );
 
       if (result.success) {
-        setSuccessId(selected.transaksi_id);
-        // Redirect to ulasan page after 1.5s
+        setConfirmedIds(prev => new Set(prev).add(transaksiId));
+        setSuccessId(transaksiId);
         setTimeout(() => {
-          router.push(`/dashboard-industri/ulasan?transaksi_id=${selected.transaksi_id}`);
+          router.push(`/dashboard-industri/ulasan?transaksi_id=${transaksiId}`);
         }, 1500);
       } else {
         setError(result.error || "Terjadi kesalahan. Silakan coba lagi.");
@@ -173,7 +175,9 @@ export default function PantauTransaksiClient({
   };
 
   const isSelesai = (item: TransaksiItem) =>
-    !!item.tanggal_selesai || item.progress_status?.toLowerCase() === "selesai";
+    confirmedIds.has(item.transaksi_id) ||
+    !!item.tanggal_selesai ||
+    item.progress_status?.toLowerCase() === "selesai";
 
   if (items.length === 0) {
     return (

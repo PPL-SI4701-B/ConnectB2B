@@ -57,7 +57,6 @@ export async function konfirmasiSelesai(
   }
 
   // Revalidate the page
-  revalidatePath("/dashboard-industri/pantau-transaksi");
   revalidatePath("/pantau-transaksi");
 
   return { success: true };
