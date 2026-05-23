@@ -441,10 +441,10 @@ export type Database = {
           industri_id: number | null
           pesan: string | null
           produk_id: number | null
+          sender_umkm_id: number | null
           status: Database["public"]["Enums"]["request_status"]
           tanggal_request: string
           umkm_id: number
-          sender_umkm_id: number | null
         }
         Insert: {
           equipment_id?: number | null
@@ -503,32 +503,32 @@ export type Database = {
         Row: {
           admin_id: string | null
           id: number
+          progress_status: string
           request_id: number
           status: Database["public"]["Enums"]["transaksi_status"]
           status_validasi: Database["public"]["Enums"]["validasi_status"]
           tanggal_mulai: string
           tanggal_selesai: string | null
-          progress_status: string
         }
         Insert: {
           admin_id?: string | null
           id?: number
+          progress_status?: string
           request_id: number
           status?: Database["public"]["Enums"]["transaksi_status"]
           status_validasi?: Database["public"]["Enums"]["validasi_status"]
           tanggal_mulai?: string
           tanggal_selesai?: string | null
-          progress_status?: string
         }
         Update: {
           admin_id?: string | null
           id?: number
+          progress_status?: string
           request_id?: number
           status?: Database["public"]["Enums"]["transaksi_status"]
           status_validasi?: Database["public"]["Enums"]["validasi_status"]
           tanggal_mulai?: string
           tanggal_selesai?: string | null
-          progress_status?: string
         }
         Relationships: [
           {
@@ -738,6 +738,14 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       is_admin: { Args: never; Returns: boolean }
+      konfirmasi_pesanan_selesai: {
+        Args: {
+          p_transaksi_id: number
+          p_umkm_user_id: string
+          p_industri_nama: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       equipment_status: "tersedia" | "tidak tersedia"

@@ -74,7 +74,11 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/register');
   const isDashboardRoute =
     request.nextUrl.pathname.startsWith('/dashboard') ||
-    request.nextUrl.pathname.startsWith('/dashboard-industri');
+    request.nextUrl.pathname.startsWith('/dashboard-industri') ||
+    request.nextUrl.pathname.startsWith('/pantau-transaksi') ||
+    request.nextUrl.pathname.startsWith('/keranjang') ||
+    request.nextUrl.pathname.startsWith('/profil') ||
+    request.nextUrl.pathname.startsWith('/sewa-alat');
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
   // #region agent log

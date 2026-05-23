@@ -198,7 +198,7 @@ export default async function DashboardIndustriPage() {
       <div className="bg-card-bg rounded-xl shadow-sm overflow-hidden p-[30px] min-h-[400px]">
         <div className="flex justify-between items-center mb-[25px]">
           <h2 className="text-[20px] font-bold text-text-main">Status Pemesanan</h2>
-          <Link href="/dashboard-industri/transaksi" className="text-text-main bg-transparent border border-border-color px-5 py-2.5 rounded-lg font-semibold text-[15px] flex items-center hover:bg-bg-color transition-colors">
+          <Link href="/pantau-transaksi" className="text-text-main bg-transparent border border-border-color px-5 py-2.5 rounded-lg font-semibold text-[15px] flex items-center hover:bg-bg-color transition-colors">
             Lihat Semua <ChevronRight className="w-4 h-4 ml-2" />
           </Link>
         </div>

@@ -9,6 +9,7 @@ interface TransaksiItem {
   trxCode: string;
   status: string;
   statusValidasi: string;
+  tanggalMulai: string;
   tanggalSelesai: string | null;
   progressStatus: string;
   history: any[];
