@@ -4,7 +4,8 @@
 INSERT INTO storage.buckets (id, name, public)
 VALUES
   ('avatars',   'avatars',   true),
-  ('documents', 'documents', false)
+  ('documents', 'documents', false),
+  ('bukti-bayar', 'bukti-bayar', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- ── RLS policies for "avatars" bucket ──
@@ -36,3 +37,19 @@ CREATE POLICY "documents: authenticated update own folder"
 CREATE POLICY "documents: owner read"
   ON storage.objects FOR SELECT TO authenticated
   USING (bucket_id = 'documents' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ── RLS policies for "bukti-bayar" bucket ──
+-- Authenticated users can upload to "bukti-bayar"
+CREATE POLICY "bukti-bayar: authenticated upload"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'bukti-bayar');
+
+CREATE POLICY "bukti-bayar: authenticated update"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (bucket_id = 'bukti-bayar');
+
+-- Everyone can read (public bucket)
+CREATE POLICY "bukti-bayar: public read"
+  ON storage.objects FOR SELECT TO public
+  USING (bucket_id = 'bukti-bayar');
+
