@@ -43,7 +43,7 @@ export default async function DashboardPage() {
     const { count: pc } = await supabase
       .from('produk')
       .select('*', { count: 'exact', head: true })
-      .eq('umkm_id', umkmId);
+      .eq('user_id', user?.id || '');
     productCount = pc ?? 0;
     // Active cooperations for this UMKM
     const { count: ca } = await supabase
