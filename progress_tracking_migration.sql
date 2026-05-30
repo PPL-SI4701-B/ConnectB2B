@@ -34,7 +34,7 @@ USING (
         JOIN public.request r ON t.request_id = r.id
         LEFT JOIN public.umkm u ON r.umkm_id = u.id
         LEFT JOIN public.industri i ON r.industri_id = i.id
-        WHERE t.id = transaksi_history.transaksi_id
+        WHERE t.id = transaksi_id
         AND (u.user_id = auth.uid() OR i.user_id = auth.uid() OR public.is_admin())
     )
 );
@@ -46,7 +46,7 @@ WITH CHECK (
         SELECT 1 FROM public.transaksi t
         JOIN public.request r ON t.request_id = r.id
         JOIN public.umkm u ON r.umkm_id = u.id
-        WHERE t.id = transaksi_history.transaksi_id
+        WHERE t.id = transaksi_id
         AND u.user_id = auth.uid()
     )
 );
