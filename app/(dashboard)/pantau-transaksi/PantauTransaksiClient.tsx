@@ -306,7 +306,7 @@ export default function PantauTransaksiClient({
         setSuccessId(selectedTransaksi.id);
         showToast('Pesanan berhasil dikonfirmasi selesai!', 'success');
         setTimeout(() => {
-          router.push(`/dashboard-industri/ulasan?transaksi_id=${selectedTransaksi.id}`);
+          router.push(`/beri-ulasan?transaksi_id=${selectedTransaksi.id}`);
         }, 1500);
       } else {
         setErrorText(result.error || 'Gagal melakukan konfirmasi pesanan.');
@@ -749,7 +749,7 @@ export default function PantauTransaksiClient({
                 {selectedTransaksi.tanggalSelesai !== null && successId !== selectedTransaksi.id && (
                   <div className="pt-4 border-t border-border-color">
                     <a
-                      href={`/dashboard-industri/ulasan?transaksi_id=${selectedTransaksi.id}`}
+                      href={`/beri-ulasan?transaksi_id=${selectedTransaksi.id}`}
                       className="w-full flex items-center justify-center gap-2 bg-[#4318ff] hover:bg-[#3311dd] text-white rounded-xl px-5 py-3.5 font-bold transition-all text-sm shadow-sm"
                     >
                       <span>{selectedTransaksi.hasUlasan ? "Lihat Ulasan Proyek" : "Beri Ulasan Bintang & Feedback"}</span>
