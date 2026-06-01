@@ -44,7 +44,7 @@ export default async function Sidebar() {
     { href: '/pencarian', label: 'Cari Supplier UMKM', icon: Search },
     { href: '/keranjang', label: 'Keranjang Kolaborasi', icon: Store },
     { href: '/pantau-transaksi', label: 'Pantau Transaksi', icon: ArrowRightLeft },
-    { href: '/dashboard-industri/ulasan', label: 'Beri Ulasan', icon: Star },
+    { href: '/beri-ulasan', label: 'Beri Ulasan', icon: Star },
   ];
 
   const links = isIndustri ? industriLinks : umkmLinks;
