@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, Tag, MapPin, Phone, Package, Wrench, X, ChevronRight, Building2, Star, ShoppingCart, Filter, Send } from 'lucide-react';
+import { Search, Tag, MapPin, Phone, Package, Wrench, X, ChevronRight, Building2, Star, ShoppingCart, Filter, MessageSquare } from 'lucide-react';
 import NotificationBell from '@/components/layout/NotificationBell';
 import { UmkmItem, Produk, Equipment } from '@/types/umkm';
 import { createClient } from '@/lib/supabase';
 import { toast } from 'react-hot-toast';
 import { addToCart } from '@/app/actions/cart-actions';
 import { sendDirectRequest } from '@/app/actions/request-actions';
+import UlasanSection from '@/components/ui/UlasanSection';
 
 export default function PencarianClient({ 
   umkmList,
@@ -49,7 +50,7 @@ export default function PencarianClient({
   const [showFilters, setShowFilters] = useState(false);
 
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'produk' | 'equipment'>('produk');
+  const [activeTab, setActiveTab] = useState<'produk' | 'equipment' | 'ulasan'>('produk');
   const [selectedItem, setSelectedItem] = useState<{ type: 'produk' | 'equipment', item: Produk | Equipment } | null>(null);
   
   // Cart States
@@ -426,12 +427,21 @@ export default function PencarianClient({
                     {selectedUmkm.kontak}
                   </div>
                 )}
+                {/* FR-18: Rating summary in header */}
+                <div className="flex items-center gap-1" id="header-rating-summary">
+                  <Star className="w-4 h-4 fill-amber-300 text-amber-300 shrink-0" />
+                  <span className="font-semibold">
+                    {selectedUmkm.rating_avg > 0 ? selectedUmkm.rating_avg.toFixed(1) : '-'}
+                  </span>
+                  <span className="text-white/60 text-xs">({selectedUmkm.rating_count} ulasan)</span>
+                </div>
               </div>
             </div>
 
             {/* Tab Nav */}
             <div className="flex border-b border-gray-100 bg-gray-50">
               <button
+                id="tab-produk"
                 onClick={() => setActiveTab('produk')}
                 className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                   activeTab === 'produk'
@@ -443,6 +453,7 @@ export default function PencarianClient({
                 Produk & Jasa ({selectedUmkm.produk.length})
               </button>
               <button
+                id="tab-equipment"
                 onClick={() => setActiveTab('equipment')}
                 className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
                   activeTab === 'equipment'
@@ -452,6 +463,19 @@ export default function PencarianClient({
               >
                 <Wrench className="w-4 h-4" />
                 Alat/Mesin ({selectedUmkm.equipment.length})
+              </button>
+              {/* FR-18: Tab Ulasan */}
+              <button
+                id="tab-ulasan"
+                onClick={() => setActiveTab('ulasan')}
+                className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                  activeTab === 'ulasan'
+                    ? 'text-amber-600 border-b-2 border-amber-500 bg-white'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Star className="w-4 h-4" />
+                Ulasan ({selectedUmkm.rating_count})
               </button>
             </div>
 
@@ -486,7 +510,7 @@ export default function PencarianClient({
                     ))}
                   </div>
                 )
-              ) : (
+              ) : activeTab === 'equipment' ? (
                 selectedUmkm.equipment.length === 0 ? (
                   <div className="py-10 text-center text-gray-400">
                     <Wrench className="w-10 h-10 mx-auto mb-2 opacity-30" />
@@ -515,6 +539,14 @@ export default function PencarianClient({
                     ))}
                   </div>
                 )
+              ) : (
+                /* FR-18: Ulasan tab */
+                <UlasanSection
+                  ulasan={selectedUmkm.ulasan}
+                  rating_avg={selectedUmkm.rating_avg}
+                  rating_count={selectedUmkm.rating_count}
+                  umkm_nama={selectedUmkm.nama_usaha}
+                />
               )}
             </div>
             
@@ -592,36 +624,53 @@ export default function PencarianClient({
             )}
           </div>
           <div className="flex border-b border-gray-100">
-            <button onClick={() => setActiveTab('produk')} className={`flex-1 py-3 text-sm font-medium ${activeTab === 'produk' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>
+            <button id="mobile-tab-produk" onClick={() => setActiveTab('produk')} className={`flex-1 py-3 text-sm font-medium ${activeTab === 'produk' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>
               Produk ({selectedUmkm.produk.length})
             </button>
-            <button onClick={() => setActiveTab('equipment')} className={`flex-1 py-3 text-sm font-medium ${activeTab === 'equipment' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>
+            <button id="mobile-tab-equipment" onClick={() => setActiveTab('equipment')} className={`flex-1 py-3 text-sm font-medium ${activeTab === 'equipment' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}>
               Alat ({selectedUmkm.equipment.length})
             </button>
+            {/* FR-18: Mobile ulasan tab */}
+            <button id="mobile-tab-ulasan" onClick={() => setActiveTab('ulasan')} className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1 ${activeTab === 'ulasan' ? 'text-amber-600 border-b-2 border-amber-500' : 'text-gray-500'}`}>
+              <Star className="w-3 h-3" />
+              Ulasan ({selectedUmkm.rating_count})
+            </button>
           </div>
-          <div className="p-4 grid grid-cols-2 gap-3">
-            {(activeTab === 'produk' ? selectedUmkm.produk : selectedUmkm.equipment).map((item: any) => (
-              <div 
-                key={item.id} 
-                onClick={() => setSelectedItem({ type: activeTab, item })}
-                className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100 cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-95"
-              >
-                <div className={`w-full h-24 flex items-center justify-center ${activeTab === 'produk' ? 'bg-indigo-50' : 'bg-cyan-50'}`}>
-                  {activeTab === 'produk' ? <Package className="w-6 h-6 text-indigo-200" /> : <Wrench className="w-6 h-6 text-cyan-200" />}
+          {activeTab === 'ulasan' ? (
+            /* FR-18: Mobile ulasan content */
+            <div className="p-4">
+              <UlasanSection
+                ulasan={selectedUmkm.ulasan}
+                rating_avg={selectedUmkm.rating_avg}
+                rating_count={selectedUmkm.rating_count}
+                umkm_nama={selectedUmkm.nama_usaha}
+              />
+            </div>
+          ) : (
+            <div className="p-4 grid grid-cols-2 gap-3">
+              {(activeTab === 'produk' ? selectedUmkm.produk : selectedUmkm.equipment).map((item: any) => (
+                <div 
+                  key={item.id} 
+                  onClick={() => setSelectedItem({ type: activeTab as 'produk' | 'equipment', item })}
+                  className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100 cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-95"
+                >
+                  <div className={`w-full h-24 flex items-center justify-center ${activeTab === 'produk' ? 'bg-indigo-50' : 'bg-cyan-50'}`}>
+                    {activeTab === 'produk' ? <Package className="w-6 h-6 text-indigo-200" /> : <Wrench className="w-6 h-6 text-cyan-200" />}
+                  </div>
+                  <div className="p-2">
+                    <h4 className="font-semibold text-gray-900 text-xs line-clamp-1">{item.nama}</h4>
+                    <p className="text-indigo-600 font-bold text-xs mt-0.5">
+                      {formatRupiah(item.harga || item.harga_sewa)}
+                      {activeTab === 'equipment' && <span className="text-gray-400 font-normal"> /hari</span>}
+                    </p>
+                  </div>
                 </div>
-                <div className="p-2">
-                  <h4 className="font-semibold text-gray-900 text-xs line-clamp-1">{item.nama}</h4>
-                  <p className="text-indigo-600 font-bold text-xs mt-0.5">
-                    {formatRupiah(item.harga || item.harga_sewa)}
-                    {activeTab === 'equipment' && <span className="text-gray-400 font-normal"> /hari</span>}
-                  </p>
-                </div>
-              </div>
-            ))}
-            {(activeTab === 'produk' ? selectedUmkm.produk : selectedUmkm.equipment).length === 0 && (
-              <div className="col-span-2 py-6 text-center text-gray-400 text-sm">Belum ada item.</div>
-            )}
-          </div>
+              ))}
+              {(activeTab === 'produk' ? selectedUmkm.produk : selectedUmkm.equipment).length === 0 && (
+                <div className="col-span-2 py-6 text-center text-gray-400 text-sm">Belum ada item.</div>
+              )}
+            </div>
+          )}
           
           {/* Request Kerjasama Form */}
           <div className="p-5 border-t border-gray-100 bg-gray-50 mt-auto">

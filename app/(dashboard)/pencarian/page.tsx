@@ -103,11 +103,63 @@ export default async function PencarianPage(props: Props) {
     })
     .map(c => c.nama_kategori);
 
+  // FR-18: Fetch ulasan joined with transaksi → request → umkm & industri
+  // Structure: ulasan.transaksi_id → transaksi.request_id → request.umkm_id + request.industri_id
+  const { data: ulasanRaw } = await supabase
+    .from('ulasan')
+    .select(`
+      id,
+      rating,
+      komentar,
+      tanggal,
+      transaksi!inner (
+        request!inner (
+          umkm!inner ( id, user_id ),
+          industri!inner ( nama_perusahaan )
+        )
+      )
+    `);
+
+  // Build per-UMKM ulasan map: umkm.user_id → list of ulasan
+  type UlasanEntry = {
+    id: number;
+    rating: number;
+    komentar: string | null;
+    tanggal: string;
+    industri_nama: string;
+  };
+  const ulasanByUmkmUserId: Record<string, UlasanEntry[]> = {};
+
+  (ulasanRaw || []).forEach((u: any) => {
+    const req = u.transaksi?.request;
+    const umkmUserId: string | undefined = req?.umkm?.user_id;
+    const industriNama: string = req?.industri?.nama_perusahaan || 'Industri';
+    if (!umkmUserId) return;
+
+    if (!ulasanByUmkmUserId[umkmUserId]) {
+      ulasanByUmkmUserId[umkmUserId] = [];
+    }
+    ulasanByUmkmUserId[umkmUserId].push({
+      id: u.id,
+      rating: u.rating,
+      komentar: u.komentar,
+      tanggal: u.tanggal,
+      industri_nama: industriNama,
+    });
+  });
+
   // Shape data for client
   const formattedUmkm = (usersList || []).map(u => {
     // umkm might be an array or an object depending on the relationship. Usually it's an array for 1:N
     const umkmData = Array.isArray(u.umkm) ? u.umkm[0] : u.umkm;
     const umkmNumericId = umkmData?.id ? Number(umkmData.id) : null;
+
+    // FR-18: Attach ulasan + compute rating stats
+    const umkmUlasan = ulasanByUmkmUserId[u.id] || [];
+    const ratingCount = umkmUlasan.length;
+    const ratingAvg = ratingCount > 0
+      ? Math.round((umkmUlasan.reduce((sum, ul) => sum + ul.rating, 0) / ratingCount) * 10) / 10
+      : 0;
     
     return {
       // Use umkm numeric id if available, otherwise keep user_id for key (avoid NaN)
@@ -122,6 +174,9 @@ export default async function PencarianPage(props: Props) {
       produk: (u.produk as any[]) || [],
       equipment: (u.equipment as any[]) || [],
       totalProduk: ((u.produk as any[]) || []).length + ((u.equipment as any[]) || []).length,
+      rating_avg: ratingAvg,
+      rating_count: ratingCount,
+      ulasan: umkmUlasan,
     };
   });
 
