@@ -14,6 +14,14 @@ export type Equipment = {
   deskripsi?: string;
 };
 
+export type Ulasan = {
+  id: number;
+  rating: number;
+  komentar: string | null;
+  tanggal: string;
+  industri_nama: string;
+};
+
 export type UmkmItem = {
   id: number | string;
   user_id: string;
@@ -25,4 +33,7 @@ export type UmkmItem = {
   produk: Produk[];
   equipment: Equipment[];
   totalProduk: number;
+  rating_avg: number;
+  rating_count: number;
+  ulasan: Ulasan[];
 };
