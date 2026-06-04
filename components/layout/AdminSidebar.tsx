@@ -7,8 +7,8 @@ export default function AdminSidebar() {
       <div className="h-full px-4 py-8 flex flex-col">
         <div className="mb-12 px-2 flex items-center justify-between">
           <Link href="/admin" className="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-indigo-200">
-            ConnectB2B
-            <span className="block text-xs font-medium text-indigo-300 mt-1 uppercase tracking-widest">Administrator</span>
+            AdminB2B
+            <span className="block text-xs font-medium text-indigo-300 mt-1 uppercase tracking-widest">Portal Moderasi</span>
           </Link>
         </div>
         
@@ -20,7 +20,7 @@ export default function AdminSidebar() {
             </Link>
           </li>
           <li>
-            <Link href="#" className="flex items-center p-3 text-indigo-100 rounded-xl hover:bg-white/10 hover:text-white transition-all group border border-transparent">
+            <Link href="/admin/users" className="flex items-center p-3 text-indigo-100 rounded-xl hover:bg-white/10 hover:text-white transition-all group border border-transparent">
               <Users className="w-5 h-5 text-indigo-400 group-hover:text-indigo-200 transition-colors" />
               <span className="ms-4 font-medium text-sm">Kelola Pengguna Sistem</span>
             </Link>
