@@ -35,7 +35,7 @@ export default async function TinjauanKontenPage() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching laporan_konten:', error);
+    // console.error('Error fetching laporan_konten:', error);
   }
 
   // Format the data to match LaporanItem type for the client component
@@ -76,11 +76,10 @@ export default async function TinjauanKontenPage() {
           <div className="w-px h-6 bg-slate-200"></div>
           <span className="font-bold text-sm text-slate-700">SuperAdmin</span>
           <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 relative">
-            <Image 
+            <img 
               src="https://ui-avatars.com/api/?name=Super+Admin&background=ee5d50&color=fff" 
               alt="Profile" 
-              fill
-              className="object-cover"
+              className="object-cover w-full h-full"
             />
           </div>
         </div>
