@@ -1,11 +1,14 @@
 import { createClient } from '@/lib/supabase-server';
 import VerificationTable from '@/components/admin/VerificationTable';
-import PaymentValidationTable from '@/components/admin/PaymentValidationTable';
+import ModerationQueuePreview from '@/components/admin/ModerationQueuePreview';
+import Link from 'next/link';
 import {
   TrendingUp,
   ShieldCheck,
   AlertTriangle,
-  Factory
+  Factory,
+  ArrowRight,
+  Users
 } from 'lucide-react';
 
 export const revalidate = 0; // ensure fresh data on load
@@ -36,52 +39,44 @@ export default async function AdminPage() {
     console.error('Error fetching documents:', error);
   }
 
-  // Fetch pending payments (FR-29)
-  const { data: pendingPayments, error: paymentError } = await supabase
-    .from('pembayaran')
-    .select(`
-      id,
-      transaksi_id,
-      tanggal_bayar,
-      bukti_transfer,
-      status,
-      transaksi (
-        id,
-        request:request_id (
-          industri:industri_id (
-            nama_perusahaan,
-            user_id
-          ),
-          umkm:umkm_id (
-            user_id
-          )
-        ),
-        detail_transaksi (
-          subtotal
-        )
-      )
-    `)
+  // Fetch moderation queue
+  const { data: laporanKonten, error: laporanError } = await supabase
+    .from('laporan_konten')
+    .select('*')
     .eq('status', 'pending')
-    .order('tanggal_bayar', { ascending: false });
+    .order('created_at', { ascending: false });
 
-  if (paymentError) {
-    console.error('Error fetching pending payments:', paymentError);
+  if (laporanError) {
+    // console.error('Error fetching laporan_konten:', laporanError);
+  }
+
+  // Fetch active industries this month
+  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  const { data: trxThisMonth } = await supabase
+    .from('transaksi')
+    .select('request:request_id(industri_id)')
+    .gte('created_at', startOfMonth);
+
+  let industriAktif = 0;
+  if (trxThisMonth) {
+    const activeSet = new Set(
+      trxThisMonth
+        .map((t: any) => t.request?.industri_id)
+        .filter((id: any) => id != null)
+    );
+    industriAktif = activeSet.size;
   }
 
   // Fetch stat counts
   const [
     { count: totalTransaksi },
     { count: penggunaTervalidasi },
-    { count: industriAktif },
-    { count: laporanDitolak } // Bug 7 Fix: separate query for rejected documents
   ] = await Promise.all([
     supabase.from('transaksi').select('*', { count: 'exact', head: true }).eq('status', 'lunas'),
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('status_verifikasi', 'terverifikasi'),
-    supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'industri').eq('status_verifikasi', 'terverifikasi'),
-    supabase.from('dokumen_legalitas').select('*', { count: 'exact', head: true }).eq('status_verifikasi', 'ditolak')
   ]);
 
-  // Calculate unique pending users instead of total documents
+  const moderationQueueCount = laporanKonten?.length || 0;
   const pendingUsersCount = documents ? new Set(documents.map((d: any) => d.user_id)).size : 0;
 
   return (
@@ -143,9 +138,8 @@ export default async function AdminPage() {
               </div>
             </div>
             <div className="flex items-baseline space-x-2">
-              {/* Bug 7 Fix: use laporanDitolak from dedicated query */}
-              <span className="text-3xl font-bold text-slate-900">{laporanDitolak || 0}</span>
-              <span className="text-xs font-medium text-slate-500">Total ditolak</span>
+              <span className="text-3xl font-bold text-slate-900">{moderationQueueCount}</span>
+              <span className="text-xs font-medium text-slate-500">Dalam antrean</span>
             </div>
           </div>
         </div>
@@ -163,7 +157,7 @@ export default async function AdminPage() {
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-slate-900">{industriAktif || 0}</span>
               <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                +45
+                Aktif
               </span>
             </div>
           </div>
@@ -171,23 +165,39 @@ export default async function AdminPage() {
 
       </div>
 
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-900">Antrean Verifikasi Dokumen Akun Baru</h2>
-        <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
-          {pendingUsersCount} Menunggu
-        </span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Section Kiri: Verifikasi Dokumen */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-bold text-slate-900">Antrean Verifikasi Akun Baru</h2>
+              <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
+                {pendingUsersCount} Menunggu
+              </span>
+            </div>
+            <Link href="/admin/users" className="inline-flex items-center px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl transition-colors">
+              <Users className="w-4 h-4 mr-2" />
+              Kelola Pengguna
+            </Link>
+          </div>
+          
+          {documents && <VerificationTable documents={documents} />}
+
+          {/* Placeholder FR-29 */}
+          <div className="mt-8 bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-6 text-center">
+            <h3 className="text-lg font-semibold text-slate-800 mb-2">Antrean Validasi Pembayaran Escrow</h3>
+            <p className="text-slate-500 text-sm mb-4">Pemantauan dan validasi pembayaran proyek dikelola di modul terpisah (FR-29).</p>
+            <Link href="/admin/pembayaran" className="inline-flex items-center text-indigo-600 font-medium hover:text-indigo-700">
+              Buka Panel Validasi Pembayaran <ArrowRight className="w-4 h-4 ml-1" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Section Kanan: Moderasi Katalog */}
+        <div className="lg:col-span-1">
+          <ModerationQueuePreview laporanList={laporanKonten || []} />
+        </div>
       </div>
-
-      {documents && <VerificationTable documents={documents} />}
-
-      <div className="mt-12 mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-900">Antrean Validasi Pembayaran Escrow</h2>
-        <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
-          {pendingPayments?.length || 0} Menunggu
-        </span>
-      </div>
-
-      <PaymentValidationTable payments={pendingPayments || []} />
     </>
   );
 }
