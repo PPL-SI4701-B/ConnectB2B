@@ -287,3 +287,99 @@ export async function rejectPayment(pembayaranId: number, transaksiId: number, i
   revalidatePath('/admin');
   return { success: true, message: 'Pembayaran berhasil ditolak.' };
 }
+
+export async function blockUser(userId: string) {
+  const supabase = await createClient();
+  const db = supabaseAny(supabase);
+
+  // Auth check
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return { success: false, error: 'Admin tidak terautentikasi. Silakan login ulang.' };
+  }
+
+  // Verifikasi admin
+  const { data: adminProfile } = await db
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (!adminProfile || adminProfile.role !== 'admin') {
+    return { success: false, error: 'Anda tidak memiliki akses admin.' };
+  }
+
+  const { error: updateError } = await db
+    .from('users')
+    .update({ is_blocked: true })
+    .eq('id', userId);
+
+  if (updateError) {
+    console.error('[Admin Action] Gagal memblokir user:', updateError);
+    return { success: false, error: 'Gagal memblokir akun pengguna.' };
+  }
+
+  // Insert notifikasi ke user
+  const { error: notifyError } = await db
+    .from('notifikasi')
+    .insert({
+      user_id: userId,
+      pesan: 'Akun Anda telah diblokir oleh admin.',
+      status: 'belum dibaca'
+    });
+
+  if (notifyError) {
+    console.error('[Admin Action] Gagal insert notifikasi blokir:', notifyError);
+  }
+
+  revalidatePath('/admin/kelola-pengguna');
+  return { success: true, message: 'Akun berhasil diblokir.' };
+}
+
+export async function unblockUser(userId: string) {
+  const supabase = await createClient();
+  const db = supabaseAny(supabase);
+
+  // Auth check
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return { success: false, error: 'Admin tidak terautentikasi. Silakan login ulang.' };
+  }
+
+  // Verifikasi admin
+  const { data: adminProfile } = await db
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (!adminProfile || adminProfile.role !== 'admin') {
+    return { success: false, error: 'Anda tidak memiliki akses admin.' };
+  }
+
+  const { error: updateError } = await db
+    .from('users')
+    .update({ is_blocked: false })
+    .eq('id', userId);
+
+  if (updateError) {
+    console.error('[Admin Action] Gagal mencabut blokir user:', updateError);
+    return { success: false, error: 'Gagal mencabut blokir akun pengguna.' };
+  }
+
+  // Insert notifikasi ke user
+  const { error: notifyError } = await db
+    .from('notifikasi')
+    .insert({
+      user_id: userId,
+      pesan: 'Blokir akun Anda telah dicabut.',
+      status: 'belum dibaca'
+    });
+
+  if (notifyError) {
+    console.error('[Admin Action] Gagal insert notifikasi unblock:', notifyError);
+  }
+
+  revalidatePath('/admin/kelola-pengguna');
+  return { success: true, message: 'Blokir akun berhasil dicabut.' };
+}
