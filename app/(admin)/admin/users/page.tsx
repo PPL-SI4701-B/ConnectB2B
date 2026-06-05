@@ -1,23 +1,71 @@
-import Link from 'next/link';
-import { ArrowLeft, Users } from 'lucide-react';
+import { createClient } from '@/lib/supabase-server';
+import { redirect } from 'next/navigation';
+import KelolaPenggunaClient from './KelolaPenggunaClient';
 
-export default function UsersPlaceholderPage() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
-      <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-        <Users className="w-10 h-10 text-indigo-500" />
-      </div>
-      <h1 className="text-3xl font-extrabold text-slate-900 mb-3">Kelola Pengguna Sistem (FR-21)</h1>
-      <p className="text-slate-500 max-w-md mb-8">
-        Halaman Manajemen Akun Pengguna sedang dalam tahap pengembangan (FR-21). Fitur ini akan segera tersedia!
-      </p>
-      <Link 
-        href="/admin" 
-        className="inline-flex items-center px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Kembali ke Dashboard Utama
-      </Link>
-    </div>
-  );
+export const metadata = {
+  title: 'Manajemen Akun | ConnectB2B Admin',
+  description: 'Kelola pengguna dan otorisasi akses ConnectB2B.',
+};
+
+export const dynamic = 'force-dynamic';
+
+export default async function KelolaPenggunaPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  // Verifikasi role admin
+  const { data: adminProfile } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (!adminProfile || adminProfile.role !== 'admin') {
+    redirect('/dashboard');
+  }
+
+  // Fetch all users with their umkm and industri profiles
+  const { data: usersData, error } = await supabase
+    .from('users')
+    .select(`
+      id,
+      nama,
+      email,
+      role,
+      status_verifikasi,
+      is_blocked,
+      umkm (nama_usaha),
+      industri (nama_perusahaan)
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching users:', error);
+  }
+
+  // Format data for client
+  const formattedUsers = (usersData || []).map((u: any) => {
+    let businessName = null;
+    if (u.role === 'umkm' && u.umkm && u.umkm.length > 0) {
+      businessName = u.umkm[0].nama_usaha;
+    } else if (u.role === 'industri' && u.industri && u.industri.length > 0) {
+      businessName = u.industri[0].nama_perusahaan;
+    }
+
+    return {
+      id: u.id,
+      nama: u.nama,
+      email: u.email,
+      role: u.role,
+      status_verifikasi: u.status_verifikasi,
+      is_blocked: u.is_blocked || false,
+      businessName
+    };
+  });
+
+  return <KelolaPenggunaClient initialUsers={formattedUsers} />;
 }
