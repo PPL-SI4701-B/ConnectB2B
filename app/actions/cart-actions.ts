@@ -4,8 +4,23 @@ import { createClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
 
 export async function addToCart(data: { produk_id?: number | null; equipment_id?: number | null; kuantitas: number; umkm_id: number }) {
+  if (!Number.isInteger(data.kuantitas) || data.kuantitas < 1) throw new Error('Kuantitas minimal 1');
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Validate min_pembelian for produk
+  if (data.produk_id) {
+    const { data: produk } = await supabase
+      .from('produk')
+      .select('min_pembelian')
+      .eq('id', data.produk_id)
+      .single();
+    const minPembelian = (produk as any)?.min_pembelian ?? 1;
+    if (data.kuantitas < minPembelian) {
+      throw new Error(`Minimum pembelian untuk produk ini adalah ${minPembelian} unit.`);
+    }
+  }
 
   if (!user) {
     throw new Error('Anda harus login terlebih dahulu');
@@ -83,11 +98,36 @@ export async function addToCart(data: { produk_id?: number | null; equipment_id?
   return { success: true };
 }
 
+async function assertCartOwnership(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, cartId: number) {
+  const { data: cartItem } = await supabase
+    .from('keranjang')
+    .select('industri_id, umkm_id')
+    .eq('id', cartId)
+    .maybeSingle();
+
+  if (!cartItem) throw new Error('Item keranjang tidak ditemukan');
+
+  const [{ data: industri }, { data: umkm }] = await Promise.all([
+    cartItem.industri_id
+      ? supabase.from('industri').select('id').eq('user_id', userId).eq('id', cartItem.industri_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    cartItem.umkm_id
+      ? supabase.from('umkm').select('id').eq('user_id', userId).eq('id', cartItem.umkm_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  if (!industri && !umkm) throw new Error('Unauthorized');
+}
+
 export async function updateCartQuantity(cartId: number, kuantitas: number) {
+  if (!Number.isInteger(kuantitas) || kuantitas < 1) throw new Error('Kuantitas minimal 1');
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) throw new Error('Unauthorized');
+
+  await assertCartOwnership(supabase, user.id, cartId);
 
   const { error } = await supabase
     .from('keranjang')
@@ -95,7 +135,7 @@ export async function updateCartQuantity(cartId: number, kuantitas: number) {
     .eq('id', cartId);
 
   if (error) throw error;
-  
+
   revalidatePath('/keranjang');
   return { success: true };
 }
@@ -106,18 +146,20 @@ export async function removeFromCart(cartId: number) {
 
   if (!user) throw new Error('Unauthorized');
 
+  await assertCartOwnership(supabase, user.id, cartId);
+
   const { error } = await supabase
     .from('keranjang')
     .delete()
     .eq('id', cartId);
 
   if (error) throw error;
-  
+
   revalidatePath('/keranjang');
   return { success: true };
 }
 
-export async function checkoutCart(requests: { umkm_id: number; pesan: string }[]) {
+export async function checkoutCart() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -131,32 +173,55 @@ export async function checkoutCart(requests: { umkm_id: number; pesan: string }[
 
   if (!industri) throw new Error('Profil industri belum lengkap.');
 
-  // Create request for each umkm
-  for (const req of requests) {
+  // Query cart items from DB — includes produk_id/equipment_id for each item
+  const { data: cartItems } = await supabase
+    .from('keranjang')
+    .select(`
+      id, kuantitas, umkm_id, produk_id, equipment_id,
+      produk:produk_id(nama),
+      equipment:equipment_id(nama)
+    `)
+    .eq('industri_id', industri.id) as any;
+
+  if (!cartItems?.length) throw new Error('Keranjang kosong');
+
+  // Track notified UMKMs to avoid duplicate notifications
+  const notifiedUmkms = new Set<number>();
+
+  // Create one request per cart item — each carries its own produk_id/equipment_id
+  for (const item of cartItems) {
+    const produk = Array.isArray(item.produk) ? item.produk[0] : item.produk;
+    const equip = Array.isArray(item.equipment) ? item.equipment[0] : item.equipment;
+    const itemNama = produk?.nama || equip?.nama || 'Item';
+
     const { error } = await supabase
       .from('request')
       .insert({
         industri_id: industri.id,
-        umkm_id: req.umkm_id,
-        pesan: req.pesan,
-        status: 'pending'
+        umkm_id: item.umkm_id,
+        produk_id: item.produk_id || null,
+        equipment_id: item.equipment_id || null,
+        pesan: `Permintaan kerja sama: ${itemNama} x${item.kuantitas}`,
+        status: 'pending',
       } as any);
 
     if (error) throw error;
 
-    // Fetch UMKM's user_id for notification
-    const { data: umkm } = await supabase
-      .from('umkm')
-      .select('user_id')
-      .eq('id', req.umkm_id)
-      .single();
+    // Notify each UMKM once even if multiple items
+    if (!notifiedUmkms.has(item.umkm_id)) {
+      notifiedUmkms.add(item.umkm_id);
+      const { data: umkm } = await supabase
+        .from('umkm')
+        .select('user_id')
+        .eq('id', item.umkm_id)
+        .single() as any;
 
-    if (umkm?.user_id) {
-      await supabase.from('notifikasi').insert({
-        user_id: umkm.user_id,
-        pesan: `Anda menerima permintaan kerjasama gabungan baru dari ${industri.nama_perusahaan}`,
-        status: 'belum dibaca'
-      });
+      if (umkm?.user_id) {
+        await supabase.rpc('kirim_notifikasi', {
+          p_target_user_id: umkm.user_id,
+          p_pesan: `Anda menerima permintaan kerja sama baru dari ${industri.nama_perusahaan}`,
+        });
+      }
     }
   }
 

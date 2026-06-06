@@ -40,7 +40,6 @@ export default async function PantauTransaksiPage() {
   const industriNama = industriData.nama_perusahaan;
 
   // Fetch all transaksi for this industri (via request)
-  // Join: transaksi → request → umkm → users (for umkm user_id)
   const { data: transaksiRaw, error: txError } = await supabase
     .from("transaksi")
     .select(
@@ -50,6 +49,12 @@ export default async function PantauTransaksiPage() {
       tanggal_mulai,
       tanggal_selesai,
       progress_status,
+      status,
+      pembayaran (
+        id,
+        status,
+        bukti_transfer
+      ),
       request!inner (
         id,
         pesan,
@@ -84,24 +89,38 @@ export default async function PantauTransaksiPage() {
     ulasanData?.forEach((u: any) => ulasanSet.add(u.transaksi_id));
   }
 
+  // Fetch admin bank info
+  const { data: bankConfigRaw } = await (supabase as any)
+    .from('platform_config')
+    .select('key, value')
+    .in('key', ['bank_nama', 'bank_no_rekening', 'bank_atas_nama']);
+
+  const bankConfig: Record<string, string> = {};
+  (bankConfigRaw as any[] || []).forEach((r: any) => { bankConfig[r.key] = r.value; });
+
   // Build items list
   const items: TransaksiItem[] = transaksiList.map((t: any) => {
     const req = t.request;
     const umkm = req?.umkm;
     const umkmNama: string = umkm?.nama_usaha || "Unknown UMKM";
 
+    const pembayaranArr = Array.isArray(t.pembayaran) ? t.pembayaran : (t.pembayaran ? [t.pembayaran] : []);
+    const pembayaran = pembayaranArr[0] ?? null;
+
     return {
       transaksi_id: t.id,
       request_id: t.request_id,
       req_label: `#REQ-${String(t.request_id).padStart(4, "0")}`,
       progress_status: t.progress_status || "Menunggu Material",
+      status_finansial: t.status || "belum lunas",
+      pembayaran_status: pembayaran?.status ?? null,
       tanggal_mulai: t.tanggal_mulai,
       tanggal_selesai: t.tanggal_selesai ?? null,
       umkm_nama: umkmNama,
       umkm_user_id: umkm?.user_id || "",
       umkm_initials: umkmNama.substring(0, 2).toUpperCase(),
       pesan: req?.pesan || null,
-      total_value: null, // simplified — lumpsum not stored separately
+      total_value: null,
       has_ulasan: ulasanSet.has(t.id),
     };
   });
@@ -129,7 +148,7 @@ export default async function PantauTransaksiPage() {
         </header>
 
         {/* Two-panel layout */}
-        <PantauTransaksiClient items={items} industriNama={industriNama} />
+        <PantauTransaksiClient items={items} adminBank={bankConfig} />
       </div>
     </div>
   );

@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Wrench, MapPin, Building2, X, Star } from 'lucide-react';
-import { createClient } from '@/lib/supabase';
 import { toast } from 'react-hot-toast';
+import { sendSewaAlatRequest } from './actions';
 
 interface EquipmentWithUmkm {
   id: number;
@@ -21,15 +21,12 @@ interface EquipmentWithUmkm {
 
 export default function SewaAlatClient({
   equipments,
-  currentUmkm,
   currentUserVerifikasi
 }: {
   equipments: EquipmentWithUmkm[];
-  currentUmkm: { id: number; nama_usaha: string } | null;
   currentUserVerifikasi: string;
 }) {
   const router = useRouter();
-  const supabase = createClient();
   const [selectedEq, setSelectedEq] = useState<EquipmentWithUmkm | null>(null);
   
   // Form state
@@ -49,46 +46,18 @@ export default function SewaAlatClient({
     e.preventDefault();
     if (!selectedEq) return;
 
-    if (currentUserVerifikasi !== 'terverifikasi') {
-      toast.error('Lengkapi verifikasi akun terlebih dahulu.');
-      return;
-    }
-
-    if (!durasi.trim()) {
-      toast.error('Durasi negosiasi harus diisi.');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      const senderName = currentUmkm?.nama_usaha || 'UMKM (Tidak Diketahui)';
-      const pesanKerjasama = `[Sewa Alat Lintas UMKM] Permintaan sewa untuk alat: ${selectedEq.nama}. Durasi yang diajukan: ${durasi}. Dari: ${senderName}`;
-      
-      const { error } = await supabase
-        .from('request')
-        .insert({
-          industri_id: null, // Karena ini dari UMKM ke UMKM
-          umkm_id: selectedEq.owner_umkm_id,
-          equipment_id: selectedEq.id,
-          pesan: pesanKerjasama,
-          status: 'pending'
-        });
-
-      if (error) throw error;
-      
-      // Kirim Notifikasi ke UMKM pemilik alat
-      await supabase.from('notifikasi').insert({
-        user_id: selectedEq.user_id,
-        pesan: `Anda menerima permintaan penyewaan alat (${selectedEq.nama}) dari ${senderName}`,
-        status: 'belum dibaca'
-      });
-      
+      const result = await sendSewaAlatRequest(selectedEq.id, durasi);
+      if (!result.success) {
+        toast.error(result.error || 'Gagal mengirim request.');
+        return;
+      }
       toast.success('Kontrak Sewa berhasil diajukan!');
       setSelectedEq(null);
       setDurasi('');
       router.push('/dashboard/transaksi');
     } catch (err: any) {
-      console.error('Error kirim request:', err);
       toast.error(`Gagal mengirim request: ${err.message}`);
     } finally {
       setIsSubmitting(false);

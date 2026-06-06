@@ -43,6 +43,7 @@ export default function ProdukFormClient({ user, kategoriList, initialData }: Pr
   const [kapasitas, setKapasitas] = useState('');
   const [satuan, setSatuan] = useState(SATUAN_OPTIONS[0]);
   const [deskripsiSingkat, setDeskripsiSingkat] = useState('');
+  const [minPembelian, setMinPembelian] = useState<number>(initialData?.min_pembelian ?? 1);
 
   useEffect(() => {
     if (initialData?.deskripsi) {
@@ -157,7 +158,8 @@ export default function ProdukFormClient({ user, kategoriList, initialData }: Pr
         harga: Number(harga),
         deskripsi: finalDeskripsi,
         gambar_url: finalGambarUrl,
-        stok: initialData?.stok || 0 // Default
+        stok: initialData?.stok || 0,
+        min_pembelian: minPembelian,
       };
 
       if (initialData) {
@@ -285,6 +287,20 @@ export default function ProdukFormClient({ user, kategoriList, initialData }: Pr
             </div>
 
             <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Pembelian (qty) <span className="text-red-500">*</span></label>
+                <input
+                  type="number"
+                  value={minPembelian}
+                  onChange={(e) => setMinPembelian(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition-all"
+                  placeholder="1"
+                  min="1"
+                  required
+                />
+                <p className="text-xs text-gray-400 mt-1">Jumlah minimal yang harus dipesan dalam satu transaksi.</p>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Rentang Kapasitas / Skala</label>
                 <input 

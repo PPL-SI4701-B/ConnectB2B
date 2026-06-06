@@ -36,7 +36,6 @@ export default async function Sidebar() {
     { href: '/sewa-alat', label: 'Sewa Alat', icon: Search },
     { href: '/request-masuk', label: 'Request Masuk', icon: Bell },
     { href: '/dashboard/transaksi', label: 'Transaksi', icon: ArrowRightLeft },
-    { href: '/dashboard/ulasan', label: 'Ulasan', icon: Star },
   ];
 
   const industriLinks = [

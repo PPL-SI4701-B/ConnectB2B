@@ -62,19 +62,11 @@ export async function verifyUserDocuments(userId: string) {
     // Tidak return error karena trigger harusnya sudah handle
   }
 
-  // Kirim notifikasi ke user
-  const { error: notifyError } = await db
-    .from('notifikasi')
-    .insert({
-      user_id: userId,
-      pesan: 'Selamat! Dokumen legalitas Anda telah diverifikasi oleh Admin. Akun Anda kini aktif dan dapat digunakan.',
-      status: 'belum dibaca',
-    });
-
-  if (notifyError) {
-    console.error('[Admin Action] Gagal insert notifikasi:', notifyError);
-    // Non-critical, jangan gagalkan proses
-  }
+  // Kirim notifikasi ke user via RPC (bypass RLS insert)
+  await supabase.rpc('kirim_notifikasi', {
+    p_target_user_id: userId,
+    p_pesan: 'Selamat! Dokumen legalitas Anda telah diverifikasi oleh Admin. Akun Anda kini aktif dan dapat digunakan.',
+  });
 
   revalidatePath('/admin');
   return { success: true, message: `${updatedDocs.length} dokumen berhasil diverifikasi.` };
@@ -137,152 +129,189 @@ export async function rejectUserDocuments(userId: string, reason: string) {
     console.error('[Admin Action] Gagal update users:', userError);
   }
 
-  // Kirim notifikasi ke user
-  const { error: notifyError } = await db
-    .from('notifikasi')
-    .insert({
-      user_id: userId,
-      pesan: `Mohon maaf, dokumen legalitas Anda ditolak. Alasan: ${reason}. Silakan unggah ulang dokumen perbaikan.`,
-      status: 'belum dibaca',
-    });
-
-  if (notifyError) {
-    console.error('[Admin Action] Gagal insert notifikasi:', notifyError);
-  }
+  // Kirim notifikasi ke user via RPC
+  await supabase.rpc('kirim_notifikasi', {
+    p_target_user_id: userId,
+    p_pesan: `Mohon maaf, dokumen legalitas Anda ditolak. Alasan: ${reason}. Silakan unggah ulang dokumen perbaikan.`,
+  });
 
   revalidatePath('/admin');
   return { success: true, message: `${updatedDocs.length} dokumen berhasil ditolak.` };
 }
 
-export async function verifyPayment(pembayaranId: number, transaksiId: number, industriUserId: string, umkmUserId: string) {
+export async function uploadBuktiPembayaranUmkm(
+  pembayaranId: number,
+  buktiPath: string
+) {
   const supabase = await createClient();
   const db = supabaseAny(supabase);
 
-  // Auth check
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    return { success: false, error: 'Admin tidak terautentikasi. Silakan login ulang.' };
-  }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Admin tidak terautentikasi.' };
 
-  // Verifikasi admin
-  const { data: adminProfile } = await db
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
+  const { data: adminProfile } = await db.from('users').select('role').eq('id', user.id).single();
+  if (!adminProfile || adminProfile.role !== 'admin') return { success: false, error: 'Anda tidak memiliki akses admin.' };
+
+  const { data: pem } = await db.from('pembayaran').select('id, status, bukti_pengiriman, bukti_pembayaran_umkm').eq('id', pembayaranId).single();
+  if (!pem) return { success: false, error: 'Data pembayaran tidak ditemukan.' };
+  if (pem.status !== 'berhasil') return { success: false, error: 'Pembayaran industri belum divalidasi.' };
+  if (!pem.bukti_pengiriman) return { success: false, error: 'UMKM belum upload bukti pengiriman barang.' };
+  if (pem.bukti_pembayaran_umkm) return { success: false, error: 'Bukti pembayaran ke UMKM sudah pernah diupload.' };
+
+  const { error } = await db.from('pembayaran').update({
+    bukti_pembayaran_umkm: buktiPath,
+    status_pencairan: 'diproses',
+  }).eq('id', pembayaranId);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath('/admin');
+  revalidatePath('/dashboard/transaksi');
+  return { success: true };
+}
+
+export async function deactivateProduct(produkId: number) {
+  const supabase = await createClient();
+  const db = supabaseAny(supabase);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Admin tidak terautentikasi.' };
+
+  const { data: adminProfile } = await db.from('users').select('role').eq('id', user.id).single();
+  if (!adminProfile || adminProfile.role !== 'admin') return { success: false, error: 'Anda tidak memiliki akses admin.' };
+
+  const { error } = await db.from('produk').update({ is_active: false }).eq('id', produkId);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath('/admin');
+  revalidatePath('/katalog-publik');
+  return { success: true };
+}
+
+export async function reactivateProduct(produkId: number) {
+  const supabase = await createClient();
+  const db = supabaseAny(supabase);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Admin tidak terautentikasi.' };
+
+  const { data: adminProfile } = await db.from('users').select('role').eq('id', user.id).single();
+  if (!adminProfile || adminProfile.role !== 'admin') return { success: false, error: 'Anda tidak memiliki akses admin.' };
+
+  const { error } = await db.from('produk').update({ is_active: true }).eq('id', produkId);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath('/admin');
+  revalidatePath('/katalog-publik');
+  return { success: true };
+}
+
+export async function blockUser(targetUserId: string) {
+  const supabase = await createClient();
+  const db = supabaseAny(supabase);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Admin tidak terautentikasi.' };
+
+  const { data: adminProfile } = await db.from('users').select('role').eq('id', user.id).single();
+  if (!adminProfile || adminProfile.role !== 'admin') return { success: false, error: 'Anda tidak memiliki akses admin.' };
+
+  if (targetUserId === user.id) return { success: false, error: 'Admin tidak dapat memblokir dirinya sendiri.' };
+
+  const { error } = await db.from('users').update({ is_blocked: true }).eq('id', targetUserId);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath('/admin');
+  return { success: true };
+}
+
+export async function unblockUser(targetUserId: string) {
+  const supabase = await createClient();
+  const db = supabaseAny(supabase);
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Admin tidak terautentikasi.' };
+
+  const { data: adminProfile } = await db.from('users').select('role').eq('id', user.id).single();
+  if (!adminProfile || adminProfile.role !== 'admin') return { success: false, error: 'Anda tidak memiliki akses admin.' };
+
+  const { error } = await db.from('users').update({ is_blocked: false }).eq('id', targetUserId);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath('/admin');
+  return { success: true };
+}
+
+export async function verifyPayment(pembayaranId: number, transaksiId: number) {
+  const supabase = await createClient();
+  const db = supabaseAny(supabase);
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return { success: false, error: 'Admin tidak terautentikasi. Silakan login ulang.' };
+
+  const { data: adminProfile } = await db.from('users').select('role').eq('id', user.id).single();
+  if (!adminProfile || adminProfile.role !== 'admin') return { success: false, error: 'Anda tidak memiliki akses admin.' };
+
+  // Derive user IDs dari DB — tidak percaya data dari client
+  const { data: relasi } = await db
+    .from('pembayaran')
+    .select('transaksi:transaksi_id(request:request_id(industri:industri_id(user_id), umkm:umkm_id(user_id)))')
+    .eq('id', pembayaranId)
     .single();
 
-  if (!adminProfile || adminProfile.role !== 'admin') {
-    return { success: false, error: 'Anda tidak memiliki akses admin.' };
+  const req = relasi?.transaksi?.request;
+  const industriUserId = req?.industri?.user_id;
+  const umkmUserId = req?.umkm?.user_id;
+
+  if (!industriUserId || !umkmUserId) {
+    return { success: false, error: 'Data relasi Industri/UMKM tidak ditemukan.' };
   }
 
-  // 1. Update pembayaran SET status = 'berhasil'
-  const { error: paymentError } = await db
-    .from('pembayaran')
-    .update({ status: 'berhasil' })
-    .eq('id', pembayaranId);
+  const { error: paymentError } = await db.from('pembayaran').update({ status: 'berhasil' }).eq('id', pembayaranId);
+  if (paymentError) return { success: false, error: 'Gagal mengupdate status pembayaran.' };
 
-  if (paymentError) {
-    console.error('[Admin Action] Gagal update pembayaran:', paymentError);
-    return { success: false, error: 'Gagal mengupdate status pembayaran.' };
-  }
-
-  // 2. Update transaksi SET status = 'lunas', status_validasi = 'valid'
   const { error: transaksiError } = await db
     .from('transaksi')
-    .update({
-      status: 'lunas',
-      status_validasi: 'valid'
-    })
+    .update({ status: 'lunas', status_validasi: 'valid' })
     .eq('id', transaksiId);
+  if (transaksiError) return { success: false, error: 'Gagal mengupdate status transaksi.' };
 
-  if (transaksiError) {
-    console.error('[Admin Action] Gagal update transaksi:', transaksiError);
-    return { success: false, error: 'Gagal mengupdate status transaksi.' };
-  }
-
-  // 3. Insert notifikasi ke Industri & UMKM
-  const notifikasiData = [
-    {
-      user_id: industriUserId,
-      pesan: 'Pembayaran Anda telah diverifikasi. Proyek dapat dimulai.',
-      status: 'belum dibaca'
-    },
-    {
-      user_id: umkmUserId,
-      pesan: 'Pembayaran telah masuk, silakan mulai pengerjaan.',
-      status: 'belum dibaca'
-    }
-  ];
-
-  const { error: notifyError } = await db
-    .from('notifikasi')
-    .insert(notifikasiData);
-
-  if (notifyError) {
-    console.error('[Admin Action] Gagal insert notifikasi pembayaran:', notifyError);
-  }
+  await Promise.all([
+    supabase.rpc('kirim_notifikasi', { p_target_user_id: industriUserId, p_pesan: 'Pembayaran Anda telah diverifikasi. Proyek dapat dimulai.' }),
+    supabase.rpc('kirim_notifikasi', { p_target_user_id: umkmUserId, p_pesan: 'Pembayaran telah masuk, silakan mulai pengerjaan.' }),
+  ]);
 
   revalidatePath('/admin');
   return { success: true, message: 'Pembayaran berhasil diverifikasi.' };
 }
 
-export async function rejectPayment(pembayaranId: number, transaksiId: number, industriUserId: string) {
+export async function rejectPayment(pembayaranId: number, transaksiId: number) {
   const supabase = await createClient();
   const db = supabaseAny(supabase);
 
-  // Auth check
   const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    return { success: false, error: 'Admin tidak terautentikasi. Silakan login ulang.' };
-  }
+  if (authError || !user) return { success: false, error: 'Admin tidak terautentikasi. Silakan login ulang.' };
 
-  // Verifikasi admin
-  const { data: adminProfile } = await db
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
+  const { data: adminProfile } = await db.from('users').select('role').eq('id', user.id).single();
+  if (!adminProfile || adminProfile.role !== 'admin') return { success: false, error: 'Anda tidak memiliki akses admin.' };
+
+  // Derive industriUserId dari DB
+  const { data: relasi } = await db
+    .from('pembayaran')
+    .select('transaksi:transaksi_id(request:request_id(industri:industri_id(user_id)))')
+    .eq('id', pembayaranId)
     .single();
 
-  if (!adminProfile || adminProfile.role !== 'admin') {
-    return { success: false, error: 'Anda tidak memiliki akses admin.' };
-  }
+  const industriUserId = relasi?.transaksi?.request?.industri?.user_id;
+  if (!industriUserId) return { success: false, error: 'Data industri tidak ditemukan.' };
 
-  // 1. Update pembayaran SET status = 'gagal'
-  const { error: paymentError } = await db
-    .from('pembayaran')
-    .update({ status: 'gagal' })
-    .eq('id', pembayaranId);
+  const { error: paymentError } = await db.from('pembayaran').update({ status: 'gagal' }).eq('id', pembayaranId);
+  if (paymentError) return { success: false, error: 'Gagal menolak pembayaran.' };
 
-  if (paymentError) {
-    console.error('[Admin Action] Gagal update pembayaran:', paymentError);
-    return { success: false, error: 'Gagal menolak pembayaran.' };
-  }
+  const { error: transaksiError } = await db.from('transaksi').update({ status_validasi: 'tidak valid' }).eq('id', transaksiId);
+  if (transaksiError) return { success: false, error: 'Gagal mengupdate status transaksi.' };
 
-  // 2. Update transaksi SET status_validasi = 'tidak valid'
-  const { error: transaksiError } = await db
-    .from('transaksi')
-    .update({
-      status_validasi: 'tidak valid'
-    })
-    .eq('id', transaksiId);
-
-  if (transaksiError) {
-    console.error('[Admin Action] Gagal update transaksi:', transaksiError);
-    return { success: false, error: 'Gagal mengupdate status transaksi.' };
-  }
-
-  // 3. Insert notifikasi ke Industri
-  const { error: notifyError } = await db
-    .from('notifikasi')
-    .insert({
-      user_id: industriUserId,
-      pesan: 'Bukti pembayaran ditolak. Silakan upload ulang.',
-      status: 'belum dibaca'
-    });
-
-  if (notifyError) {
-    console.error('[Admin Action] Gagal insert notifikasi penolakan pembayaran:', notifyError);
-  }
+  await supabase.rpc('kirim_notifikasi', { p_target_user_id: industriUserId, p_pesan: 'Bukti pembayaran ditolak. Silakan upload ulang.' });
 
   revalidatePath('/admin');
   return { success: true, message: 'Pembayaran berhasil ditolak.' };

@@ -1,11 +1,17 @@
 import { createClient } from '@/lib/supabase-server';
 import VerificationTable from '@/components/admin/VerificationTable';
 import PaymentValidationTable from '@/components/admin/PaymentValidationTable';
+import UserManagementTable from '@/components/admin/UserManagementTable';
+import ContentModerationTable from '@/components/admin/ContentModerationTable';
+import UmkmPayoutTable, { PayoutItem } from '@/components/admin/UmkmPayoutTable';
 import {
   TrendingUp,
   ShieldCheck,
   AlertTriangle,
-  Factory
+  Factory,
+  Users,
+  Package,
+  Banknote
 } from 'lucide-react';
 
 export const revalidate = 0; // ensure fresh data on load
@@ -67,6 +73,68 @@ export default async function AdminPage() {
   if (paymentError) {
     console.error('Error fetching pending payments:', paymentError);
   }
+
+  // Fetch pembayaran yang siap dicairkan ke UMKM (validated + bukti_pengiriman ada + belum bayar ke UMKM)
+  const { data: payoutRaw } = await supabase
+    .from('pembayaran')
+    .select(`
+      id,
+      transaksi_id,
+      tanggal_bayar,
+      bukti_pengiriman,
+      bukti_pembayaran_umkm,
+      status_pencairan,
+      transaksi:transaksi_id (
+        request:request_id (
+          industri:industri_id ( nama_perusahaan ),
+          umkm:umkm_id ( nama_usaha, no_rekening, nama_bank, atas_nama_rekening )
+        )
+      )
+    `)
+    .eq('status', 'berhasil')
+    .not('bukti_pengiriman', 'is', null)
+    .order('tanggal_bayar', { ascending: false }) as any;
+
+  const payouts: PayoutItem[] = (payoutRaw as any[] || []).map((p: any) => {
+    const req = Array.isArray(p.transaksi?.request) ? p.transaksi.request[0] : p.transaksi?.request;
+    const industri = Array.isArray(req?.industri) ? req.industri[0] : req?.industri;
+    const umkm = Array.isArray(req?.umkm) ? req.umkm[0] : req?.umkm;
+    return {
+      pembayaran_id: p.id,
+      transaksi_id: p.transaksi_id,
+      umkm_nama: umkm?.nama_usaha || 'UMKM',
+      nama_bank: umkm?.nama_bank ?? null,
+      no_rekening: umkm?.no_rekening ?? null,
+      atas_nama_rekening: umkm?.atas_nama_rekening ?? null,
+      bukti_pengiriman: p.bukti_pengiriman,
+      bukti_pembayaran_umkm: p.bukti_pembayaran_umkm ?? null,
+      status_pencairan: p.status_pencairan || 'menunggu',
+      tanggal_bayar: p.tanggal_bayar,
+      industri_nama: industri?.nama_perusahaan || 'Industri',
+    };
+  });
+
+  // Fetch all products for content moderation (FR-22)
+  const { data: allProducts } = await supabase
+    .from('produk')
+    .select('id, nama, kategori, harga, is_active, user_id, umkm:users!produk_user_id_fkey(nama)')
+    .order('id', { ascending: false });
+
+  const formattedProducts = (allProducts as any[] || []).map((p: any) => ({
+    id: p.id,
+    nama: p.nama,
+    kategori: p.kategori,
+    harga: p.harga,
+    is_active: p.is_active ?? true,
+    user_id: p.user_id,
+    owner_nama: Array.isArray(p.umkm) ? p.umkm[0]?.nama : p.umkm?.nama ?? null,
+  }));
+
+  // Fetch all users for management table (FR-21)
+  const { data: allUsers } = await supabase
+    .from('users')
+    .select('id, nama, email, role, status_verifikasi, is_blocked, created_at')
+    .order('created_at', { ascending: false });
 
   // Fetch stat counts
   const [
@@ -188,6 +256,48 @@ export default async function AdminPage() {
       </div>
 
       <PaymentValidationTable payments={pendingPayments || []} />
+
+      <div className="mt-12 mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-50 rounded-xl">
+            <Banknote className="w-5 h-5 text-blue-600" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Pencairan Dana ke UMKM</h2>
+        </div>
+        <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">
+          {payouts.filter(p => !p.bukti_pembayaran_umkm).length} Menunggu
+        </span>
+      </div>
+
+      <UmkmPayoutTable payouts={payouts} />
+
+      <div className="mt-12 mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-slate-100 rounded-xl">
+            <Users className="w-5 h-5 text-slate-600" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Manajemen Pengguna</h2>
+        </div>
+        <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-full">
+          {allUsers?.length || 0} Total
+        </span>
+      </div>
+
+      <UserManagementTable users={(allUsers as any) || []} />
+
+      <div className="mt-12 mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-slate-100 rounded-xl">
+            <Package className="w-5 h-5 text-slate-600" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Moderasi Konten Produk</h2>
+        </div>
+        <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-full">
+          {formattedProducts.length} Produk
+        </span>
+      </div>
+
+      <ContentModerationTable products={formattedProducts} />
     </>
   );
 }

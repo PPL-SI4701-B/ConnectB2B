@@ -25,13 +25,6 @@ export default async function SewaAlatPage() {
 
   const currentUserVerifikasi = currentUserData?.status_verifikasi || 'menunggu';
 
-  // Get current UMKM data to use as sender info
-  const { data: currentUmkm } = await supabase
-    .from('umkm')
-    .select('id, nama_usaha')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
   // Fetch all equipment with their owner's UMKM info
   // We need to fetch from `equipment` and join `umkm` via user_id
   const { data: equipments, error } = await supabase
@@ -87,9 +80,8 @@ export default async function SewaAlatPage() {
         </div>
       </header>
 
-      <SewaAlatClient 
-        equipments={formattedEquipments} 
-        currentUmkm={currentUmkm}
+      <SewaAlatClient
+        equipments={formattedEquipments}
         currentUserVerifikasi={currentUserVerifikasi}
       />
     </div>

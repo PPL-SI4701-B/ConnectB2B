@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, ArrowRightLeft, Clock, CheckCircle, AlertCircle, Inbox, History } from 'lucide-react';
+import { Search, ArrowRightLeft, Clock, CheckCircle, AlertCircle, Inbox, History, UploadCloud, FileText, Banknote, CheckCheck } from 'lucide-react';
 import NotificationBell from '@/components/layout/NotificationBell';
 import { updateTransaksiProgress } from '@/app/actions/transaksi-actions';
+import { uploadBuktiPengiriman, uploadBuktiTerimaUang } from './actions';
+import { createClient } from '@/lib/supabase';
 
 interface TransaksiItem {
   id: number;
@@ -18,6 +20,13 @@ interface TransaksiItem {
   pesan: string;
   industriId: number;
   industriNama: string;
+  pembayaranId: number | null;
+  pembayaranStatus: string | null;
+  buktiPengiriman: string | null;
+  statusPengiriman: string;
+  buktiPembayaranUmkm: string | null;
+  statusPencairan: string;
+  buktiTerimaUang: string | null;
 }
 
 export default function TransaksiClient({
@@ -38,6 +47,42 @@ export default function TransaksiClient({
   const router = useRouter();
 
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+
+  // Upload states for bukti pengiriman & bukti terima uang
+  const [uploadingTxId, setUploadingTxId] = useState<number | null>(null);
+  const [uploadType, setUploadType] = useState<'pengiriman' | 'terima' | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (transaksiId: number, type: 'pengiriman' | 'terima') => {
+    if (!uploadFile) return;
+    setUploadError(null);
+    setUploadingTxId(transaksiId);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Silakan login kembali.');
+      const ext = uploadFile.name.split('.').pop() || 'pdf';
+      const bucket = type === 'pengiriman' ? 'bukti-transfer' : 'bukti-transfer';
+      const filePath = `${user.id}/${type}_${transaksiId}_${Date.now()}.${ext}`;
+      const { data: up, error: storageErr } = await supabase.storage.from(bucket).upload(filePath, uploadFile, { upsert: false });
+      if (storageErr) throw new Error(storageErr.message);
+      const action = type === 'pengiriman'
+        ? uploadBuktiPengiriman(transaksiId, up.path)
+        : uploadBuktiTerimaUang(transaksiId, up.path);
+      const result = await action;
+      if (!result.success) throw new Error(result.error);
+      setUploadFile(null);
+      setUploadType(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      router.refresh();
+    } catch (e: any) {
+      setUploadError(e.message || 'Gagal upload.');
+    } finally {
+      setUploadingTxId(null);
+    }
+  };
 
   const filtered = transaksi.filter(t =>
     t.trxCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -96,7 +141,7 @@ export default function TransaksiClient({
   const handleUpdateSubmit = async () => {
     if (!selectedTransaksi) return;
     setIsUpdating(true);
-    const result = await updateTransaksiProgress(selectedTransaksi.id, newProgressStatus, progressPesan, selectedTransaksi.industriId);
+    const result = await updateTransaksiProgress(selectedTransaksi.id, newProgressStatus, progressPesan);
     setIsUpdating(false);
     
     if (result.success) {
@@ -174,15 +219,96 @@ export default function TransaksiClient({
                   </div>
                 </div>
                 <div className="flex justify-between items-end">
-                  <div>
+                  <div className="flex-1 min-w-0 mr-4">
                     <div className="text-[14px] font-bold text-text-main mb-1 line-clamp-1 max-w-[500px]">
                       {t.pesan}
                     </div>
-                    <div className="text-[13px] text-text-muted">
+                    <div className="text-[13px] text-text-muted mb-3">
                       Mitra: {t.industriNama}
                     </div>
+
+                    {/* ── Escrow Status Section ── */}
+                    <div className="space-y-2 mt-2">
+                      {/* Step 1: Pembayaran dari Industri */}
+                      {t.pembayaranStatus === 'berhasil' && t.statusPengiriman !== 'dikirim' && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                          <p className="text-xs font-bold text-blue-700 mb-2 flex items-center gap-1.5">
+                            <UploadCloud className="w-3.5 h-3.5" /> Upload Bukti Pengiriman Barang
+                          </p>
+                          {uploadError && uploadingTxId === t.id && uploadType === 'pengiriman' && (
+                            <p className="text-xs text-red-600 mb-1">{uploadError}</p>
+                          )}
+                          <label className="flex items-center gap-2 p-2 bg-white border border-dashed border-blue-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors text-xs text-blue-500">
+                            <FileText className="w-4 h-4 shrink-0" />
+                            {uploadFile && uploadingTxId === t.id && uploadType === 'pengiriman'
+                              ? uploadFile.name
+                              : 'Klik pilih file bukti pengiriman (PDF/JPG, maks 5MB)'}
+                            <input type="file" accept="application/pdf,image/jpeg,image/png" className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (!f || f.size > 5 * 1024 * 1024) { setUploadError('Maks 5MB.'); return; }
+                                setUploadFile(f); setUploadType('pengiriman'); setUploadingTxId(t.id); setUploadError(null);
+                              }} />
+                          </label>
+                          <button
+                            disabled={!uploadFile || uploadingTxId !== t.id || uploadType !== 'pengiriman'}
+                            onClick={() => handleUpload(t.id, 'pengiriman')}
+                            className="mt-2 w-full py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors"
+                          >
+                            {uploadingTxId === t.id && uploadType === 'pengiriman' ? 'Mengunggah...' : 'Kirim Bukti Pengiriman'}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Step 2: Bukti pengiriman sudah dikirim */}
+                      {t.statusPengiriman === 'dikirim' && !t.buktiPembayaranUmkm && (
+                        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                          <CheckCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                          <p className="text-xs font-semibold text-amber-700">Bukti pengiriman terkirim. Menunggu Admin transfer dana ke rekening Anda.</p>
+                        </div>
+                      )}
+
+                      {/* Step 3: Admin sudah bayar ke UMKM, upload bukti terima */}
+                      {t.buktiPembayaranUmkm && !t.buktiTerimaUang && (
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                          <p className="text-xs font-bold text-emerald-700 mb-2 flex items-center gap-1.5">
+                            <Banknote className="w-3.5 h-3.5" /> Admin sudah transfer! Upload Bukti Terima Dana
+                          </p>
+                          {uploadError && uploadingTxId === t.id && uploadType === 'terima' && (
+                            <p className="text-xs text-red-600 mb-1">{uploadError}</p>
+                          )}
+                          <label className="flex items-center gap-2 p-2 bg-white border border-dashed border-emerald-300 rounded-lg cursor-pointer hover:border-emerald-500 transition-colors text-xs text-emerald-600">
+                            <FileText className="w-4 h-4 shrink-0" />
+                            {uploadFile && uploadingTxId === t.id && uploadType === 'terima'
+                              ? uploadFile.name
+                              : 'Klik pilih bukti penerimaan dana (PDF/JPG, maks 5MB)'}
+                            <input type="file" accept="application/pdf,image/jpeg,image/png" className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (!f || f.size > 5 * 1024 * 1024) { setUploadError('Maks 5MB.'); return; }
+                                setUploadFile(f); setUploadType('terima'); setUploadingTxId(t.id); setUploadError(null);
+                              }} />
+                          </label>
+                          <button
+                            disabled={!uploadFile || uploadingTxId !== t.id || uploadType !== 'terima'}
+                            onClick={() => handleUpload(t.id, 'terima')}
+                            className="mt-2 w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors"
+                          >
+                            {uploadingTxId === t.id && uploadType === 'terima' ? 'Mengunggah...' : 'Konfirmasi Terima Dana'}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Step 4: Pencairan selesai */}
+                      {t.statusPencairan === 'selesai' && (
+                        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                          <CheckCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <p className="text-xs font-bold text-emerald-700">Dana telah diterima. Transaksi escrow selesai.</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     {activeTab === 'berjalan' && (
                       <button 
                         onClick={() => {

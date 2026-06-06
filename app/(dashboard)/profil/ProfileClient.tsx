@@ -110,13 +110,13 @@ export default function ProfileClient({
     setIsLoading(true);
     try {
       const { error: uploadError } = await supabase.storage
-        .from('documents')
+        .from('dokumen')
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: publicUrlData } = supabase.storage.from('documents').getPublicUrl(fileName);
-      const fileUrl = publicUrlData.publicUrl;
+      // Simpan relative path (bukan public URL) agar konsisten dengan alur registrasi
+      const fileUrl = fileName;
 
       const existingDoc = documents.find((d: any) => d.jenis_dokumen === docType);
       

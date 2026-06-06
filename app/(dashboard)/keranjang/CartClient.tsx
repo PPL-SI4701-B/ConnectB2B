@@ -62,32 +62,13 @@ export default function CartClient({ initialItems }: { initialItems: CartItem[] 
 
   const handleCheckout = async () => {
     if (items.length === 0) return;
-    
+
     setIsCheckingOut(true);
     try {
-      // Group by UMKM to create requests
-      const umkmGroups: Record<number, CartItem[]> = {};
-      items.forEach(item => {
-        if (!umkmGroups[item.umkm_id]) umkmGroups[item.umkm_id] = [];
-        umkmGroups[item.umkm_id].push(item);
-      });
-
-      const requests = Object.keys(umkmGroups).map(umkmId => {
-        const umkmItems = umkmGroups[Number(umkmId)];
-        const pesan = `Request Kolaborasi untuk:\n` + umkmItems.map(i => 
-          `- ${i.nama} (${i.type === 'produk' ? 'Produk' : 'Alat'}) x${i.kuantitas}`
-        ).join('\n');
-        
-        return {
-          umkm_id: Number(umkmId),
-          pesan
-        };
-      });
-
-      await checkoutCart(requests);
+      await checkoutCart();
       toast.success('Request berhasil diajukan!');
       setItems([]);
-      router.push('/dashboard-industri/transaksi'); // Redirect ke transaksi
+      router.push('/dashboard-industri/transaksi');
     } catch (err: any) {
       toast.error(err.message || 'Gagal melakukan checkout');
     } finally {

@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase-server';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Metadata } from 'next';
+import ProductDetailActions from './ProductDetailActions';
 
 export const revalidate = 0;
 
@@ -43,11 +43,36 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   // Fetch UMKM info
-  const { data: umkm, error: umkmError } = await supabase
+  const { data: umkm } = await supabase
     .from('umkm')
-    .select('*')
+    .select('id, nama_usaha, deskripsi, alamat')
     .eq('user_id', product.user_id)
     .single();
+
+  // Fetch rating for this UMKM
+  let umkmRating: { avg_rating: number; total_ulasan: number } | null = null;
+  if (umkm?.id) {
+    const { data: ratingRow } = await (supabase as any)
+      .from('umkm_rating_summary')
+      .select('avg_rating, total_ulasan')
+      .eq('umkm_id', umkm.id)
+      .maybeSingle();
+    if (ratingRow) {
+      umkmRating = { avg_rating: parseFloat(ratingRow.avg_rating), total_ulasan: parseInt(ratingRow.total_ulasan) };
+    }
+  }
+
+  // Check if logged-in user is industri (only industri can add to cart)
+  const { data: { user } } = await supabase.auth.getUser();
+  let isIndustri = false;
+  if (user) {
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    isIndustri = userData?.role === 'industri';
+  }
 
   const formatRupiah = (angka: number | null) => {
     if (!angka) return 'Rp 0';
@@ -130,6 +155,22 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             <div className="mt-auto">
               <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">Informasi Pemilik</h3>
               
+              {umkmRating ? (
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-0.5">
+                    {[1,2,3,4,5].map(star => (
+                      <svg key={star} className={`w-4 h-4 ${star <= Math.round(umkmRating!.avg_rating) ? 'text-amber-400' : 'text-slate-200'}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700">{umkmRating.avg_rating.toFixed(1)}</span>
+                  <span className="text-sm text-slate-400">({umkmRating.total_ulasan} ulasan)</span>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 mb-4">Belum ada ulasan untuk UMKM ini.</p>
+              )}
+
               <Link href={`/profil`} className="group flex items-center p-4 bg-white border border-slate-200 rounded-2xl hover:border-blue-300 hover:shadow-md transition-all duration-300 mb-6">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-lg font-bold flex-shrink-0 shadow-inner">
                   {umkm?.nama_usaha?.charAt(0) || 'U'}
@@ -150,20 +191,20 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </Link>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button className="flex-1 bg-white border-2 border-slate-200 text-slate-700 py-3.5 px-6 rounded-xl font-bold hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900 transition-all flex items-center justify-center gap-2 group shadow-sm">
-                  <svg className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Tambah ke Keranjang
-                </button>
-                <button className="flex-1 bg-blue-600 text-white py-3.5 px-6 rounded-xl font-bold hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center justify-center gap-2">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  Ajukan Kerjasama
-                </button>
-              </div>
+              {isIndustri && umkm ? (
+                <ProductDetailActions produkId={product.id} umkmId={umkm.id} />
+              ) : !user ? (
+                <Link
+                  href="/login"
+                  className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-3.5 px-6 rounded-xl font-bold hover:bg-blue-700 transition-all"
+                >
+                  Login untuk Ajukan Kerjasama
+                </Link>
+              ) : (
+                <div className="px-4 py-3 bg-slate-50 border border-slate-200 text-slate-500 text-sm rounded-xl text-center">
+                  Hanya akun Industri yang dapat mengajukan kerjasama.
+                </div>
+              )}
             </div>
             
           </div>

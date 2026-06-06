@@ -96,22 +96,12 @@ export default function PaymentValidationTable({ payments }: { payments: any[] }
   const handleVerify = async () => {
     if (!selectedPayment) return;
     
-    const industriUserId = selectedPayment.transaksi?.request?.industri?.user_id;
-    const umkmUserId = selectedPayment.transaksi?.request?.umkm?.user_id;
-    
-    if (!industriUserId || !umkmUserId) {
-      showToast('Data relasi tidak lengkap (Industri / UMKM ID tidak ditemukan).', 'error');
-      return;
-    }
-
     setLoadingId(selectedPayment.id);
     setConfirmModalOpen(false);
     try {
       const result = await verifyPayment(
         selectedPayment.id,
-        selectedPayment.transaksi_id,
-        industriUserId,
-        umkmUserId
+        selectedPayment.transaksi_id
       );
       
       if (!result.success) {
@@ -138,19 +128,12 @@ export default function PaymentValidationTable({ payments }: { payments: any[] }
   const handleReject = async () => {
     if (!selectedPayment) return;
 
-    const industriUserId = selectedPayment.transaksi?.request?.industri?.user_id;
-    if (!industriUserId) {
-      showToast('Data relasi tidak lengkap (Industri ID tidak ditemukan).', 'error');
-      return;
-    }
-
     setLoadingId(selectedPayment.id);
     setRejectModalOpen(false);
     try {
       const result = await rejectPayment(
         selectedPayment.id,
-        selectedPayment.transaksi_id,
-        industriUserId
+        selectedPayment.transaksi_id
       );
       
       if (!result.success) {
@@ -179,20 +162,12 @@ export default function PaymentValidationTable({ payments }: { payments: any[] }
 
     setDocLoadingId(paymentId);
     try {
-      // Asumsi menggunakan bucket 'pembayaran'
       const { data, error } = await supabase.storage
-        .from('pembayaran')
-        .createSignedUrl(filePath, 3600); // Berlaku 1 jam
+        .from('bukti-transfer')
+        .createSignedUrl(filePath, 3600);
 
       if (error || !data?.signedUrl) {
-        // Fallback: mencoba bucket 'dokumen' jika 'pembayaran' tidak ada
-        const fallback = await supabase.storage.from('dokumen').createSignedUrl(filePath, 3600);
-        if (fallback.error || !fallback.data?.signedUrl) {
-           showToast('Tidak dapat memuat bukti transfer. File mungkin telah dihapus atau bucket tidak valid.', 'error');
-           return;
-        }
-        setPreviewUrl(fallback.data.signedUrl);
-        setPreviewModalOpen(true);
+        showToast('Tidak dapat memuat bukti transfer. File mungkin telah dihapus.', 'error');
         return;
       }
       

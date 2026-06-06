@@ -92,15 +92,31 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Protect dashboard routes from unverified users
-  if (user && isDashboardRoute) {
-    const { data: profile } = await supabase.from('users').select('status_verifikasi, role').eq('id', user.id).single();
+  // Protect dashboard and admin routes: check is_blocked + status_verifikasi
+  if (user && (isDashboardRoute || isAdminRoute)) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('status_verifikasi, role, is_blocked')
+      .eq('id', user.id)
+      .single();
 
-    if (profile && profile.role !== 'admin' && profile.status_verifikasi !== 'terverifikasi') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/status-verifikasi'
-      url.search = `?status=${profile.status_verifikasi}`
-      return NextResponse.redirect(url)
+    if (profile?.is_blocked) {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
+      url.search = '?error=blocked';
+      const redirectResponse = NextResponse.redirect(url);
+      response.headers.getSetCookie().forEach(cookie => {
+        redirectResponse.headers.append('Set-Cookie', cookie);
+      });
+      return redirectResponse;
+    }
+
+    if (isDashboardRoute && profile && profile.role !== 'admin' && profile.status_verifikasi !== 'terverifikasi') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/status-verifikasi';
+      url.search = `?status=${profile.status_verifikasi}`;
+      return NextResponse.redirect(url);
     }
   }
 

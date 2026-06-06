@@ -53,6 +53,15 @@ export default async function TransaksiPage() {
       status_progress,
       pesan,
       created_at
+    ),
+    pembayaran (
+      id,
+      status,
+      bukti_pengiriman,
+      status_pengiriman,
+      bukti_pembayaran_umkm,
+      status_pencairan,
+      bukti_terima_umkm
     )
   `;
 
@@ -129,6 +138,9 @@ export default async function TransaksiPage() {
       mitraNama = umkmMitraMap[req?.sender_umkm_id] || mitraNama;
     }
 
+    const pembayaranArr = Array.isArray(t.pembayaran) ? t.pembayaran : (t.pembayaran ? [t.pembayaran] : []);
+    const pem = pembayaranArr[0] ?? null;
+
     return {
       id: t.id,
       trxCode: `TRX-${t.id.toString().padStart(4, '0')}`,
@@ -141,6 +153,13 @@ export default async function TransaksiPage() {
       pesan: req?.pesan || '-',
       industriId: mitraId,
       industriNama: mitraNama,
+      pembayaranId: pem?.id ?? null,
+      pembayaranStatus: pem?.status ?? null,
+      buktiPengiriman: pem?.bukti_pengiriman ?? null,
+      statusPengiriman: pem?.status_pengiriman ?? 'menunggu',
+      buktiPembayaranUmkm: pem?.bukti_pembayaran_umkm ?? null,
+      statusPencairan: pem?.status_pencairan ?? 'menunggu',
+      buktiTerimaUang: pem?.bukti_terima_umkm ?? null,
     };
   });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -14,23 +14,29 @@ import {
   CheckCheck,
   XCircle,
   ChevronRight,
+  UploadCloud,
+  FileText,
+  Banknote,
 } from "lucide-react";
-import { konfirmasiSelesai } from "./actions";
+import { createClient } from "@/lib/supabase";
+import { konfirmasiSelesai, createPembayaran } from "./actions";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type TransaksiItem = {
   transaksi_id: number;
   request_id: number;
-  req_label: string; // #REQ-XXXX
+  req_label: string;
   progress_status: string;
+  status_finansial: string;
+  pembayaran_status: string | null;
   tanggal_mulai: string;
   tanggal_selesai: string | null;
   umkm_nama: string;
   umkm_user_id: string;
   umkm_initials: string;
-  pesan: string | null; // description from request
-  total_value: number | null; // from detail_transaksi or produk harga
+  pesan: string | null;
+  total_value: number | null;
   has_ulasan: boolean;
 };
 
@@ -124,7 +130,7 @@ function getListBadge(status: string, tanggal_selesai: string | null) {
 // ─── Format Rupiah ────────────────────────────────────────────────────────────
 
 function formatRupiah(val: number | null) {
-  if (!val) return "Rp -";
+  if (val === null || val === undefined) return "Belum ada data";
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
@@ -136,10 +142,10 @@ function formatRupiah(val: number | null) {
 
 export default function PantauTransaksiClient({
   items,
-  industriNama,
+  adminBank,
 }: {
   items: TransaksiItem[];
-  industriNama: string;
+  adminBank: Record<string, string>;
 }) {
   const [confirmedIds, setConfirmedIds] = useState<Set<number>>(new Set());
   const [selected, setSelected] = useState<TransaksiItem | null>(
@@ -150,17 +156,52 @@ export default function PantauTransaksiClient({
   const [successId, setSuccessId] = useState<number | null>(null);
   const router = useRouter();
 
+  // Upload bukti transfer state
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadedTxIds, setUploadedTxIds] = useState<Set<number>>(new Set());
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadBukti = async () => {
+    if (!uploadFile || !selected) return;
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Silakan login kembali.");
+
+      const ext = uploadFile.name.split(".").pop() || "pdf";
+      const filePath = `${user.id}/${selected.transaksi_id}_${Date.now()}.${ext}`;
+
+      const { data: uploadData, error: storageError } = await supabase.storage
+        .from("bukti-transfer")
+        .upload(filePath, uploadFile, { upsert: false });
+
+      if (storageError) throw new Error(storageError.message);
+
+      const result = await createPembayaran(selected.transaksi_id, uploadData.path);
+      if (!result.success) throw new Error(result.error);
+
+      setUploadedTxIds((prev) => new Set(prev).add(selected.transaksi_id));
+      setUploadFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      router.refresh();
+    } catch (err: any) {
+      setUploadError(err.message || "Gagal mengunggah bukti transfer.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleKonfirmasi = () => {
     if (!selected) return;
     setError(null);
 
     const transaksiId = selected.transaksi_id;
     startTransition(async () => {
-      const result = await konfirmasiSelesai(
-        transaksiId,
-        selected.umkm_user_id,
-        industriNama
-      );
+      const result = await konfirmasiSelesai(transaksiId);
 
       if (result.success) {
         setConfirmedIds(prev => new Set(prev).add(transaksiId));
@@ -173,6 +214,55 @@ export default function PantauTransaksiClient({
       }
     });
   };
+
+  const renderUploadForm = () => (
+    <div className="space-y-2">
+      {uploadError && (
+        <p className="text-xs text-rose-600 font-medium">{uploadError}</p>
+      )}
+      <label className="flex items-center gap-3 p-3 bg-white border-2 border-dashed border-[#c3d0e5] rounded-xl cursor-pointer hover:border-[#4318ff] transition-colors group">
+        <UploadCloud className="w-5 h-5 text-[#a3aed1] group-hover:text-[#4318ff] shrink-0 transition-colors" />
+        <div className="flex-1 min-w-0">
+          {uploadFile ? (
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-[#4318ff] shrink-0" />
+              <span className="text-xs font-semibold text-[#2b3674] truncate">{uploadFile.name}</span>
+            </div>
+          ) : (
+            <span className="text-xs text-[#a3aed1]">Klik untuk pilih file (PDF/JPG/PNG, maks 5MB)</span>
+          )}
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/pdf,image/jpeg,image/png"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            if (f.size > 5 * 1024 * 1024) {
+              setUploadError("Ukuran file maksimal 5MB.");
+              return;
+            }
+            setUploadError(null);
+            setUploadFile(f);
+          }}
+        />
+      </label>
+      <button
+        type="button"
+        disabled={!uploadFile || isUploading}
+        onClick={handleUploadBukti}
+        className="w-full flex items-center justify-center gap-2 bg-[#4318ff] hover:bg-[#3311dd] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-2.5 text-sm font-bold transition-all"
+      >
+        {isUploading ? (
+          <><Loader2 className="w-4 h-4 animate-spin" /> Mengunggah...</>
+        ) : (
+          <><UploadCloud className="w-4 h-4" /> Kirim Bukti Transfer</>
+        )}
+      </button>
+    </div>
+  );
 
   const isSelesai = (item: TransaksiItem) =>
     confirmedIds.has(item.transaksi_id) ||
@@ -384,6 +474,88 @@ export default function PantauTransaksiClient({
               </div>
             </div>
 
+            {/* ── Bukti Transfer Section (FR-28) ── */}
+            {(() => {
+              const isLunas = selected.status_finansial === "lunas";
+              const pembayaranStatus = uploadedTxIds.has(selected.transaksi_id)
+                ? "pending"
+                : selected.pembayaran_status;
+
+              if (isLunas) {
+                return (
+                  <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl p-4 mb-6">
+                    <Banknote className="w-5 h-5 text-emerald-500 shrink-0" />
+                    <div>
+                      <p className="font-bold text-emerald-700 text-sm">Pembayaran Terverifikasi</p>
+                      <p className="text-xs text-emerald-600">Admin telah memvalidasi pembayaran Anda.</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (pembayaranStatus === "pending") {
+                return (
+                  <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <Clock className="w-5 h-5 text-amber-500 shrink-0" />
+                    <div>
+                      <p className="font-bold text-amber-700 text-sm">Bukti Transfer Dikirim</p>
+                      <p className="text-xs text-amber-600">Menunggu validasi oleh Admin ConnectB2B.</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (pembayaranStatus === "gagal") {
+                return (
+                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <XCircle className="w-5 h-5 text-rose-500 shrink-0" />
+                      <div>
+                        <p className="font-bold text-rose-700 text-sm">Bukti Transfer Ditolak</p>
+                        <p className="text-xs text-rose-600">Silakan upload ulang bukti yang valid.</p>
+                      </div>
+                    </div>
+                    {renderUploadForm()}
+                  </div>
+                );
+              }
+
+              // null — belum pernah upload
+              return (
+                <div className="bg-[#f4f7fe] border border-[#e2e8f0] rounded-xl p-4 mb-6 space-y-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Banknote className="w-4 h-4 text-[#4318ff]" />
+                    <p className="font-bold text-[#2b3674] text-sm">Lakukan Pembayaran ke Rekening Admin</p>
+                  </div>
+
+                  {/* Info rekening admin */}
+                  <div className="bg-white border border-[#c3d0e5] rounded-xl p-4 space-y-2">
+                    <p className="text-xs font-semibold text-[#a3aed1] uppercase tracking-wide">Rekening Tujuan Transfer</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-[#a3aed1]">Bank</span>
+                      <span className="text-sm font-bold text-[#2b3674]">{adminBank.bank_nama || 'BCA'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-[#a3aed1]">Nomor Rekening</span>
+                      <span className="text-sm font-bold text-[#4318ff] tracking-widest">{adminBank.bank_no_rekening || '-'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-[#a3aed1]">Atas Nama</span>
+                      <span className="text-sm font-bold text-[#2b3674]">{adminBank.bank_atas_nama || '-'}</span>
+                    </div>
+                    <p className="text-xs text-amber-600 font-medium pt-1 border-t border-[#e2e8f0] mt-1">
+                      Transfer sesuai nilai kesepakatan, lalu upload bukti di bawah.
+                    </p>
+                  </div>
+
+                  <p className="text-xs text-[#a3aed1]">
+                    Upload bukti pembayaran (PDF/JPG/PNG, maks 5MB) agar Admin dapat memvalidasi transaksi ini.
+                  </p>
+                  {renderUploadForm()}
+                </div>
+              );
+            })()}
+
             {/* Divider */}
             <div className="h-px bg-[#e2e8f0] mb-6" />
 
@@ -400,9 +572,9 @@ export default function PantauTransaksiClient({
               <div className="flex gap-4 mt-auto">
                 <button
                   type="button"
-                  onClick={() => alert("Fitur komplain akan segera hadir.")}
-                  className="flex-1 flex items-center justify-center gap-2 border-2 border-[#e2e8f0] rounded-xl px-5 py-3.5 font-bold text-[#a3aed1] hover:bg-[#f4f7fe] hover:border-[#a3aed1] transition-all text-sm"
-                  disabled={isPending}
+                  disabled
+                  title="Fitur komplain belum tersedia"
+                  className="flex-1 flex items-center justify-center gap-2 border-2 border-[#e2e8f0] rounded-xl px-5 py-3.5 font-bold text-[#a3aed1] transition-all text-sm opacity-50 cursor-not-allowed"
                 >
                   <AlertTriangle className="w-4 h-4" />
                   Ajukan Komplain

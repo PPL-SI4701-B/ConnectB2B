@@ -20,11 +20,11 @@ export async function acceptRequest(requestId: number) {
 
   const { data: request } = await supabase
     .from('request')
-    .select('id, umkm_id, industri_id, sender_umkm_id, pesan')
+    .select('id, umkm_id, industri_id, sender_umkm_id, pesan, produk_id, equipment_id')
     .eq('id', requestId)
     .eq('umkm_id', umkm.id)
     .eq('status', 'pending')
-    .single() as any;
+    .maybeSingle() as any;
 
   if (!request) throw new Error('Request tidak ditemukan atau sudah diproses');
 
@@ -37,15 +37,39 @@ export async function acceptRequest(requestId: number) {
   if (updateError) throw updateError;
 
   // Create transaksi record linked to the request
-  const { error: transaksiError } = await supabase
+  const { data: newTransaksi, error: transaksiError } = await supabase
     .from('transaksi')
     .insert({
       request_id: requestId,
       status: 'belum lunas',
       status_validasi: 'menunggu',
-    } as any);
+    } as any)
+    .select('id')
+    .single() as any;
 
   if (transaksiError) throw transaksiError;
+
+  // Isi detail_transaksi jika request punya produk/equipment (direct request)
+  if (newTransaksi?.id && (request.produk_id || request.equipment_id)) {
+    let harga = 0;
+    if (request.produk_id) {
+      const { data: produk } = await supabase.from('produk').select('harga').eq('id', request.produk_id).maybeSingle() as any;
+      harga = produk?.harga || 0;
+    } else if (request.equipment_id) {
+      const { data: equip } = await supabase.from('equipment').select('harga_sewa').eq('id', request.equipment_id).maybeSingle() as any;
+      harga = equip?.harga_sewa || 0;
+    }
+    if (harga > 0) {
+      await supabase.from('detail_transaksi').insert({
+        transaksi_id: newTransaksi.id,
+        produk_id: request.produk_id || null,
+        equipment_id: request.equipment_id || null,
+        kuantitas: 1,
+        harga_satuan: harga,
+        subtotal: harga,
+      } as any);
+    }
+  }
 
   // Notify the requester (Industri or sender UMKM)
   if (request.industri_id) {
@@ -56,10 +80,9 @@ export async function acceptRequest(requestId: number) {
       .single();
 
     if (industri?.user_id) {
-      await supabase.from('notifikasi').insert({
-        user_id: industri.user_id,
-        pesan: `Request kerja sama Anda telah diterima oleh ${umkm.nama_usaha}. Transaksi telah dibuat, silakan lanjutkan.`,
-        status: 'belum dibaca',
+      await supabase.rpc('kirim_notifikasi', {
+        p_target_user_id: industri.user_id,
+        p_pesan: `Request kerja sama Anda telah diterima oleh ${umkm.nama_usaha}. Transaksi telah dibuat, silakan lanjutkan.`,
       });
     }
   } else if (request.sender_umkm_id) {
@@ -70,16 +93,16 @@ export async function acceptRequest(requestId: number) {
       .single();
 
     if (senderUmkm?.user_id) {
-      await supabase.from('notifikasi').insert({
-        user_id: senderUmkm.user_id,
-        pesan: `Request Anda telah diterima oleh ${umkm.nama_usaha}. Transaksi telah dibuat, silakan lanjutkan.`,
-        status: 'belum dibaca',
+      await supabase.rpc('kirim_notifikasi', {
+        p_target_user_id: senderUmkm.user_id,
+        p_pesan: `Request Anda telah diterima oleh ${umkm.nama_usaha}. Transaksi telah dibuat, silakan lanjutkan.`,
       });
     }
   }
 
   revalidatePath('/request-masuk');
   revalidatePath('/dashboard/transaksi');
+  revalidatePath('/pantau-transaksi');
   revalidatePath('/dashboard');
   return { success: true };
 }
@@ -105,7 +128,7 @@ export async function rejectRequest(requestId: number) {
     .eq('id', requestId)
     .eq('umkm_id', umkm.id)
     .eq('status', 'pending')
-    .single() as any;
+    .maybeSingle() as any;
 
   if (!request) throw new Error('Request tidak ditemukan atau sudah diproses');
 
@@ -126,10 +149,9 @@ export async function rejectRequest(requestId: number) {
       .single();
 
     if (industri?.user_id) {
-      await supabase.from('notifikasi').insert({
-        user_id: industri.user_id,
-        pesan: `Request kerja sama Anda ditolak oleh ${umkm.nama_usaha}.`,
-        status: 'belum dibaca',
+      await supabase.rpc('kirim_notifikasi', {
+        p_target_user_id: industri.user_id,
+        p_pesan: `Request kerja sama Anda ditolak oleh ${umkm.nama_usaha}.`,
       });
     }
   } else if (request.sender_umkm_id) {
@@ -140,10 +162,9 @@ export async function rejectRequest(requestId: number) {
       .single();
 
     if (senderUmkm?.user_id) {
-      await supabase.from('notifikasi').insert({
-        user_id: senderUmkm.user_id,
-        pesan: `Request Anda ditolak oleh ${umkm.nama_usaha}.`,
-        status: 'belum dibaca',
+      await supabase.rpc('kirim_notifikasi', {
+        p_target_user_id: senderUmkm.user_id,
+        p_pesan: `Request Anda ditolak oleh ${umkm.nama_usaha}.`,
       });
     }
   }
@@ -219,10 +240,9 @@ export async function sendDirectRequest(data: {
     .single();
 
   if (targetUmkm?.user_id) {
-    await supabase.from('notifikasi').insert({
-      user_id: targetUmkm.user_id,
-      pesan: `Anda menerima permintaan kerja sama baru dari ${senderName}`,
-      status: 'belum dibaca',
+    await supabase.rpc('kirim_notifikasi', {
+      p_target_user_id: targetUmkm.user_id,
+      p_pesan: `Anda menerima permintaan kerja sama baru dari ${senderName}`,
     });
   }
 

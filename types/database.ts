@@ -317,23 +317,38 @@ export type Database = {
       }
       pembayaran: {
         Row: {
+          bukti_pembayaran_umkm: string | null
+          bukti_pengiriman: string | null
+          bukti_terima_umkm: string | null
           bukti_transfer: string | null
           id: number
           status: Database["public"]["Enums"]["pembayaran_status"]
+          status_pencairan: string
+          status_pengiriman: string
           tanggal_bayar: string
           transaksi_id: number
         }
         Insert: {
+          bukti_pembayaran_umkm?: string | null
+          bukti_pengiriman?: string | null
+          bukti_terima_umkm?: string | null
           bukti_transfer?: string | null
           id?: number
           status?: Database["public"]["Enums"]["pembayaran_status"]
+          status_pencairan?: string
+          status_pengiriman?: string
           tanggal_bayar?: string
           transaksi_id: number
         }
         Update: {
+          bukti_pembayaran_umkm?: string | null
+          bukti_pengiriman?: string | null
+          bukti_terima_umkm?: string | null
           bukti_transfer?: string | null
           id?: number
           status?: Database["public"]["Enums"]["pembayaran_status"]
+          status_pencairan?: string
+          status_pengiriman?: string
           tanggal_bayar?: string
           transaksi_id?: number
         }
@@ -353,6 +368,7 @@ export type Database = {
           gambar_url: string | null
           harga: number | null
           id: number
+          is_active: boolean
           kategori: string | null
           nama: string
           stok: number | null
@@ -363,6 +379,7 @@ export type Database = {
           gambar_url?: string | null
           harga?: number | null
           id?: number
+          is_active?: boolean
           kategori?: string | null
           nama: string
           stok?: number | null
@@ -373,6 +390,7 @@ export type Database = {
           gambar_url?: string | null
           harga?: number | null
           id?: number
+          is_active?: boolean
           kategori?: string | null
           nama?: string
           stok?: number | null
@@ -621,26 +639,35 @@ export type Database = {
       umkm: {
         Row: {
           alamat: string | null
+          atas_nama_rekening: string | null
           deskripsi: string | null
           id: number
           kategori_id: number | null
+          nama_bank: string | null
           nama_usaha: string
+          no_rekening: string | null
           user_id: string
         }
         Insert: {
           alamat?: string | null
+          atas_nama_rekening?: string | null
           deskripsi?: string | null
           id?: number
           kategori_id?: number | null
+          nama_bank?: string | null
           nama_usaha: string
+          no_rekening?: string | null
           user_id: string
         }
         Update: {
           alamat?: string | null
+          atas_nama_rekening?: string | null
           deskripsi?: string | null
           id?: number
           kategori_id?: number | null
+          nama_bank?: string | null
           nama_usaha?: string
+          no_rekening?: string | null
           user_id?: string
         }
         Relationships: [
@@ -738,11 +765,16 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       is_admin: { Args: never; Returns: boolean }
+      kirim_notifikasi: {
+        Args: {
+          p_target_user_id: string
+          p_pesan: string
+        }
+        Returns: void
+      }
       konfirmasi_pesanan_selesai: {
         Args: {
           p_transaksi_id: number
-          p_umkm_user_id: string
-          p_industri_nama: string
         }
         Returns: Json
       }
