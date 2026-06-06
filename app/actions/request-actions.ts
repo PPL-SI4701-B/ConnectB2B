@@ -20,7 +20,7 @@ export async function acceptRequest(requestId: number) {
 
   const { data: request } = await supabase
     .from('request')
-    .select('id, umkm_id, industri_id, sender_umkm_id, pesan, produk_id, equipment_id')
+    .select('id, umkm_id, industri_id, sender_umkm_id, pesan, produk_id, equipment_id, kuantitas')
     .eq('id', requestId)
     .eq('umkm_id', umkm.id)
     .eq('status', 'pending')
@@ -60,13 +60,15 @@ export async function acceptRequest(requestId: number) {
       harga = equip?.harga_sewa || 0;
     }
     if (harga > 0) {
+      // Gunakan kuantitas asli dari request (bukan hardcode 1) agar nominal tagihan akurat
+      const qty = Math.max(1, Number(request.kuantitas) || 1);
       await supabase.from('detail_transaksi').insert({
         transaksi_id: newTransaksi.id,
         produk_id: request.produk_id || null,
         equipment_id: request.equipment_id || null,
-        kuantitas: 1,
+        kuantitas: qty,
         harga_satuan: harga,
-        subtotal: harga,
+        subtotal: harga * qty,
       } as any);
     }
   }
@@ -179,6 +181,7 @@ export async function sendDirectRequest(data: {
   produk_id?: number | null;
   equipment_id?: number | null;
   pesan: string;
+  kuantitas?: number;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -227,6 +230,7 @@ export async function sendDirectRequest(data: {
     produk_id: data.produk_id || null,
     equipment_id: data.equipment_id || null,
     pesan: data.pesan,
+    kuantitas: Math.max(1, Number(data.kuantitas) || 1),
     status: 'pending',
   } as any);
 

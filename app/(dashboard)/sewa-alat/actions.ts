@@ -40,18 +40,26 @@ export async function sendSewaAlatRequest(
 
   if (!senderUmkm) return { success: false, error: "Profil UMKM Anda tidak ditemukan." };
 
-  // Get equipment info including owner
+  // Get equipment info (equipment links to owner via user_id, not umkm_id)
   const { data: equipment } = await (supabase as any)
     .from("equipment")
-    .select("id, nama, umkm_id, umkm:umkm_id(user_id, nama_usaha)")
+    .select("id, nama, user_id")
     .eq("id", equipmentId)
     .single();
 
   if (!equipment) return { success: false, error: "Alat tidak ditemukan." };
 
-  const ownerUmkmId: number = equipment.umkm_id;
-  const ownerUserId: string = Array.isArray(equipment.umkm) ? equipment.umkm[0]?.user_id : equipment.umkm?.user_id;
-  const ownerNama: string = Array.isArray(equipment.umkm) ? equipment.umkm[0]?.nama_usaha : equipment.umkm?.nama_usaha;
+  // Find the UMKM that owns this equipment via the equipment's user_id
+  const { data: ownerUmkm } = await (supabase as any)
+    .from("umkm")
+    .select("id, user_id, nama_usaha")
+    .eq("user_id", equipment.user_id)
+    .single();
+
+  if (!ownerUmkm) return { success: false, error: "Pemilik alat tidak ditemukan." };
+
+  const ownerUmkmId: number = ownerUmkm.id;
+  const ownerUserId: string = ownerUmkm.user_id;
 
   if (ownerUmkmId === senderUmkm.id) {
     return { success: false, error: "Anda tidak dapat menyewa alat milik sendiri." };

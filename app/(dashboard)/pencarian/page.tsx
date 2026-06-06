@@ -114,7 +114,7 @@ export default async function PencarianPage(props: Props) {
       tanggal,
       transaksi!inner (
         request!inner (
-          umkm!inner ( id, user_id ),
+          umkm!request_umkm_id_fkey ( id, user_id ),
           industri!inner ( nama_perusahaan )
         )
       )

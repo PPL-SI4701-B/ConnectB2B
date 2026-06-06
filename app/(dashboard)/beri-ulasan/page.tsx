@@ -59,7 +59,7 @@ export default async function BeriUlasanPage({
         pesan,
         produk:produk_id ( nama ),
         equipment:equipment_id ( nama ),
-        umkm!inner (
+        umkm!request_umkm_id_fkey (
           id,
           nama_usaha
         )

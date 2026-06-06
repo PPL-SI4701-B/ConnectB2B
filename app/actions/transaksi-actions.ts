@@ -81,12 +81,30 @@ export async function uploadPaymentProof(
       return { success: false, error: 'Unauthorized: Silakan masuk kembali.' };
     }
 
+    // Guard: jangan izinkan upload ulang jika transaksi sudah lunas / pembayaran sudah divalidasi
+    const { data: trx } = await supabase
+      .from('transaksi')
+      .select('status, status_validasi')
+      .eq('id', transaksiId)
+      .maybeSingle() as any;
+
+    if (!trx) {
+      return { success: false, error: 'Transaksi tidak ditemukan.' };
+    }
+    if (trx.status === 'lunas' || trx.status_validasi === 'valid') {
+      return { success: false, error: 'Transaksi ini sudah lunas dan tervalidasi. Tidak perlu upload ulang.' };
+    }
+
     // 2. Check if payment already exists
     const { data: existingPayment } = await supabase
       .from('pembayaran')
-      .select('id')
+      .select('id, status')
       .eq('transaksi_id', transaksiId)
-      .maybeSingle();
+      .maybeSingle() as any;
+
+    if (existingPayment?.status === 'berhasil') {
+      return { success: false, error: 'Pembayaran untuk transaksi ini sudah divalidasi.' };
+    }
 
     if (existingPayment) {
       // Update existing payment

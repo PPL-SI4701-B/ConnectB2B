@@ -156,7 +156,25 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const markAsRead = async (id: number) => {
+  // Tentukan rute tujuan berdasarkan role + isi pesan notifikasi.
+  // UMKM menerima dua jenis: request masuk (→ /request-masuk) dan update transaksi/pembayaran (→ /dashboard/transaksi).
+  const getTargetRoute = (pesan?: string) => {
+    if (userRole === "admin") return "/admin";
+    if (userRole === "industri") return "/pantau-transaksi";
+    const p = (pesan || "").toLowerCase();
+    if (
+      p.includes("permintaan") ||
+      p.includes("request") ||
+      p.includes("kerja sama") ||
+      p.includes("kerjasama") ||
+      p.includes("penyewaan")
+    ) {
+      return "/request-masuk";
+    }
+    return "/dashboard/transaksi";
+  };
+
+  const markAsRead = async (id: number, pesan?: string) => {
     const { error } = await supabase
       .from("notifikasi")
       .update({ status: "dibaca" })
@@ -171,14 +189,8 @@ export default function NotificationBell() {
       prev.map((n) => (n.id === id ? { ...n, status: "dibaca" } : n))
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
-    
-    // Navigate based on role
-    const targetRoute = userRole === "admin"
-      ? "/admin"
-      : userRole === "industri"
-      ? "/pantau-transaksi"
-      : "/dashboard/transaksi";
-    router.push(targetRoute);
+
+    router.push(getTargetRoute(pesan));
     setIsOpen(false);
   };
 
@@ -237,14 +249,9 @@ export default function NotificationBell() {
                     }`}
                     onClick={() => {
                       if (notif.status === "belum dibaca") {
-                        markAsRead(notif.id);
+                        markAsRead(notif.id, notif.pesan);
                       } else {
-                        const targetRoute = userRole === "admin"
-                          ? "/admin"
-                          : userRole === "industri"
-                          ? "/pantau-transaksi"
-                          : "/dashboard/transaksi";
-                        router.push(targetRoute);
+                        router.push(getTargetRoute(notif.pesan));
                         setIsOpen(false);
                       }
                     }}

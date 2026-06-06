@@ -55,7 +55,7 @@ export default async function PantauTransaksiPage() {
         pesan,
         industri_id,
         umkm_id,
-        umkm!inner (
+        umkm!request_umkm_id_fkey (
           id,
           nama_usaha,
           user_id

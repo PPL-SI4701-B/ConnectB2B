@@ -168,7 +168,7 @@ export default async function AdminPage() {
             </div>
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-slate-900">{totalTransaksi || 0}</span>
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">+12% bln ini</span>
+              <span className="text-xs font-medium text-slate-500">transaksi lunas</span>
             </div>
           </div>
         </div>
@@ -210,7 +210,7 @@ export default async function AdminPage() {
             </div>
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-slate-900">{industriAktif || 0}</span>
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">+45</span>
+              <span className="text-xs font-medium text-slate-500">akun aktif</span>
             </div>
           </div>
         </div>

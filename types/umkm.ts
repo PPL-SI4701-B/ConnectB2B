@@ -30,6 +30,7 @@ export type UmkmItem = {
   kategori: string;
   kontak: string;
   nama_user: string;
+  status_verifikasi: string;
   produk: Produk[];
   equipment: Equipment[];
   totalProduk: number;

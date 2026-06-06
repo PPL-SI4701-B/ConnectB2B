@@ -498,6 +498,7 @@ export type Database = {
           equipment_id: number | null
           id: number
           industri_id: number | null
+          kuantitas: number
           pesan: string | null
           produk_id: number | null
           sender_umkm_id: number | null
@@ -509,6 +510,7 @@ export type Database = {
           equipment_id?: number | null
           id?: number
           industri_id?: number | null
+          kuantitas?: number
           pesan?: string | null
           produk_id?: number | null
           status?: Database["public"]["Enums"]["request_status"]
@@ -520,6 +522,7 @@ export type Database = {
           equipment_id?: number | null
           id?: number
           industri_id?: number | null
+          kuantitas?: number
           pesan?: string | null
           produk_id?: number | null
           status?: Database["public"]["Enums"]["request_status"]

@@ -129,6 +129,25 @@ export async function updateCartQuantity(cartId: number, kuantitas: number) {
 
   await assertCartOwnership(supabase, user.id, cartId);
 
+  // Enforce min_pembelian — konsisten dengan addToCart agar qty tidak bisa diturunkan di bawah minimum
+  const { data: cartItem } = await supabase
+    .from('keranjang')
+    .select('produk_id')
+    .eq('id', cartId)
+    .maybeSingle();
+
+  if (cartItem?.produk_id) {
+    const { data: produk } = await supabase
+      .from('produk')
+      .select('min_pembelian')
+      .eq('id', cartItem.produk_id)
+      .single();
+    const minPembelian = (produk as any)?.min_pembelian ?? 1;
+    if (kuantitas < minPembelian) {
+      throw new Error(`Minimum pembelian untuk produk ini adalah ${minPembelian} unit.`);
+    }
+  }
+
   const { error } = await supabase
     .from('keranjang')
     .update({ kuantitas })
@@ -201,6 +220,7 @@ export async function checkoutCart() {
         umkm_id: item.umkm_id,
         produk_id: item.produk_id || null,
         equipment_id: item.equipment_id || null,
+        kuantitas: Math.max(1, Number(item.kuantitas) || 1),
         pesan: `Permintaan kerja sama: ${itemNama} x${item.kuantitas}`,
         status: 'pending',
       } as any);
