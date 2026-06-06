@@ -63,6 +63,7 @@ export async function sendSewaAlatRequest(
     .from("request")
     .insert({
       industri_id: null,
+      sender_umkm_id: senderUmkm.id,
       umkm_id: ownerUmkmId,
       equipment_id: equipmentId,
       pesan,

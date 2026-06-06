@@ -173,8 +173,12 @@ export default function NotificationBell() {
     setUnreadCount((prev) => Math.max(0, prev - 1));
     
     // Navigate based on role
-    const targetRoute = userRole === "industri" ? "/pantau-transaksi" : "/dashboard/transaksi";
-    router.push(targetRoute); 
+    const targetRoute = userRole === "admin"
+      ? "/admin"
+      : userRole === "industri"
+      ? "/pantau-transaksi"
+      : "/dashboard/transaksi";
+    router.push(targetRoute);
     setIsOpen(false);
   };
 
@@ -235,7 +239,11 @@ export default function NotificationBell() {
                       if (notif.status === "belum dibaca") {
                         markAsRead(notif.id);
                       } else {
-                        const targetRoute = userRole === "industri" ? "/pantau-transaksi" : "/dashboard/transaksi";
+                        const targetRoute = userRole === "admin"
+                          ? "/admin"
+                          : userRole === "industri"
+                          ? "/pantau-transaksi"
+                          : "/dashboard/transaksi";
                         router.push(targetRoute);
                         setIsOpen(false);
                       }

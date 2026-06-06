@@ -67,7 +67,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/profil') ||
     request.nextUrl.pathname.startsWith('/sewa-alat') ||
     request.nextUrl.pathname.startsWith('/pencarian') ||
-    request.nextUrl.pathname.startsWith('/request-masuk');
+    request.nextUrl.pathname.startsWith('/request-masuk') ||
+    request.nextUrl.pathname.startsWith('/beri-ulasan');
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
   // Redirect authenticated users away from auth routes

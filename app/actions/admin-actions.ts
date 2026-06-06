@@ -184,6 +184,7 @@ export async function deactivateProduct(produkId: number) {
   if (error) return { success: false, error: error.message };
 
   revalidatePath('/admin');
+  revalidatePath('/admin/tinjauan-konten');
   revalidatePath('/katalog-publik');
   return { success: true };
 }
@@ -202,6 +203,7 @@ export async function reactivateProduct(produkId: number) {
   if (error) return { success: false, error: error.message };
 
   revalidatePath('/admin');
+  revalidatePath('/admin/tinjauan-konten');
   revalidatePath('/katalog-publik');
   return { success: true };
 }
@@ -325,7 +327,8 @@ export async function blockUser(userId: string) {
     console.error('[Admin Action] Gagal insert notifikasi blokir:', notifyError);
   }
 
-  revalidatePath('/admin/kelola-pengguna');
+  revalidatePath('/admin/users');
+  revalidatePath('/admin');
   return { success: true, message: 'Akun berhasil diblokir.' };
 }
 
@@ -373,6 +376,7 @@ export async function unblockUser(userId: string) {
     console.error('[Admin Action] Gagal insert notifikasi unblock:', notifyError);
   }
 
-  revalidatePath('/admin/kelola-pengguna');
+  revalidatePath('/admin/users');
+  revalidatePath('/admin');
   return { success: true, message: 'Blokir akun berhasil dicabut.' };
 }
