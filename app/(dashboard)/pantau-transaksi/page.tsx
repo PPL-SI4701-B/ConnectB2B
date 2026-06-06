@@ -21,23 +21,18 @@ export default async function PantauTransaksiPage() {
   }
 
   // Get industri data
-  const { data: industriDataRaw } = await supabase
+  const { data: industri } = await supabase
     .from("industri")
     .select("id, nama_perusahaan")
     .eq("user_id", user.id)
     .single();
 
-  const industriData = industriDataRaw as {
-    id: number;
-    nama_perusahaan: string;
-  } | null;
-
-  if (!industriData) {
+  if (!industri) {
     redirect("/dashboard");
   }
 
-  const industriId = industriData.id;
-  const industriNama = industriData.nama_perusahaan;
+  const industriId = industri.id;
+  const industriNama = industri.nama_perusahaan;
 
   // Fetch all transaksi for this industri (via request)
   const { data: transaksiRaw, error: txError } = await supabase
@@ -79,7 +74,6 @@ export default async function PantauTransaksiPage() {
 
   // Collect transaksi IDs to check for ulasan
   const transaksiIds = transaksiList.map((t: any) => t.id);
-
   let ulasanSet = new Set<number>();
   if (transaksiIds.length > 0) {
     const { data: ulasanData } = await supabase
@@ -89,22 +83,28 @@ export default async function PantauTransaksiPage() {
     ulasanData?.forEach((u: any) => ulasanSet.add(u.transaksi_id));
   }
 
-  // Fetch admin bank info
+  // Fetch admin bank info from platform_config
   const { data: bankConfigRaw } = await (supabase as any)
-    .from('platform_config')
-    .select('key, value')
-    .in('key', ['bank_nama', 'bank_no_rekening', 'bank_atas_nama']);
+    .from("platform_config")
+    .select("key, value")
+    .in("key", ["bank_nama", "bank_no_rekening", "bank_atas_nama"]);
 
   const bankConfig: Record<string, string> = {};
-  (bankConfigRaw as any[] || []).forEach((r: any) => { bankConfig[r.key] = r.value; });
+  (bankConfigRaw as any[] || []).forEach((r: any) => {
+    bankConfig[r.key] = r.value;
+  });
 
   // Build items list
   const items: TransaksiItem[] = transaksiList.map((t: any) => {
-    const req = t.request;
-    const umkm = req?.umkm;
+    const req = Array.isArray(t.request) ? t.request[0] : t.request;
+    const umkm = Array.isArray(req?.umkm) ? req.umkm[0] : req?.umkm;
     const umkmNama: string = umkm?.nama_usaha || "Unknown UMKM";
 
-    const pembayaranArr = Array.isArray(t.pembayaran) ? t.pembayaran : (t.pembayaran ? [t.pembayaran] : []);
+    const pembayaranArr = Array.isArray(t.pembayaran)
+      ? t.pembayaran
+      : t.pembayaran
+      ? [t.pembayaran]
+      : [];
     const pembayaran = pembayaranArr[0] ?? null;
 
     return {
@@ -138,7 +138,6 @@ export default async function PantauTransaksiPage() {
               Pembelian &amp; Kerja Sama
             </h1>
           </div>
-
           <div className="flex items-center gap-5 bg-white px-5 py-2.5 rounded-[30px] shadow-sm">
             <NotificationBell />
             <div className="w-10 h-10 rounded-full bg-[#00b5d8] text-white flex items-center justify-center font-bold text-sm shadow-sm">
@@ -147,7 +146,6 @@ export default async function PantauTransaksiPage() {
           </div>
         </header>
 
-        {/* Two-panel layout */}
         <PantauTransaksiClient items={items} adminBank={bankConfig} />
       </div>
     </div>

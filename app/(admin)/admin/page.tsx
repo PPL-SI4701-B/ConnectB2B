@@ -14,7 +14,7 @@ import {
   Banknote
 } from 'lucide-react';
 
-export const revalidate = 0; // ensure fresh data on load
+export const revalidate = 0;
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -74,7 +74,7 @@ export default async function AdminPage() {
     console.error('Error fetching pending payments:', paymentError);
   }
 
-  // Fetch pembayaran yang siap dicairkan ke UMKM (validated + bukti_pengiriman ada + belum bayar ke UMKM)
+  // Fetch pembayaran yang siap dicairkan ke UMKM
   const { data: payoutRaw } = await supabase
     .from('pembayaran')
     .select(`
@@ -141,15 +141,14 @@ export default async function AdminPage() {
     { count: totalTransaksi },
     { count: penggunaTervalidasi },
     { count: industriAktif },
-    { count: laporanDitolak } // Bug 7 Fix: separate query for rejected documents
+    { count: laporanDitolak },
   ] = await Promise.all([
     supabase.from('transaksi').select('*', { count: 'exact', head: true }).eq('status', 'lunas'),
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('status_verifikasi', 'terverifikasi'),
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'industri').eq('status_verifikasi', 'terverifikasi'),
-    supabase.from('dokumen_legalitas').select('*', { count: 'exact', head: true }).eq('status_verifikasi', 'ditolak')
+    supabase.from('dokumen_legalitas').select('*', { count: 'exact', head: true }).eq('status_verifikasi', 'ditolak'),
   ]);
 
-  // Calculate unique pending users instead of total documents
   const pendingUsersCount = documents ? new Set(documents.map((d: any) => d.user_id)).size : 0;
 
   return (
@@ -159,91 +158,67 @@ export default async function AdminPage() {
         <p className="text-slate-500 mt-2 text-sm">Pratinjau metrik transaksi, verifikasi pengguna, dan pemantauan sistem.</p>
       </div>
 
-      {/* Stat Cards - using glassmorphism and subtle gradients */}
       <div className="grid grid-cols-1 md:grid-cols-2 flex-wrap xl:grid-cols-4 gap-6 mb-10">
-
-        {/* Card 1 */}
         <div className="relative overflow-hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-100 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-500 z-0"></div>
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-500">Total Transaksi Sukses</h3>
-              <div className="p-2 bg-emerald-100/50 rounded-xl">
-                <TrendingUp className="w-5 h-5 text-emerald-600" />
-              </div>
+              <div className="p-2 bg-emerald-100/50 rounded-xl"><TrendingUp className="w-5 h-5 text-emerald-600" /></div>
             </div>
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-slate-900">{totalTransaksi || 0}</span>
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded flex items-center">
-                +12% <span className="ml-1 text-slate-400 font-medium">bln ini</span>
-              </span>
+              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">+12% bln ini</span>
             </div>
           </div>
         </div>
 
-        {/* Card 2 */}
         <div className="relative overflow-hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-100 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-500 z-0"></div>
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-500">Pengguna Tervalidasi</h3>
-              <div className="p-2 bg-blue-100/50 rounded-xl">
-                <ShieldCheck className="w-5 h-5 text-blue-600" />
-              </div>
+              <div className="p-2 bg-blue-100/50 rounded-xl"><ShieldCheck className="w-5 h-5 text-blue-600" /></div>
             </div>
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-slate-900">{penggunaTervalidasi || 0}</span>
-              <span className="text-xs font-medium text-slate-500">
-                Menunggu: <span className="font-bold text-amber-500">{pendingUsersCount}</span>
-              </span>
+              <span className="text-xs font-medium text-slate-500">Menunggu: <span className="font-bold text-amber-500">{pendingUsersCount}</span></span>
             </div>
           </div>
         </div>
 
-        {/* Card 3 */}
         <div className="relative overflow-hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-100 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-red-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-500 z-0"></div>
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-slate-500">Laporan Pelanggaran Konten</h3>
-              <div className="p-2 bg-red-100/50 rounded-xl">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-              </div>
+              <div className="p-2 bg-red-100/50 rounded-xl"><AlertTriangle className="w-5 h-5 text-red-600" /></div>
             </div>
             <div className="flex items-baseline space-x-2">
-              {/* Bug 7 Fix: use laporanDitolak from dedicated query */}
               <span className="text-3xl font-bold text-slate-900">{laporanDitolak || 0}</span>
               <span className="text-xs font-medium text-slate-500">Total ditolak</span>
             </div>
           </div>
         </div>
 
-        {/* Card 4 */}
         <div className="relative overflow-hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-100 group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110 duration-500 z-0"></div>
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-500">Industri Aktif (Bulan Ini)</h3>
-              <div className="p-2 bg-indigo-100/50 rounded-xl">
-                <Factory className="w-5 h-5 text-indigo-600" />
-              </div>
+              <h3 className="text-sm font-semibold text-slate-500">Industri Aktif (Terverifikasi)</h3>
+              <div className="p-2 bg-indigo-100/50 rounded-xl"><Factory className="w-5 h-5 text-indigo-600" /></div>
             </div>
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-slate-900">{industriAktif || 0}</span>
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                +45
-              </span>
+              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">+45</span>
             </div>
           </div>
         </div>
-
       </div>
 
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-900">Antrean Verifikasi Dokumen Akun Baru</h2>
-        <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">
-          {pendingUsersCount} Menunggu
-        </span>
+        <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full">{pendingUsersCount} Menunggu</span>
       </div>
 
       {documents && <VerificationTable documents={documents} />}
@@ -259,9 +234,7 @@ export default async function AdminPage() {
 
       <div className="mt-12 mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-50 rounded-xl">
-            <Banknote className="w-5 h-5 text-blue-600" />
-          </div>
+          <div className="p-2 bg-blue-50 rounded-xl"><Banknote className="w-5 h-5 text-blue-600" /></div>
           <h2 className="text-xl font-bold text-slate-900">Pencairan Dana ke UMKM</h2>
         </div>
         <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">
@@ -273,9 +246,7 @@ export default async function AdminPage() {
 
       <div className="mt-12 mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-100 rounded-xl">
-            <Users className="w-5 h-5 text-slate-600" />
-          </div>
+          <div className="p-2 bg-slate-100 rounded-xl"><Users className="w-5 h-5 text-slate-600" /></div>
           <h2 className="text-xl font-bold text-slate-900">Manajemen Pengguna</h2>
         </div>
         <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-full">
@@ -287,9 +258,7 @@ export default async function AdminPage() {
 
       <div className="mt-12 mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-100 rounded-xl">
-            <Package className="w-5 h-5 text-slate-600" />
-          </div>
+          <div className="p-2 bg-slate-100 rounded-xl"><Package className="w-5 h-5 text-slate-600" /></div>
           <h2 className="text-xl font-bold text-slate-900">Moderasi Konten Produk</h2>
         </div>
         <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-full">

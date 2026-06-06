@@ -80,7 +80,6 @@ function getStatusConfig(status: string) {
       icon: <Clock className="w-4 h-4" />,
     };
   }
-  // default: menunggu material
   return {
     label: status || "Menunggu Material",
     bg: "bg-amber-50",
@@ -567,50 +566,47 @@ export default function PantauTransaksiClient({
               </div>
             )}
 
-            {/* Action Buttons */}
-            {!selectedDone && !isCurrentSuccess ? (
-              <div className="flex gap-4 mt-auto">
-                <button
-                  type="button"
-                  disabled
-                  title="Fitur komplain belum tersedia"
-                  className="flex-1 flex items-center justify-center gap-2 border-2 border-[#e2e8f0] rounded-xl px-5 py-3.5 font-bold text-[#a3aed1] transition-all text-sm opacity-50 cursor-not-allowed"
-                >
-                  <AlertTriangle className="w-4 h-4" />
-                  Ajukan Komplain
-                </button>
+            {/* Konfirmasi Selesai Button */}
+            {!selectedDone && !isCurrentSuccess && (
+              <button
+                onClick={handleKonfirmasi}
+                disabled={isPending}
+                className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-sm shadow-emerald-200"
+              >
+                {isPending ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Memproses...</>
+                ) : (
+                  <><CheckCircle2 className="w-5 h-5" /> Konfirmasi Pesanan Selesai</>
+                )}
+              </button>
+            )}
 
-                <button
-                  id="btn-konfirmasi-selesai"
-                  type="button"
-                  onClick={handleKonfirmasi}
-                  disabled={isPending}
-                  className="flex-[2] flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white rounded-xl px-5 py-3.5 font-bold transition-all text-sm shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Memproses...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCheck className="w-4 h-4" />
-                      Pesanan Sesuai &amp; Selesai
-                    </>
-                  )}
-                </button>
+            {/* Ulasan link */}
+            {selectedDone && !isCurrentSuccess && !selected.has_ulasan && (
+              <a
+                href={`/dashboard-industri/ulasan?transaksi_id=${selected.transaksi_id}`}
+                className="w-full flex items-center justify-center gap-2 bg-[#4318ff] hover:bg-[#3311dd] text-white font-bold py-3.5 px-6 rounded-xl transition-all mt-2"
+              >
+                Beri Ulasan untuk {selected.umkm_nama} <ChevronRight className="w-5 h-5" />
+              </a>
+            )}
+
+            {selectedDone && selected.has_ulasan && (
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mt-2">
+                <CheckCheck className="w-4 h-4 text-slate-400 shrink-0" />
+                <p className="text-sm text-slate-500 font-medium">Ulasan sudah diberikan.</p>
               </div>
-            ) : selectedDone && !isCurrentSuccess ? (
-              <div className="mt-auto">
-                <a
-                  href={`/dashboard-industri/ulasan?transaksi_id=${selected.transaksi_id}`}
-                  className="w-full flex items-center justify-center gap-2 bg-[#4318ff] hover:bg-[#3311dd] text-white rounded-xl px-5 py-3.5 font-bold transition-all text-sm shadow-sm"
-                >
-                  {selected.has_ulasan ? "Lihat Ulasan" : "Beri Ulasan"}
-                  <ChevronRight className="w-4 h-4" />
-                </a>
+            )}
+
+            {/* Warning jika belum bayar */}
+            {!selectedDone && !selected.pembayaran_status && !uploadedTxIds.has(selected.transaksi_id) && (
+              <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-3">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-700 font-medium">
+                  Silakan selesaikan pembayaran terlebih dahulu sebelum mengkonfirmasi pesanan.
+                </p>
               </div>
-            ) : null}
+            )}
           </>
         )}
       </div>

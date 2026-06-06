@@ -276,6 +276,47 @@ export type Database = {
           }
         ]
       }
+      laporan_konten: {
+        Row: {
+          id: number
+          katalog_type: Database["public"]["Enums"]["katalog_type"]
+          katalog_id: number
+          pelapor: string
+          alasan: string
+          severity: Database["public"]["Enums"]["laporan_severity"]
+          status: Database["public"]["Enums"]["laporan_status"]
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          katalog_type?: Database["public"]["Enums"]["katalog_type"]
+          katalog_id: number
+          pelapor: string
+          alasan: string
+          severity?: Database["public"]["Enums"]["laporan_severity"]
+          status?: Database["public"]["Enums"]["laporan_status"]
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          katalog_type?: Database["public"]["Enums"]["katalog_type"]
+          katalog_id?: number
+          pelapor?: string
+          alasan?: string
+          severity?: Database["public"]["Enums"]["laporan_severity"]
+          status?: Database["public"]["Enums"]["laporan_status"]
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "laporan_konten_katalog_id_fkey"
+            columns: ["katalog_id"]
+            isOneToOne: false
+            referencedRelation: "produk"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       notifikasi: {
         Row: {
           id: number
@@ -788,6 +829,9 @@ export type Database = {
       user_role: "industri" | "umkm" | "admin"
       validasi_status: "menunggu" | "valid" | "tidak valid"
       verifikasi_status: "menunggu" | "terverifikasi" | "ditolak"
+      laporan_status: "pending" | "dihapus" | "diabaikan"
+      laporan_severity: "berat" | "ringan"
+      katalog_type: "produk" | "equipment"
     }
     CompositeTypes: {
       [_ in never]: never
