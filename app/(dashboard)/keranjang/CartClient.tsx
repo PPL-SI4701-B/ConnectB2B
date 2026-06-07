@@ -65,12 +65,22 @@ export default function CartClient({ initialItems }: { initialItems: CartItem[] 
 
     setIsCheckingOut(true);
     try {
-      await checkoutCart();
-      toast.success('Request berhasil diajukan!');
-      setItems([]);
-      router.push('/pantau-transaksi');
+      const result = await checkoutCart();
+      if (result?.skipped && result.skipped.length > 0) {
+        // Sebagian item berhasil, sebagian dilewati (pemilik tanpa profil UMKM valid)
+        toast.success('Sebagian request berhasil diajukan!');
+        toast.error(
+          `${result.skipped.length} item dilewati karena UMKM tidak valid (${result.skipped.join(', ')}). Item tersebut masih di keranjang — silakan hapus.`,
+          { duration: 6000 }
+        );
+        router.refresh();
+      } else {
+        toast.success('Request berhasil diajukan!');
+        setItems([]);
+        router.push('/pantau-transaksi');
+      }
     } catch (err: any) {
-      toast.error(err.message || 'Gagal melakukan checkout');
+      toast.error(err?.message || 'Gagal melakukan checkout');
     } finally {
       setIsCheckingOut(false);
     }

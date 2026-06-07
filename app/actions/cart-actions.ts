@@ -192,32 +192,60 @@ export async function checkoutCart() {
 
   if (!industri) throw new Error('Profil industri belum lengkap.');
 
-  // Query cart items from DB — includes produk_id/equipment_id for each item
+  // Query cart items. PENTING: keranjang.umkm_id null untuk keranjang Industri
+  // (kolom itu menandai pemilik keranjang, bukan pemasok). UMKM pemasok diturunkan
+  // dari pemilik produk/alat (produk.user_id / equipment.user_id → umkm).
   const { data: cartItems } = await supabase
     .from('keranjang')
     .select(`
-      id, kuantitas, umkm_id, produk_id, equipment_id,
-      produk:produk_id(nama),
-      equipment:equipment_id(nama)
+      id, kuantitas, produk_id, equipment_id,
+      produk:produk_id(nama, user_id),
+      equipment:equipment_id(nama, user_id)
     `)
     .eq('industri_id', industri.id) as any;
 
   if (!cartItems?.length) throw new Error('Keranjang kosong');
 
-  // Track notified UMKMs to avoid duplicate notifications
-  const notifiedUmkms = new Set<number>();
+  // Resolve umkm pemasok untuk tiap pemilik (satu query)
+  const ownerUserIds = new Set<string>();
+  for (const item of cartItems) {
+    const produk = Array.isArray(item.produk) ? item.produk[0] : item.produk;
+    const equip = Array.isArray(item.equipment) ? item.equipment[0] : item.equipment;
+    const ownerUserId = produk?.user_id || equip?.user_id;
+    if (ownerUserId) ownerUserIds.add(ownerUserId);
+  }
 
-  // Create one request per cart item — each carries its own produk_id/equipment_id
+  const umkmByUser: Record<string, { id: number; user_id: string }> = {};
+  if (ownerUserIds.size > 0) {
+    const { data: umkms } = await supabase
+      .from('umkm')
+      .select('id, user_id')
+      .in('user_id', Array.from(ownerUserIds)) as any;
+    (umkms || []).forEach((u: any) => { umkmByUser[u.user_id] = u; });
+  }
+
+  const notifiedUmkms = new Set<number>();
+  const processedCartIds: number[] = [];
+  const skipped: string[] = [];
+
   for (const item of cartItems) {
     const produk = Array.isArray(item.produk) ? item.produk[0] : item.produk;
     const equip = Array.isArray(item.equipment) ? item.equipment[0] : item.equipment;
     const itemNama = produk?.nama || equip?.nama || 'Item';
+    const ownerUserId = produk?.user_id || equip?.user_id;
+    const supplier = ownerUserId ? umkmByUser[ownerUserId] : null;
+
+    // Lewati item yang pemiliknya tidak punya profil UMKM (request tidak bisa dibuat)
+    if (!supplier) {
+      skipped.push(itemNama);
+      continue;
+    }
 
     const { error } = await supabase
       .from('request')
       .insert({
         industri_id: industri.id,
-        umkm_id: item.umkm_id,
+        umkm_id: supplier.id,
         produk_id: item.produk_id || null,
         equipment_id: item.equipment_id || null,
         kuantitas: Math.max(1, Number(item.kuantitas) || 1),
@@ -226,31 +254,31 @@ export async function checkoutCart() {
       } as any);
 
     if (error) throw error;
+    processedCartIds.push(item.id);
 
-    // Notify each UMKM once even if multiple items
-    if (!notifiedUmkms.has(item.umkm_id)) {
-      notifiedUmkms.add(item.umkm_id);
-      const { data: umkm } = await supabase
-        .from('umkm')
-        .select('user_id')
-        .eq('id', item.umkm_id)
-        .single() as any;
-
-      if (umkm?.user_id) {
+    if (!notifiedUmkms.has(supplier.id)) {
+      notifiedUmkms.add(supplier.id);
+      if (supplier.user_id) {
         await supabase.rpc('kirim_notifikasi', {
-          p_target_user_id: umkm.user_id,
+          p_target_user_id: supplier.user_id,
           p_pesan: `Anda menerima permintaan kerja sama baru dari ${industri.nama_perusahaan}`,
         });
       }
     }
   }
 
-  // Clear cart for this industri
+  if (processedCartIds.length === 0) {
+    throw new Error(
+      'Tidak ada item yang bisa diajukan. Item di keranjang milik akun tanpa profil UMKM yang valid. Silakan hapus item tersebut.'
+    );
+  }
+
+  // Hapus hanya item yang berhasil diproses (item yang dilewati tetap di keranjang)
   await supabase
     .from('keranjang')
     .delete()
-    .eq('industri_id', industri.id);
+    .in('id', processedCartIds);
 
   revalidatePath('/keranjang');
-  return { success: true };
+  return { success: true, skipped };
 }
