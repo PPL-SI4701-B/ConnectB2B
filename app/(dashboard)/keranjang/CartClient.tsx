@@ -68,7 +68,7 @@ export default function CartClient({ initialItems }: { initialItems: CartItem[] 
       await checkoutCart();
       toast.success('Request berhasil diajukan!');
       setItems([]);
-      router.push('/dashboard-industri/transaksi');
+      router.push('/pantau-transaksi');
     } catch (err: any) {
       toast.error(err.message || 'Gagal melakukan checkout');
     } finally {

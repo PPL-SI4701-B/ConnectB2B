@@ -2,18 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { 
-  Plus, 
-  Search, 
-  Bell, 
-  Trash2, 
-  Pencil, 
+import {
+  Plus,
+  Search,
+  Bell,
+  EyeOff,
+  Power,
+  Pencil,
   Tag,
   Eye
 } from 'lucide-react';
 import NotificationBell from '@/components/layout/NotificationBell';
-import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { setKatalogItemActive } from './actions';
 
 export default function CatalogClient({ 
   produkList, 
@@ -26,43 +27,34 @@ export default function CatalogClient({
 }) {
   const [activeTab, setActiveTab] = useState<'produk' | 'equipment'>('produk');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
   const router = useRouter();
 
-  const supabase = createClient();
-
   const activeItems = (activeTab === 'produk' ? produkList : equipmentList) || [];
-  const filteredItems = activeItems.filter(item => 
+  const filteredItems = activeItems.filter(item =>
     item?.nama?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDelete = async (id: number, gambar_url?: string) => {
-    if (!confirm('Yakin ingin menghapus item ini?')) return;
-    
-    setIsDeleting(true);
-    try {
-      if (activeTab === 'produk') {
-        const { error } = await supabase.from('produk').delete().eq('id', id);
-        if (error) throw error;
+  // Soft-delete: nonaktifkan/aktifkan item (tidak menghapus baris agar riwayat transaksi tetap aman)
+  const handleToggleActive = async (id: number, currentActive: boolean) => {
+    const next = !currentActive;
+    if (!next && !confirm(
+      'Nonaktifkan item ini? Item tidak akan muncul ke calon mitra, tetapi data dan riwayat transaksinya tetap aman. Anda bisa mengaktifkannya kembali kapan saja.'
+    )) return;
 
-        // Coba delete dari storage jika punya gambar_url
-        if (gambar_url) {
-          const path = gambar_url.split('/').pop();
-          if (path) {
-            await supabase.storage.from('produk-images').remove([path]);
-          }
-        }
-      } else {
-        const { error } = await supabase.from('equipment').delete().eq('id', id);
-        if (error) throw error;
+    setTogglingId(id);
+    try {
+      const res = await setKatalogItemActive(activeTab, id, next);
+      if (!res.success) {
+        alert(res.error || 'Gagal memperbarui status item.');
+        return;
       }
-      
       router.refresh();
     } catch (error) {
-      console.error('Error hapus:', error);
-      alert('Gagal menghapus item');
+      console.error('Error toggle status:', error);
+      alert('Gagal memperbarui status item.');
     } finally {
-      setIsDeleting(false);
+      setTogglingId(null);
     }
   };
 
@@ -163,15 +155,24 @@ export default function CatalogClient({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredItems.map((item) => (
-            <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col group">
-              {item.gambar_url ? (
-                <img src={item.gambar_url} alt={item.nama} className="w-full h-48 object-cover" />
-              ) : (
-                <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400">
-                  <Tag className="w-12 h-12 opacity-20" />
-                </div>
+          {filteredItems.map((item) => {
+            const isActive = item.is_active !== false;
+            return (
+            <div key={item.id} className={`relative bg-white rounded-2xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow flex flex-col group ${isActive ? 'border-gray-100' : 'border-amber-200'}`}>
+              {!isActive && (
+                <span className="absolute top-3 left-3 z-10 bg-slate-800/85 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                  Nonaktif
+                </span>
               )}
+              <div className={isActive ? '' : 'opacity-50'}>
+                {item.gambar_url ? (
+                  <img src={item.gambar_url} alt={item.nama} className="w-full h-48 object-cover" />
+                ) : (
+                  <div className="w-full h-48 bg-gray-100 flex items-center justify-center text-gray-400">
+                    <Tag className="w-12 h-12 opacity-20" />
+                  </div>
+                )}
+              </div>
               <div className="p-5 flex flex-col flex-1">
                 <h3 className="font-bold text-gray-900 text-lg mb-1 line-clamp-1">{item.nama}</h3>
                 <p className="text-gray-500 text-sm flex items-center gap-1 mb-3">
@@ -200,20 +201,25 @@ export default function CatalogClient({
                       >
                         <Pencil className="w-4 h-4" /> Edit
                       </Link>
-                      <button 
-                        onClick={() => handleDelete(item.id, item.gambar_url)}
-                        disabled={isDeleting}
-                        className="p-2 border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 rounded-lg transition-colors disabled:opacity-50"
-                        title="Hapus item"
+                      <button
+                        onClick={() => handleToggleActive(item.id, isActive)}
+                        disabled={togglingId === item.id}
+                        className={`p-2 border rounded-lg transition-colors disabled:opacity-50 ${
+                          isActive
+                            ? 'border-amber-200 text-amber-600 hover:bg-amber-50 hover:border-amber-300'
+                            : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300'
+                        }`}
+                        title={isActive ? 'Nonaktifkan item' : 'Aktifkan item'}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {isActive ? <EyeOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {statusVerifikasi === 'terverifikasi' && (
             <Link href={activeTab === 'produk' ? "/dashboard/katalog/tambah" : "/dashboard/katalog/tambah-alat"} className="border-2 border-dashed border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 rounded-2xl flex flex-col items-center justify-center text-gray-400 hover:text-indigo-600 min-h-[300px] transition-colors group cursor-pointer">

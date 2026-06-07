@@ -12,43 +12,25 @@ export async function hapusKontenAction(
 ) {
   const supabase = await createClient();
 
-  // 1. Delete image from Supabase Storage if exists
-  if (gambarUrl) {
-    try {
-      const urlObj = new URL(gambarUrl);
-      const pathSegments = urlObj.pathname.split('/');
-      // Assuming URL format like https://.../storage/v1/object/public/products/filename.jpg
-      const bucketIndex = pathSegments.indexOf('public');
-      if (bucketIndex !== -1 && pathSegments.length > bucketIndex + 2) {
-        const bucketName = pathSegments[bucketIndex + 1];
-        const filePath = pathSegments.slice(bucketIndex + 2).join('/');
-        
-        // Only delete if it's in a bucket we manage (e.g. products)
-        await supabase.storage.from(bucketName).remove([filePath]);
-      }
-    } catch (e) {
-      console.error('Failed to parse or delete image from storage:', e);
-      // We continue even if image deletion fails, to ensure DB is clean
-    }
-  }
-
-  // 2. Delete product from database
+  // Soft-delete: nonaktifkan produk, jangan hard delete.
+  // Hard delete berisiko melanggar foreign key (request/transaksi/keranjang) dan
+  // menghapus jejak transaksi yang sudah terjadi. Gambar dibiarkan agar bisa dipulihkan.
   const { error: deleteError } = await supabase
     .from('produk')
-    .delete()
+    .update({ is_active: false })
     .eq('id', produkId);
 
   if (deleteError) {
-    console.error('Error deleting product:', deleteError);
-    return { success: false, error: 'Gagal menghapus produk dari database.' };
+    console.error('Error deactivating product:', deleteError);
+    return { success: false, error: 'Gagal menonaktifkan produk.' };
   }
 
-  // 3. Insert notification to the UMKM owner
+  // Insert notification to the UMKM owner
   const { error: notifError } = await supabase
     .from('notifikasi')
     .insert({
       user_id: umkmUserId,
-      pesan: `Produk "${namaProduk}" telah dihapus karena melanggar ketentuan platform.`,
+      pesan: `Produk "${namaProduk}" telah dinonaktifkan oleh Admin karena melanggar ketentuan platform.`,
       status: 'belum dibaca',
     });
 

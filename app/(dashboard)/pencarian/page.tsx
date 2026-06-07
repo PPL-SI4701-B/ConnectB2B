@@ -62,8 +62,8 @@ export default async function PencarianPage(props: Props) {
       email,
       status_verifikasi,
       umkm (id, nama_usaha, alamat, kategori_id, kategori(nama_kategori)),
-      produk (id, nama, harga, gambar_url, deskripsi),
-      equipment (id, nama, harga_sewa, deskripsi, gambar_url)
+      produk (id, nama, harga, gambar_url, deskripsi, is_active),
+      equipment (id, nama, harga_sewa, deskripsi, gambar_url, is_active)
     `)
     .eq('role', 'umkm')
     .order('created_at', { ascending: false });
@@ -171,9 +171,11 @@ export default async function PencarianPage(props: Props) {
       kontak: profileMap[u.id] || '',
       nama_user: u.nama || '',
       status_verifikasi: u.status_verifikasi,
-      produk: (u.produk as any[]) || [],
-      equipment: (u.equipment as any[]) || [],
-      totalProduk: ((u.produk as any[]) || []).length + ((u.equipment as any[]) || []).length,
+      produk: ((u.produk as any[]) || []).filter((p: any) => p.is_active !== false),
+      equipment: ((u.equipment as any[]) || []).filter((e: any) => e.is_active !== false),
+      totalProduk:
+        ((u.produk as any[]) || []).filter((p: any) => p.is_active !== false).length +
+        ((u.equipment as any[]) || []).filter((e: any) => e.is_active !== false).length,
       rating_avg: ratingAvg,
       rating_count: ratingCount,
       ulasan: umkmUlasan,
