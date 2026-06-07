@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
 import {
-  Building2, Store, Package, Star, ArrowRight,
-  ShieldCheck, Search, Handshake, MapPin, Zap, TrendingUp, CheckCircle
+  Building2, Store, ArrowRight,
+  ShieldCheck, Search, Handshake, Zap, TrendingUp, CheckCircle
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -13,39 +13,10 @@ export default async function LandingPage() {
   const [
     { count: jumlahUMKM },
     { count: jumlahIndustri },
-    { count: jumlahProduk },
-    { data: produkUnggulan },
-    { data: umkmTerpercaya },
-    { data: ratingData }
   ] = await Promise.all([
     supabase.from('umkm').select('*', { count: 'exact', head: true }),
     supabase.from('industri').select('*', { count: 'exact', head: true }),
-    supabase.from('produk').select('id, users!inner(status_verifikasi)', { count: 'exact', head: true })
-      .eq('users.status_verifikasi', 'terverifikasi'),
-    supabase.from('produk').select('id, nama, harga, gambar_url, kategori, users!inner(nama, status_verifikasi)')
-      .eq('users.status_verifikasi', 'terverifikasi')
-      .order('id', { ascending: false }).limit(4),
-    supabase.from('umkm').select('id, nama_usaha, alamat, kategori(nama_kategori), users!inner(status_verifikasi)')
-      .eq('users.status_verifikasi', 'terverifikasi')
-      .limit(3),
-    supabase.from('ulasan').select('rating')
   ]);
-
-  const avgRating = ratingData && ratingData.length > 0
-    ? (ratingData.reduce((sum, u) => sum + u.rating, 0) / ratingData.length).toFixed(1)
-    : '0';
-
-  const formatIDR = (value: number) =>
-    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
-
-  const GRADIENT_PAIRS = [
-    'from-violet-500 to-purple-700',
-    'from-cyan-400 to-blue-600',
-    'from-rose-400 to-pink-600',
-    'from-amber-400 to-orange-600',
-    'from-emerald-400 to-teal-600',
-    'from-indigo-400 to-violet-600',
-  ];
 
   return (
     <div className="min-h-screen bg-white text-slate-800 overflow-x-hidden">
@@ -129,27 +100,19 @@ export default async function LandingPage() {
                       <div className="text-xs text-slate-400">Platform B2B Terpercaya</div>
                     </div>
                   </div>
-                  <div className="space-y-3 mb-5">
-                    <div className="flex justify-between items-center bg-indigo-50 rounded-xl px-4 py-2.5">
-                      <span className="text-[13px] font-semibold text-[#2b3674]">UMKM Terverifikasi</span>
-                      <span className="text-[13px] font-extrabold text-[#4318ff]">{jumlahUMKM ?? 0}</span>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 bg-indigo-50 rounded-xl px-4 py-3">
+                      <ShieldCheck className="w-4 h-4 text-[#4318ff] shrink-0" />
+                      <span className="text-[13px] font-semibold text-[#2b3674]">Legalitas Terverifikasi</span>
                     </div>
-                    <div className="flex justify-between items-center bg-cyan-50 rounded-xl px-4 py-2.5">
-                      <span className="text-[13px] font-semibold text-[#2b3674]">Mitra Industri</span>
-                      <span className="text-[13px] font-extrabold text-[#00b5d8]">{jumlahIndustri ?? 0}</span>
+                    <div className="flex items-center gap-3 bg-cyan-50 rounded-xl px-4 py-3">
+                      <Search className="w-4 h-4 text-[#00b5d8] shrink-0" />
+                      <span className="text-[13px] font-semibold text-[#2b3674]">Pencarian Mitra Cerdas</span>
                     </div>
-                    <div className="flex justify-between items-center bg-emerald-50 rounded-xl px-4 py-2.5">
-                      <span className="text-[13px] font-semibold text-[#2b3674]">Produk Tersedia</span>
-                      <span className="text-[13px] font-extrabold text-emerald-600">{jumlahProduk ?? 0}</span>
+                    <div className="flex items-center gap-3 bg-emerald-50 rounded-xl px-4 py-3">
+                      <Handshake className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="text-[13px] font-semibold text-[#2b3674]">Kerja Sama Aman &amp; Transparan</span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 bg-amber-50 rounded-xl px-4 py-2.5">
-                    <div className="flex gap-0.5">
-                      {[1,2,3,4,5].map(s => (
-                        <Star key={s} className={`w-3.5 h-3.5 ${parseFloat(avgRating) >= s ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
-                      ))}
-                    </div>
-                    <span className="text-[13px] font-bold text-amber-600">{avgRating}/5 Rating</span>
                   </div>
                 </div>
               </div>
@@ -165,12 +128,10 @@ export default async function LandingPage() {
       {/* ── STAT STRIP ── */}
       <section className="bg-gradient-to-r from-[#4318ff] to-[#00b5d8] py-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 gap-8 max-w-lg mx-auto">
             {[
               { icon: Store, value: `${jumlahUMKM ?? 0}+`, label: 'UMKM Aktif' },
               { icon: Building2, value: `${jumlahIndustri ?? 0}+`, label: 'Mitra Industri' },
-              { icon: Package, value: `${jumlahProduk ?? 0}+`, label: 'Produk Tersedia' },
-              { icon: Star, value: `${avgRating}/5`, label: 'Rating Platform' },
             ].map(({ icon: Icon, value, label }) => (
               <div key={label} className="text-center text-white animate-fade-up">
                 <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -228,109 +189,6 @@ export default async function LandingPage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ── PRODUK UNGGULAN ── */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8">
-          <div className="flex justify-between items-end mb-12">
-            <div className="animate-fade-left">
-              <span className="text-[#00b5d8] font-bold text-[13px] uppercase tracking-widest">Katalog</span>
-              <h2 className="text-4xl font-extrabold text-[#2b3674] mt-2 mb-2">Produk Unggulan</h2>
-              <p className="text-slate-500 font-medium">Temukan produk terbaik dari UMKM terverifikasi kami</p>
-            </div>
-            <Link href="/pencarian" className="hidden sm:inline-flex items-center gap-2 text-[#4318ff] font-semibold hover:gap-3 transition-all animate-fade-right">
-              Lihat Semua <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {produkUnggulan && produkUnggulan.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {produkUnggulan.map((produk: any, i: number) => (
-                <div key={produk.id} className={`group rounded-3xl overflow-hidden bg-white border border-slate-100 hover:shadow-2xl hover:shadow-indigo-100 transition-all duration-300 hover:-translate-y-1 animate-fade-up delay-${(i + 1) * 100}`}>
-                  <div className="aspect-square relative overflow-hidden">
-                    {produk.gambar_url ? (
-                      <img src={produk.gambar_url} alt={produk.nama} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    ) : (
-                      <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${GRADIENT_PAIRS[i % GRADIENT_PAIRS.length]} text-white font-extrabold text-3xl`}>
-                        {produk.nama.substring(0, 2).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="absolute top-3 left-3">
-                      <span className="text-[10px] uppercase tracking-wider font-bold text-white bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full">
-                        {produk.kategori || 'Umum'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <h3 className="font-bold text-[#2b3674] text-[15px] mb-1 truncate">{produk.nama}</h3>
-                    <p className="text-xs text-slate-400 font-medium mb-3 flex items-center gap-1">
-                      <Store className="w-3 h-3" /> {(produk.users as any)?.nama || 'UMKM Mitra'}
-                    </p>
-                    <div className="text-[16px] font-extrabold text-[#4318ff]">
-                      {formatIDR(produk.harga)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-              <Package className="w-14 h-14 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-400 font-medium text-lg">Belum ada produk tersedia</p>
-              <p className="text-slate-400 text-sm mt-1">Daftar sebagai UMKM dan tambahkan produk pertama Anda</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ── UMKM TERPERCAYA ── */}
-      <section className="py-24 bg-[#f4f7fe]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8">
-          <div className="text-center mb-16 animate-fade-up">
-            <span className="text-[#4318ff] font-bold text-[13px] uppercase tracking-widest">Mitra Kami</span>
-            <h2 className="text-4xl font-extrabold text-[#2b3674] mt-3 mb-4">UMKM Terverifikasi</h2>
-            <p className="text-slate-500 max-w-xl mx-auto">Bermitra dengan UMKM terbaik yang telah melewati proses verifikasi ketat untuk menjamin kualitas dan keamanan kerja sama Anda.</p>
-          </div>
-
-          {umkmTerpercaya && umkmTerpercaya.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {umkmTerpercaya.map((umkm: any, i: number) => (
-                <div key={umkm.id} className={`bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-indigo-100 border border-slate-100 transition-all hover:-translate-y-1 animate-fade-up delay-${(i + 1) * 200}`}>
-                  <div className="flex justify-between items-start mb-6">
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${GRADIENT_PAIRS[i % GRADIENT_PAIRS.length]} flex items-center justify-center text-white font-extrabold text-xl shadow-lg`}>
-                      {umkm.nama_usaha?.substring(0, 2).toUpperCase()}
-                    </div>
-                    <span className="flex items-center text-[11px] uppercase tracking-wider font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
-                      <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Terverifikasi
-                    </span>
-                  </div>
-                  <h3 className="text-[18px] font-bold text-[#2b3674] mb-3">{umkm.nama_usaha}</h3>
-                  <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500 mb-4">
-                    {umkm.alamat && (
-                      <span className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg">
-                        <MapPin className="w-3.5 h-3.5" /> {umkm.alamat}
-                      </span>
-                    )}
-                    {umkm.kategori?.nama_kategori && (
-                      <span className="flex items-center gap-1 bg-indigo-50 text-[#4318ff] px-2.5 py-1 rounded-lg">
-                        <Package className="w-3.5 h-3.5" /> {umkm.kategori.nama_kategori}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-slate-500 leading-relaxed">
-                    UMKM unggulan terverifikasi yang siap memenuhi kebutuhan produksi industri Anda dengan standar kualitas terbaik.
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-slate-100">
-              <Store className="w-14 h-14 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-400 font-medium text-lg">Belum ada UMKM terdaftar</p>
-            </div>
-          )}
         </div>
       </section>
 

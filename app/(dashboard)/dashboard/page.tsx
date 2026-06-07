@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
 import {
-  Store,
-  Factory,
-  Handshake,
-  Package,
+  Briefcase,
+  Building2,
+  Eye,
+  TrendingUp,
   ChevronRight
 } from 'lucide-react';
 import NotificationBell from '@/components/layout/NotificationBell';
@@ -36,15 +36,9 @@ export default async function DashboardPage() {
     .select('*', { count: 'exact', head: true });
 
   let activeCooperations = 0;
-  let productCount = 0;
   let requests: any[] = [];
 
   if (umkmId) {
-    const { count: pc } = await supabase
-      .from('produk')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user?.id || '');
-    productCount = pc ?? 0;
     // Active cooperations for this UMKM
     const { count: ca } = await supabase
       .from('request')
@@ -124,49 +118,53 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      {/* 4 Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-[25px] mb-[30px]">
+      {/* 3 Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-[25px] mb-[30px]">
         {/* Card 1: Total UMKM */}
         <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
-          <div className="w-[60px] h-[60px] rounded-full bg-bg-color text-primary flex items-center justify-center shrink-0">
-            <Store className="w-7 h-7" />
+          <div className="w-[60px] h-[60px] rounded-full bg-[#ede7ff] text-primary flex items-center justify-center shrink-0">
+            <Briefcase className="w-7 h-7" />
           </div>
           <div>
             <h4 className="text-text-muted font-medium text-[14px] mb-1">Total UMKM Terdaftar</h4>
-            <h2 className="text-[24px] font-bold text-text-main leading-none">{countUMKM?.toLocaleString() || 0}</h2>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-[24px] font-bold text-text-main leading-none">{countUMKM?.toLocaleString() || 0}</h2>
+              <span className="flex items-center text-success bg-[#e6f9f4] px-2 py-1 rounded-lg text-[12px] font-semibold">
+                <TrendingUp className="w-3.5 h-3.5 mr-1" /> 12%
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Card 2: Total Industri */}
         <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
           <div className="w-[60px] h-[60px] rounded-full bg-[#fffbdf] text-warning flex items-center justify-center shrink-0">
-            <Factory className="w-7 h-7" />
+            <Building2 className="w-7 h-7" />
           </div>
           <div>
             <h4 className="text-text-muted font-medium text-[14px] mb-1">Total Industri Terdaftar</h4>
-            <h2 className="text-[24px] font-bold text-text-main leading-none">{countIndustri?.toLocaleString() || 0}</h2>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-[24px] font-bold text-text-main leading-none">{countIndustri?.toLocaleString() || 0}</h2>
+              <span className="flex items-center text-success bg-[#e6f9f4] px-2 py-1 rounded-lg text-[12px] font-semibold">
+                <TrendingUp className="w-3.5 h-3.5 mr-1" /> 5%
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Card 3: Kerjasama Aktif */}
         <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
           <div className="w-[60px] h-[60px] rounded-full bg-[#e6f9f4] text-success flex items-center justify-center shrink-0">
-            <Handshake className="w-7 h-7" />
+            <Eye className="w-7 h-7" />
           </div>
           <div>
             <h4 className="text-text-muted font-medium text-[14px] mb-1">Kerjasama Aktif</h4>
-            <h2 className="text-[24px] font-bold text-text-main leading-none">{activeCooperations}</h2>
-          </div>
-        </div>
-
-        {/* Card 4: Produk Saya */}
-        <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
-          <div className="w-[60px] h-[60px] rounded-full bg-[#ede7ff] text-primary flex items-center justify-center shrink-0">
-            <Package className="w-7 h-7" />
-          </div>
-          <div>
-            <h4 className="text-text-muted font-medium text-[14px] mb-1">Produk Saya</h4>
-            <h2 className="text-[24px] font-bold text-text-main leading-none">{productCount}</h2>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-[24px] font-bold text-text-main leading-none">{activeCooperations}</h2>
+              <span className="flex items-center text-success bg-[#e6f9f4] px-2 py-1 rounded-lg text-[12px] font-semibold">
+                <TrendingUp className="w-3.5 h-3.5 mr-1" /> 24%
+              </span>
+            </div>
           </div>
         </div>
       </div>

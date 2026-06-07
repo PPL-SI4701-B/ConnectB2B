@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase-server';
 import Link from 'next/link';
 import {
-  Store,
+  Search,
   Handshake,
   Clock,
   TrendingUp,
+  LifeBuoy,
   ChevronRight
 } from 'lucide-react';
 import NotificationBell from '@/components/layout/NotificationBell';
@@ -121,7 +122,7 @@ export default async function DashboardIndustriPage() {
       <header className="flex justify-between items-center mb-8 bg-transparent">
         <div>
           <div className="text-[14px] font-medium text-text-muted mb-1">Halaman / Dashboard Industri</div>
-          <h1 className="text-[32px] font-bold text-text-main">Dashboard Utama</h1>
+          <h1 className="text-[32px] font-bold text-text-main">Dasbor Perusahaan</h1>
         </div>
         
         <div className="flex items-center gap-5 bg-card-bg px-5 py-2.5 rounded-[30px] shadow-sm">
@@ -134,105 +135,115 @@ export default async function DashboardIndustriPage() {
 
       {/* 3 Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[25px] mb-[30px]">
-        {/* Card 1: Mitra UMKM */}
+        {/* Card 1: Total Mitra UMKM */}
         <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
-          <div className="w-[60px] h-[60px] rounded-full bg-bg-color text-primary flex items-center justify-center shrink-0">
-            <Store className="w-7 h-7" />
+          <div className="w-[60px] h-[60px] rounded-full bg-[#ede7ff] text-primary flex items-center justify-center shrink-0">
+            <Search className="w-7 h-7" />
           </div>
           <div>
-            <h4 className="text-text-muted font-medium text-[14px] mb-1">Mitra UMKM</h4>
+            <h4 className="text-text-muted font-medium text-[14px] mb-1">Total Mitra UMKM</h4>
             <div className="flex items-center gap-2.5">
               <h2 className="text-[24px] font-bold text-text-main leading-none flex items-center">{totalMitra}</h2>
               <span className="flex items-center text-success bg-[#e6f9f4] px-2 py-1 rounded-lg text-[12px] font-semibold">
-                <TrendingUp className="w-3.5 h-3.5 mr-1" /> 2%
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Card 2: Request Menunggu */}
-        <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
-          <div className="w-[60px] h-[60px] rounded-full bg-[#fffbdf] text-warning flex items-center justify-center shrink-0">
-            <Clock className="w-7 h-7" />
-          </div>
-          <div>
-            <h4 className="text-text-muted font-medium text-[14px] mb-1">Request Menunggu</h4>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-[24px] font-bold text-text-main leading-none flex items-center">{pendingRequests}</h2>
-              <span className="flex items-center text-danger bg-[#feeceb] px-2 py-1 rounded-lg text-[12px] font-semibold">
-                Perlu Diproses
+                <TrendingUp className="w-3.5 h-3.5 mr-1" /> Baru
               </span>
             </div>
           </div>
         </div>
 
-        {/* Card 3: Kerja Sama Aktif */}
+        {/* Card 2: Request Menunggu Konfirmasi */}
+        <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
+          <div className="w-[60px] h-[60px] rounded-full bg-[#fffbdf] text-warning flex items-center justify-center shrink-0">
+            <Clock className="w-7 h-7" />
+          </div>
+          <div>
+            <h4 className="text-text-muted font-medium text-[14px] mb-1">Request Menunggu Konfirmasi</h4>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-[24px] font-bold text-text-main leading-none flex items-center">{pendingRequests}</h2>
+              <span className="flex items-center text-danger bg-[#feeceb] px-2 py-1 rounded-lg text-[12px] font-semibold">
+                Perlu Tindakan
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Proses Kerja Sama Aktif */}
         <div className="bg-card-bg p-[25px] rounded-xl shadow-sm flex items-center gap-5 hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer">
           <div className="w-[60px] h-[60px] rounded-full bg-[#e6f9f4] text-success flex items-center justify-center shrink-0">
             <Handshake className="w-7 h-7" />
           </div>
           <div>
-            <h4 className="text-text-muted font-medium text-[14px] mb-1">Kerja Sama Aktif</h4>
+            <h4 className="text-text-muted font-medium text-[14px] mb-1">Proses Kerja Sama Aktif</h4>
             <div className="flex items-center gap-2.5">
               <h2 className="text-[24px] font-bold text-text-main leading-none flex items-center">{activeProcess}</h2>
               <span className="flex items-center text-success bg-[#e6f9f4] px-2 py-1 rounded-lg text-[12px] font-semibold">
-                <TrendingUp className="w-3.5 h-3.5 mr-1" /> 15%
+                <TrendingUp className="w-3.5 h-3.5 mr-1" /> Stabil
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="bg-card-bg rounded-xl shadow-sm overflow-hidden p-[30px] min-h-[400px]">
-        <div className="flex justify-between items-center mb-[25px]">
-          <h2 className="text-[20px] font-bold text-text-main">Status Pemesanan</h2>
-          <Link href="/pantau-transaksi" className="text-text-main bg-transparent border border-border-color px-5 py-2.5 rounded-lg font-semibold text-[15px] flex items-center hover:bg-bg-color transition-colors">
-            Lihat Semua <ChevronRight className="w-4 h-4 ml-2" />
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-             <thead>
-               <tr>
-                 <th className="text-text-muted font-semibold text-[14px] pb-[15px] border-b border-border-color">ID Request</th>
-                 <th className="text-text-muted font-semibold text-[14px] pb-[15px] border-b border-border-color">UMKM Mitra</th>
-                 <th className="text-text-muted font-semibold text-[14px] pb-[15px] border-b border-border-color">Jenis Kerja Sama</th>
-                 <th className="text-text-muted font-semibold text-[14px] pb-[15px] border-b border-border-color">Tanggal</th>
-                 <th className="text-text-muted font-semibold text-[14px] pb-[15px] border-b border-border-color">Status</th>
-               </tr>
-             </thead>
-             <tbody>
-               {requests.length > 0 ? (
-                 requests.map((req) => (
-                   <tr key={req.id} className="hover:bg-[#f8fafc] cursor-pointer transition-colors group">
-                     <td className="py-[18px] border-b border-border-color text-[15px] font-semibold text-text-main group-last:border-none">#REQ-{req.id.toString().padStart(4, '0')}</td>
-                     <td className="py-[18px] border-b border-border-color group-last:border-none">
-                       <div className="flex items-center gap-3">
-                         <div className="w-9 h-9 rounded-lg bg-bg-color text-primary font-bold flex items-center justify-center">
-                           {req.initials}
+      {/* Table + Jalan Pintas Cepat */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-[25px]">
+        {/* Table Section */}
+        <div className="lg:col-span-2 bg-card-bg rounded-xl shadow-sm overflow-hidden p-[30px] min-h-[400px]">
+          <div className="flex justify-between items-center mb-[25px]">
+            <h2 className="text-[20px] font-bold text-text-main">Status Pemesanan / Penyewaan Terbaru</h2>
+            <Link href="/pantau-transaksi" className="text-text-main bg-transparent border border-border-color px-5 py-2.5 rounded-lg font-semibold text-[15px] flex items-center hover:bg-bg-color transition-colors">
+              Kelola Transaksi <ChevronRight className="w-4 h-4 ml-2" />
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+               <thead>
+                 <tr>
+                   <th className="text-text-muted font-semibold text-[14px] pb-[15px] border-b border-border-color">ID Req</th>
+                   <th className="text-text-muted font-semibold text-[14px] pb-[15px] border-b border-border-color">UMKM Mitra</th>
+                   <th className="text-text-muted font-semibold text-[14px] pb-[15px] border-b border-border-color">Jenis Kerja Sama</th>
+                   <th className="text-text-muted font-semibold text-[14px] pb-[15px] border-b border-border-color">Status</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {requests.length > 0 ? (
+                   requests.map((req) => (
+                     <tr key={req.id} className="hover:bg-[#f8fafc] cursor-pointer transition-colors group">
+                       <td className="py-[18px] border-b border-border-color text-[15px] font-semibold text-text-main group-last:border-none">#REQ-{req.id.toString().padStart(4, '0')}</td>
+                       <td className="py-[18px] border-b border-border-color group-last:border-none">
+                         <div className="flex items-center gap-3">
+                           <div className="w-9 h-9 rounded-lg bg-bg-color text-primary font-bold flex items-center justify-center">
+                             {req.initials}
+                           </div>
+                           <span className="font-semibold text-[15px] text-text-main">{req.umkm_nama}</span>
                          </div>
-                         <span className="font-semibold text-[15px] text-text-main">{req.umkm_nama}</span>
-                       </div>
-                     </td>
-                     <td className="py-[18px] border-b border-border-color text-[15px] font-semibold text-text-main group-last:border-none truncate max-w-[200px]">{req.pesan || '-'}</td>
-                     <td className="py-[18px] border-b border-border-color text-[15px] font-semibold text-text-main group-last:border-none">
-                       {new Date(req.tanggal_request).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                     </td>
-                     <td className="py-[18px] border-b border-border-color group-last:border-none">
-                       {getStatusBadge(req.status)}
+                       </td>
+                       <td className="py-[18px] border-b border-border-color text-[15px] font-semibold text-text-main group-last:border-none truncate max-w-[200px]">{req.pesan || '-'}</td>
+                       <td className="py-[18px] border-b border-border-color group-last:border-none">
+                         {getStatusBadge(req.status)}
+                       </td>
+                     </tr>
+                   ))
+                 ) : (
+                   <tr>
+                     <td colSpan={4} className="py-[18px] text-center text-text-muted text-[15px] font-medium border-b border-border-color">
+                       Belum ada aktivitas status pemesanan terbaru.
                      </td>
                    </tr>
-                 ))
-               ) : (
-                 <tr>
-                   <td colSpan={5} className="py-[18px] text-center text-text-muted text-[15px] font-medium border-b border-border-color">
-                     Belum ada aktivitas status pemesanan terbaru.
-                   </td>
-                 </tr>
-               )}
-             </tbody>
-          </table>
+                 )}
+               </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Jalan Pintas Cepat */}
+        <div className="bg-card-bg rounded-xl shadow-sm p-[30px] h-fit">
+          <h2 className="text-[20px] font-bold text-text-main mb-[25px]">Jalan Pintas Cepat</h2>
+          <Link href="/pencarian" className="flex items-center gap-3 w-full bg-secondary text-white font-semibold text-[15px] px-5 py-4 rounded-xl hover:opacity-90 transition-all shadow-sm mb-4">
+            <Search className="w-5 h-5" /> Temukan Supplier Baru
+          </Link>
+          <a href="mailto:support@connectb2b.id" className="flex items-center gap-3 w-full bg-bg-color text-text-main font-semibold text-[15px] px-5 py-4 rounded-xl hover:bg-border-color/40 transition-all">
+            <LifeBuoy className="w-5 h-5 text-text-muted" /> Pusat Bantuan B2B
+          </a>
         </div>
       </div>
     </div>
