@@ -30,6 +30,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# test report (generated)
+/test-report.html
+
 # Claude settings and local configs
 .claude/
 .cursor/
