@@ -69,11 +69,16 @@ export async function submitUlasan(
   // Check if ulasan already exists
   const { data: existing } = await supabase
     .from("ulasan")
-    .select("id")
+    .select("id, tanggal")
     .eq("transaksi_id", transaksiId)
-    .single();
+    .single() as any;
 
   if (existing) {
+    // FR-17: edit ulasan hanya diizinkan dalam 24 jam sejak ulasan dibuat/terakhir diubah
+    const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+    if (existing.tanggal && Date.now() - new Date(existing.tanggal).getTime() > EDIT_WINDOW_MS) {
+      return { success: false, error: "Batas waktu edit ulasan (24 jam) sudah lewat." };
+    }
     // Update existing ulasan
     const { error: updateError } = await supabase
       .from("ulasan")

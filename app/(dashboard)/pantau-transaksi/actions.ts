@@ -5,12 +5,18 @@ import { revalidatePath } from "next/cache";
 
 export async function createPembayaran(
   transaksiId: number,
-  buktiBayarPath: string
+  buktiBayarPath: string,
+  jumlahTransfer?: number
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "Anda harus login terlebih dahulu." };
+
+  // FR-28: nominal transfer wajib diisi dan harus > 0
+  if (jumlahTransfer === undefined || jumlahTransfer === null || !(jumlahTransfer > 0)) {
+    return { success: false, error: "Nominal transfer harus diisi dan lebih dari 0." };
+  }
 
   const { data: industri } = await supabase
     .from("industri")
@@ -48,6 +54,8 @@ export async function createPembayaran(
       .from("pembayaran")
       .update({
         bukti_transfer: buktiBayarPath,
+        jumlah_transfer: jumlahTransfer,
+        catatan_admin: null,
         status: "pending",
         tanggal_bayar: new Date().toISOString(),
       } as any)
@@ -59,6 +67,7 @@ export async function createPembayaran(
       .insert({
         transaksi_id: transaksiId,
         bukti_transfer: buktiBayarPath,
+        jumlah_transfer: jumlahTransfer,
         status: "pending",
         tanggal_bayar: new Date().toISOString(),
       } as any);
@@ -109,5 +118,69 @@ export async function konfirmasiSelesai(
   // Revalidate the page
   revalidatePath("/pantau-transaksi");
 
+  return { success: true };
+}
+
+// FR-16 (skenario alternatif): Industri mengajukan komplain alih-alih konfirmasi selesai
+export async function ajukanKomplain(
+  transaksiId: number,
+  pesan: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Anda harus login terlebih dahulu." };
+  if (!pesan.trim()) return { success: false, error: "Detail keluhan tidak boleh kosong." };
+
+  const { data: industri } = await supabase
+    .from("industri")
+    .select("id, nama_perusahaan")
+    .eq("user_id", user.id)
+    .maybeSingle() as any;
+  if (!industri) return { success: false, error: "Profil industri tidak ditemukan." };
+
+  // Verifikasi kepemilikan transaksi + ambil user_id UMKM
+  const { data: trx } = await supabase
+    .from("transaksi")
+    .select("id, request:request_id(industri_id, umkm:umkm_id(user_id))")
+    .eq("id", transaksiId)
+    .maybeSingle() as any;
+
+  const req = Array.isArray(trx?.request) ? trx.request[0] : trx?.request;
+  if (!trx || req?.industri_id !== industri.id) {
+    return { success: false, error: "Anda tidak memiliki akses ke transaksi ini." };
+  }
+
+  const trxCode = `TRX-${String(transaksiId).padStart(4, "0")}`;
+
+  // Catat di riwayat transaksi
+  const { error: histError } = await supabase
+    .from("transaksi_history")
+    .insert({
+      transaksi_id: transaksiId,
+      status_progress: "Komplain Diajukan",
+      pesan,
+    } as any);
+  if (histError) return { success: false, error: "Gagal mencatat komplain." };
+
+  // Notifikasi ke UMKM
+  const umkm = Array.isArray(req?.umkm) ? req.umkm[0] : req?.umkm;
+  if (umkm?.user_id) {
+    await supabase.rpc("kirim_notifikasi", {
+      p_target_user_id: umkm.user_id,
+      p_pesan: `Komplain pada ${trxCode} dari ${industri.nama_perusahaan}: "${pesan}"`,
+    });
+  }
+
+  // Notifikasi ke semua Admin
+  const { data: admins } = await supabase.from("users").select("id").eq("role", "admin");
+  for (const a of (admins as any[]) || []) {
+    await supabase.rpc("kirim_notifikasi", {
+      p_target_user_id: a.id,
+      p_pesan: `Komplain baru pada ${trxCode} dari ${industri.nama_perusahaan}. Perlu ditinjau.`,
+    });
+  }
+
+  revalidatePath("/pantau-transaksi");
   return { success: true };
 }

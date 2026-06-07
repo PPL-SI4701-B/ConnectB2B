@@ -66,6 +66,8 @@ export default function KatalogClient({ initialProducts, categories }: KatalogCl
         return (a.harga || 0) - (b.harga || 0);
       } else if (currentSort === 'termahal') {
         return (b.harga || 0) - (a.harga || 0);
+      } else if (currentSort === 'rating') {
+        return (b.umkm?.avg_rating || 0) - (a.umkm?.avg_rating || 0);
       }
       return 0;
     });
@@ -110,6 +112,7 @@ export default function KatalogClient({ initialProducts, categories }: KatalogCl
             <option value="terbaru">Terbaru</option>
             <option value="termurah">Harga: Terendah</option>
             <option value="termahal">Harga: Tertinggi</option>
+            <option value="rating">Rating Tertinggi</option>
           </select>
         </div>
       </div>

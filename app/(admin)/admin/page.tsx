@@ -50,6 +50,7 @@ export default async function AdminPage() {
       transaksi_id,
       tanggal_bayar,
       bukti_transfer,
+      jumlah_transfer,
       status,
       transaksi (
         id,

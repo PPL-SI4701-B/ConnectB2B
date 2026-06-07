@@ -17,6 +17,23 @@ export default async function TransaksiPage() {
     redirect('/login');
   }
 
+  // FR-15: update status kerja sama hanya untuk UMKM.
+  // Cegah Industri/Admin mengakses halaman ini (arahkan ke halaman yang sesuai),
+  // bahkan jika akun kebetulan memiliki profil UMKM ganda.
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single() as any;
+
+  const role = (userRow?.role || '').toLowerCase();
+  if (role === 'industri') {
+    redirect('/pantau-transaksi');
+  }
+  if (role === 'admin') {
+    redirect('/admin');
+  }
+
   // Get current user's UMKM profile
   const { data: umkm } = await supabase
     .from('umkm')

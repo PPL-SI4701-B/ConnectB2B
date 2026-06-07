@@ -17,9 +17,10 @@ import {
   UploadCloud,
   FileText,
   Banknote,
+  MessageSquareWarning,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
-import { konfirmasiSelesai, createPembayaran } from "./actions";
+import { konfirmasiSelesai, createPembayaran, ajukanKomplain } from "./actions";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -160,10 +161,23 @@ export default function PantauTransaksiClient({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadedTxIds, setUploadedTxIds] = useState<Set<number>>(new Set());
+  const [jumlahTransfer, setJumlahTransfer] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // FR-16: komplain
+  const [komplainOpen, setKomplainOpen] = useState(false);
+  const [komplainPesan, setKomplainPesan] = useState("");
+  const [isKomplaining, setIsKomplaining] = useState(false);
+  const [komplainDoneIds, setKomplainDoneIds] = useState<Set<number>>(new Set());
 
   const handleUploadBukti = async () => {
     if (!uploadFile || !selected) return;
+    // FR-28: validasi nominal transfer
+    const nominal = parseInt(jumlahTransfer.replace(/[^\d]/g, ""), 10);
+    if (!nominal || nominal <= 0) {
+      setUploadError("Masukkan nominal transfer yang valid (lebih dari 0).");
+      return;
+    }
     setIsUploading(true);
     setUploadError(null);
     try {
@@ -180,17 +194,39 @@ export default function PantauTransaksiClient({
 
       if (storageError) throw new Error(storageError.message);
 
-      const result = await createPembayaran(selected.transaksi_id, uploadData.path);
+      const result = await createPembayaran(selected.transaksi_id, uploadData.path, nominal);
       if (!result.success) throw new Error(result.error);
 
       setUploadedTxIds((prev) => new Set(prev).add(selected.transaksi_id));
       setUploadFile(null);
+      setJumlahTransfer("");
       if (fileInputRef.current) fileInputRef.current.value = "";
       router.refresh();
     } catch (err: any) {
       setUploadError(err.message || "Gagal mengunggah bukti transfer.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleKomplain = async () => {
+    if (!selected) return;
+    if (!komplainPesan.trim()) return;
+    setIsKomplaining(true);
+    try {
+      const result = await ajukanKomplain(selected.transaksi_id, komplainPesan.trim());
+      if (!result.success) {
+        setError(result.error || "Gagal mengirim komplain.");
+        return;
+      }
+      setKomplainDoneIds((prev) => new Set(prev).add(selected.transaksi_id));
+      setKomplainOpen(false);
+      setKomplainPesan("");
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || "Gagal mengirim komplain.");
+    } finally {
+      setIsKomplaining(false);
     }
   };
 
@@ -219,6 +255,21 @@ export default function PantauTransaksiClient({
       {uploadError && (
         <p className="text-xs text-rose-600 font-medium">{uploadError}</p>
       )}
+      {/* FR-28: nominal transfer */}
+      <div>
+        <label className="text-xs font-semibold text-[#2b3674] mb-1 block">Nominal Transfer (Rp)</label>
+        <div className="flex items-center bg-white border border-[#c3d0e5] rounded-xl px-3 focus-within:border-[#4318ff] transition-colors">
+          <span className="text-sm font-bold text-[#a3aed1]">Rp</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={jumlahTransfer ? Number(jumlahTransfer.replace(/[^\d]/g, "")).toLocaleString("id-ID") : ""}
+            onChange={(e) => setJumlahTransfer(e.target.value.replace(/[^\d]/g, ""))}
+            placeholder="0"
+            className="flex-1 py-2.5 px-2 bg-transparent text-sm font-bold text-[#2b3674] outline-none"
+          />
+        </div>
+      </div>
       <label className="flex items-center gap-3 p-3 bg-white border-2 border-dashed border-[#c3d0e5] rounded-xl cursor-pointer hover:border-[#4318ff] transition-colors group">
         <UploadCloud className="w-5 h-5 text-[#a3aed1] group-hover:text-[#4318ff] shrink-0 transition-colors" />
         <div className="flex-1 min-w-0">
@@ -250,7 +301,7 @@ export default function PantauTransaksiClient({
       </label>
       <button
         type="button"
-        disabled={!uploadFile || isUploading}
+        disabled={!uploadFile || !jumlahTransfer || isUploading}
         onClick={handleUploadBukti}
         className="w-full flex items-center justify-center gap-2 bg-[#4318ff] hover:bg-[#3311dd] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-2.5 text-sm font-bold transition-all"
       >
@@ -566,19 +617,34 @@ export default function PantauTransaksiClient({
               </div>
             )}
 
-            {/* Konfirmasi Selesai Button */}
+            {/* Konfirmasi Selesai + Ajukan Komplain (FR-16) */}
             {!selectedDone && !isCurrentSuccess && (
-              <button
-                onClick={handleKonfirmasi}
-                disabled={isPending}
-                className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-sm shadow-emerald-200"
-              >
-                {isPending ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> Memproses...</>
-                ) : (
-                  <><CheckCircle2 className="w-5 h-5" /> Konfirmasi Pesanan Selesai</>
-                )}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleKonfirmasi}
+                  disabled={isPending}
+                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-sm shadow-emerald-200"
+                >
+                  {isPending ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" /> Memproses...</>
+                  ) : (
+                    <><CheckCircle2 className="w-5 h-5" /> Konfirmasi Pesanan Selesai</>
+                  )}
+                </button>
+                <button
+                  onClick={() => { setKomplainOpen(true); setError(null); }}
+                  className="sm:w-auto flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold py-3.5 px-6 rounded-xl transition-all"
+                >
+                  <MessageSquareWarning className="w-5 h-5" /> Ajukan Komplain
+                </button>
+              </div>
+            )}
+
+            {komplainDoneIds.has(selected.transaksi_id) && (
+              <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 mt-3">
+                <MessageSquareWarning className="w-4 h-4 text-rose-500 shrink-0" />
+                <p className="text-sm text-rose-600 font-medium">Komplain Anda sudah dikirim ke UMKM &amp; Admin.</p>
+              </div>
             )}
 
             {/* Ulasan link */}
@@ -610,6 +676,51 @@ export default function PantauTransaksiClient({
           </>
         )}
       </div>
+
+      {/* FR-16: Modal Ajukan Komplain */}
+      {komplainOpen && selected && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => !isKomplaining && setKomplainOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <MessageSquareWarning className="w-5 h-5 text-rose-500" />
+                <h3 className="font-bold text-[#2b3674]">Ajukan Komplain</h3>
+              </div>
+              <button onClick={() => setKomplainOpen(false)} disabled={isKomplaining} className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 disabled:opacity-50">
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3">
+              <p className="text-sm text-slate-500">
+                Jelaskan masalah pada <strong className="text-[#2b3674]">{selected.req_label}</strong> (mis. barang tidak sesuai, rusak, atau jumlah kurang). Komplain dikirim ke UMKM dan Admin untuk ditinjau.
+              </p>
+              <textarea
+                value={komplainPesan}
+                onChange={(e) => setKomplainPesan(e.target.value)}
+                rows={4}
+                placeholder="Tuliskan detail keluhan Anda..."
+                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none text-[#2b3674]"
+              />
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => setKomplainOpen(false)}
+                  disabled={isKomplaining}
+                  className="flex-1 py-2.5 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleKomplain}
+                  disabled={isKomplaining || !komplainPesan.trim()}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl disabled:opacity-50"
+                >
+                  {isKomplaining ? <><Loader2 className="w-4 h-4 animate-spin" /> Mengirim...</> : "Kirim Komplain"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

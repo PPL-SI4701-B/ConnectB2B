@@ -251,7 +251,7 @@ export async function verifyPayment(pembayaranId: number, transaksiId: number) {
   return { success: true, message: 'Pembayaran berhasil diverifikasi.' };
 }
 
-export async function rejectPayment(pembayaranId: number, transaksiId: number) {
+export async function rejectPayment(pembayaranId: number, transaksiId: number, catatan?: string) {
   const supabase = await createClient();
   const db = supabaseAny(supabase);
 
@@ -260,6 +260,10 @@ export async function rejectPayment(pembayaranId: number, transaksiId: number) {
 
   const { data: adminProfile } = await db.from('users').select('role').eq('id', user.id).single();
   if (!adminProfile || adminProfile.role !== 'admin') return { success: false, error: 'Anda tidak memiliki akses admin.' };
+
+  // FR-29: alasan penolakan wajib diisi
+  const alasan = (catatan || '').trim();
+  if (!alasan) return { success: false, error: 'Alasan penolakan wajib diisi.' };
 
   // Derive industriUserId dari DB
   const { data: relasi } = await db
@@ -271,13 +275,13 @@ export async function rejectPayment(pembayaranId: number, transaksiId: number) {
   const industriUserId = relasi?.transaksi?.request?.industri?.user_id;
   if (!industriUserId) return { success: false, error: 'Data industri tidak ditemukan.' };
 
-  const { error: paymentError } = await db.from('pembayaran').update({ status: 'gagal' }).eq('id', pembayaranId);
+  const { error: paymentError } = await db.from('pembayaran').update({ status: 'gagal', catatan_admin: alasan }).eq('id', pembayaranId);
   if (paymentError) return { success: false, error: 'Gagal menolak pembayaran.' };
 
   const { error: transaksiError } = await db.from('transaksi').update({ status_validasi: 'tidak valid' }).eq('id', transaksiId);
   if (transaksiError) return { success: false, error: 'Gagal mengupdate status transaksi.' };
 
-  await supabase.rpc('kirim_notifikasi', { p_target_user_id: industriUserId, p_pesan: 'Bukti pembayaran ditolak. Silakan upload ulang.' });
+  await supabase.rpc('kirim_notifikasi', { p_target_user_id: industriUserId, p_pesan: `Bukti pembayaran ditolak. Alasan: ${alasan}. Silakan upload ulang.` });
 
   revalidatePath('/admin');
   return { success: true, message: 'Pembayaran berhasil ditolak.' };

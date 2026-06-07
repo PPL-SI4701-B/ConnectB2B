@@ -176,6 +176,61 @@ export async function rejectRequest(requestId: number) {
   return { success: true };
 }
 
+// FR-14 (skenario alternatif): UMKM membalas/negosiasi sebelum menerima/menolak request
+export async function balasRequest(requestId: number, pesan: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+  if (!pesan.trim()) throw new Error('Pesan balasan tidak boleh kosong.');
+
+  const { data: umkm } = await supabase
+    .from('umkm')
+    .select('id, nama_usaha')
+    .eq('user_id', user.id)
+    .single();
+  if (!umkm) throw new Error('Profil UMKM tidak ditemukan');
+
+  const { data: request } = await supabase
+    .from('request')
+    .select('id, umkm_id, industri_id, sender_umkm_id, status')
+    .eq('id', requestId)
+    .eq('umkm_id', umkm.id)
+    .maybeSingle() as any;
+
+  if (!request) throw new Error('Request tidak ditemukan');
+  if (request.status !== 'pending') throw new Error('Request sudah diproses, tidak bisa dibalas.');
+
+  // Kirim balasan ke pengirim (Industri atau UMKM pengirim)
+  if (request.industri_id) {
+    const { data: industri } = await supabase
+      .from('industri')
+      .select('user_id')
+      .eq('id', request.industri_id)
+      .single();
+    if (industri?.user_id) {
+      await supabase.rpc('kirim_notifikasi', {
+        p_target_user_id: industri.user_id,
+        p_pesan: `Balasan/negosiasi dari ${umkm.nama_usaha}: "${pesan}"`,
+      });
+    }
+  } else if (request.sender_umkm_id) {
+    const { data: senderUmkm } = await supabase
+      .from('umkm')
+      .select('user_id')
+      .eq('id', request.sender_umkm_id)
+      .single();
+    if (senderUmkm?.user_id) {
+      await supabase.rpc('kirim_notifikasi', {
+        p_target_user_id: senderUmkm.user_id,
+        p_pesan: `Balasan/negosiasi dari ${umkm.nama_usaha}: "${pesan}"`,
+      });
+    }
+  }
+
+  revalidatePath('/request-masuk');
+  return { success: true };
+}
+
 export async function sendDirectRequest(data: {
   targetUmkmId: number;
   produk_id?: number | null;
@@ -220,6 +275,23 @@ export async function sendDirectRequest(data: {
     if (!umkm) throw new Error('Profil UMKM Anda belum lengkap.');
     senderId = umkm.id;
     senderName = umkm.nama_usaha;
+  }
+
+  // FR-12: cegah request duplikat yang masih menunggu respon (status pending)
+  let dupQuery = supabase
+    .from('request')
+    .select('id')
+    .eq('umkm_id', data.targetUmkmId)
+    .eq('status', 'pending');
+  dupQuery = isIndustri
+    ? dupQuery.eq('industri_id', senderId as number)
+    : dupQuery.eq('sender_umkm_id', senderId as number);
+  if (data.produk_id) dupQuery = dupQuery.eq('produk_id', data.produk_id);
+  else if (data.equipment_id) dupQuery = dupQuery.eq('equipment_id', data.equipment_id);
+
+  const { data: dupRows } = await dupQuery.limit(1);
+  if (dupRows && dupRows.length > 0) {
+    throw new Error('Anda sudah mengirim request ke UMKM ini dan masih menunggu respon.');
   }
 
   // Insert request — industri_id is set only when sender is industri

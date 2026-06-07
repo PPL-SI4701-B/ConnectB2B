@@ -47,6 +47,7 @@ export default function BeriUlasanClient({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isEditing, setIsEditing] = useState(false); // FR-17: mode edit ulasan
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Sync state when selected item changes
@@ -56,6 +57,7 @@ export default function BeriUlasanClient({
       setKomentar(selected.existing_komentar ?? '');
       setError(null);
       setSuccess(false);
+      setIsEditing(false);
     }
   }, [selected]);
 
@@ -140,6 +142,7 @@ export default function BeriUlasanClient({
   }
 
   const isAlreadyReviewed = selected?.has_ulasan || false;
+  const editable = !isAlreadyReviewed || isEditing; // form aktif jika belum diulas, atau sedang mengedit
 
   return (
     <div className="w-full">
@@ -269,12 +272,27 @@ export default function BeriUlasanClient({
                 </div>
               )}
 
-              {/* Already reviewed banner */}
-              {isAlreadyReviewed && !success && (
-                <div className="bg-slate-50 border border-border-color rounded-xl p-4 mb-6">
+              {/* Already reviewed banner + tombol Edit (FR-17) */}
+              {isAlreadyReviewed && !success && !isEditing && (
+                <div className="bg-slate-50 border border-border-color rounded-xl p-4 mb-6 flex items-center justify-between gap-3">
                   <p className="text-[13px] font-semibold text-text-main flex items-center gap-1.5">
                     <CheckCircle className="w-4 h-4 text-slate-400" />
                     Anda sudah memberikan ulasan untuk transaksi ini.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setIsEditing(true); setError(null); }}
+                    className="shrink-0 px-4 py-2 text-xs font-bold rounded-lg border border-secondary/30 text-secondary hover:bg-secondary/10 transition-colors"
+                  >
+                    Edit Ulasan
+                  </button>
+                </div>
+              )}
+
+              {isEditing && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-6">
+                  <p className="text-[12px] text-blue-700 font-medium">
+                    Mode edit aktif. Ulasan hanya bisa diubah dalam 24 jam sejak terakhir disimpan.
                   </p>
                 </div>
               )}
@@ -288,7 +306,7 @@ export default function BeriUlasanClient({
                 <StarRating
                   rating={rating}
                   onChange={setRating}
-                  readonly={isAlreadyReviewed || isPending || success}
+                  readonly={!editable || isPending || success}
                   size={36}
                 />
 
@@ -308,7 +326,7 @@ export default function BeriUlasanClient({
                   rows={5}
                   value={komentar}
                   onChange={(e) => setKomentar(e.target.value)}
-                  readOnly={isAlreadyReviewed || isPending || success}
+                  readOnly={!editable || isPending || success}
                   placeholder="Apakah barang yang disuplai sesuai ekspektasi industri Anda? Apakah layanan pengiriman dilakukan tepat waktu?"
                   className="w-full border border-border-color rounded-xl px-4 py-3 text-[14px] text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary transition-all resize-none read-only:bg-slate-50/70 read-only:text-text-muted"
                 />
@@ -323,25 +341,42 @@ export default function BeriUlasanClient({
               )}
 
               {/* Submit button */}
-              {!isAlreadyReviewed && !success && (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isPending}
-                  className="w-full flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/95 text-white font-bold text-[14px] py-3.5 rounded-xl shadow-md disabled:opacity-75 disabled:cursor-not-allowed transition-all mt-auto"
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                      <span>Mengirim Ulasan...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 shrink-0" />
-                      <span>Kirim untuk Ditampilkan di Platform</span>
-                    </>
+              {editable && !success && (
+                <div className="flex gap-3 mt-auto">
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditing(false);
+                        setRating(selected.existing_rating ?? 0);
+                        setKomentar(selected.existing_komentar ?? '');
+                        setError(null);
+                      }}
+                      disabled={isPending}
+                      className="px-5 py-3.5 border border-border-color text-text-muted font-bold text-[14px] rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-all"
+                    >
+                      Batal
+                    </button>
                   )}
-                </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isPending}
+                    className="flex-1 flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/95 text-white font-bold text-[14px] py-3.5 rounded-xl shadow-md disabled:opacity-75 disabled:cursor-not-allowed transition-all"
+                  >
+                    {isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                        <span>{isEditing ? 'Menyimpan...' : 'Mengirim Ulasan...'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 shrink-0" />
+                        <span>{isEditing ? 'Simpan Perubahan' : 'Kirim untuk Ditampilkan di Platform'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
             </div>
           ) : (

@@ -11,6 +11,8 @@ import {
   ChevronRight,
   ArrowLeft,
   CirclePlus,
+  Mail,
+  X,
 } from "lucide-react";
 
 type Role = "UMKM" | "Industri" | "Admin";
@@ -24,8 +26,41 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // FR-03: Lupa Sandi
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   const router = useRouter();
   const supabase = createClient();
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotMsg(null);
+    if (!forgotEmail.trim()) {
+      setForgotMsg({ type: "error", text: "Masukkan email Anda terlebih dahulu." });
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        setForgotMsg({ type: "error", text: error.message });
+      } else {
+        setForgotMsg({
+          type: "success",
+          text: "Tautan reset kata sandi telah dikirim ke email Anda. Silakan cek inbox/spam.",
+        });
+      }
+    } catch {
+      setForgotMsg({ type: "error", text: "Terjadi kesalahan. Coba lagi nanti." });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   const handleRoleSelection = (role: Role) => {
     setSelectedRole(role);
@@ -266,12 +301,13 @@ export default function LoginPage() {
                     />
                     Ingat Saya
                   </label>
-                  <Link
-                    href="#"
+                  <button
+                    type="button"
+                    onClick={() => { setForgotEmail(email); setForgotMsg(null); setForgotOpen(true); }}
                     className="text-indigo-600 font-semibold hover:underline"
                   >
                     Lupa Sandi?
-                  </Link>
+                  </button>
                 </div>
 
                 <button
@@ -311,6 +347,49 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+
+      {/* FR-03: Modal Lupa Sandi */}
+      {forgotOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => !forgotLoading && setForgotOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Mail className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-bold text-slate-900">Lupa Kata Sandi</h3>
+              </div>
+              <button onClick={() => setForgotOpen(false)} disabled={forgotLoading} className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 disabled:opacity-50">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleForgotPassword} className="p-5 space-y-3">
+              <p className="text-sm text-slate-500">
+                Masukkan email akun Anda. Kami akan mengirim tautan untuk mengatur ulang kata sandi.
+              </p>
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="email@perusahaan.com"
+                required
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none text-black text-sm"
+              />
+              {forgotMsg && (
+                <p className={`text-sm font-medium ${forgotMsg.type === "success" ? "text-emerald-600" : "text-rose-600"}`}>
+                  {forgotMsg.text}
+                </p>
+              )}
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setForgotOpen(false)} disabled={forgotLoading} className="flex-1 py-2.5 border border-slate-200 text-slate-600 font-semibold rounded-lg hover:bg-slate-50 disabled:opacity-50 text-sm">
+                  Tutup
+                </button>
+                <button type="submit" disabled={forgotLoading} className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg disabled:opacity-50 text-sm">
+                  {forgotLoading ? "Mengirim..." : "Kirim Tautan Reset"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

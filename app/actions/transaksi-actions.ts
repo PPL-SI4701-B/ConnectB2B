@@ -14,6 +14,16 @@ export async function updateTransaksiProgress(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
+    // FR-15: hanya role UMKM yang boleh memperbarui status progres
+    const { data: userRow } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle() as any;
+    if ((userRow?.role || '').toLowerCase() !== 'umkm') {
+      return { success: false, error: 'Hanya UMKM yang dapat memperbarui status kerja sama.' };
+    }
+
     // Verifikasi caller adalah UMKM dan transaksi ini miliknya, sekaligus ambil industri user_id
     const { data: umkm } = await supabase
       .from('umkm')

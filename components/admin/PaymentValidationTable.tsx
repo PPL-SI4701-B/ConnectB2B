@@ -22,6 +22,7 @@ type PaymentData = {
   transaksi_id: number;
   tanggal_bayar: string;
   bukti_transfer: string | null;
+  jumlah_transfer: number | null;
   status: string;
   transaksi: {
     id: number;
@@ -53,6 +54,7 @@ export default function PaymentValidationTable({ payments }: { payments: any[] }
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<PaymentData | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'success' });
   const [docLoadingId, setDocLoadingId] = useState<number | null>(null);
   const router = useRouter();
@@ -64,6 +66,8 @@ export default function PaymentValidationTable({ payments }: { payments: any[] }
   }, []);
 
   const getNominal = (payment: PaymentData) => {
+    // FR-28: utamakan nominal yang diinput Industri; fallback ke total detail_transaksi
+    if (payment.jumlah_transfer != null) return payment.jumlah_transfer;
     if (!payment.transaksi?.detail_transaksi) return 0;
     return payment.transaksi.detail_transaksi.reduce((sum, item) => sum + (item.subtotal || 0), 0);
   };
@@ -122,24 +126,32 @@ export default function PaymentValidationTable({ payments }: { payments: any[] }
   // --- TOLAK (Reject) ---
   const openRejectModal = (payment: PaymentData) => {
     setSelectedPayment(payment);
+    setRejectReason('');
     setRejectModalOpen(true);
   };
 
   const handleReject = async () => {
     if (!selectedPayment) return;
+    if (!rejectReason.trim()) {
+      showToast('Mohon isi alasan penolakan.', 'error');
+      return;
+    }
 
+    const reason = rejectReason.trim();
     setLoadingId(selectedPayment.id);
     setRejectModalOpen(false);
     try {
       const result = await rejectPayment(
         selectedPayment.id,
-        selectedPayment.transaksi_id
+        selectedPayment.transaksi_id,
+        reason
       );
-      
+
       if (!result.success) {
         showToast(`Gagal menolak: ${result.error}`, 'error');
       } else {
         showToast(result.message || 'Pembayaran berhasil ditolak.', 'success');
+        setRejectReason('');
         router.refresh();
       }
     } catch (e) {
@@ -413,6 +425,17 @@ export default function PaymentValidationTable({ payments }: { payments: any[] }
                 <strong className="text-slate-700">{selectedPayment.transaksi?.request?.industri?.nama_perusahaan}</strong>.
                 <br /><br />Pembayaran akan ditandai gagal dan pihak Industri harus mengupload ulang bukti.
               </p>
+            </div>
+
+            <div className="mb-5 text-left">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Alasan Penolakan <span className="text-red-500">*</span></label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={3}
+                placeholder="Mis. nominal tidak sesuai, bukti tidak jelas/buram..."
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none text-slate-800"
+              />
             </div>
 
             <div className="flex gap-3">
