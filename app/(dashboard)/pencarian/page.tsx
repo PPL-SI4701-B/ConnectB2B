@@ -66,6 +66,7 @@ export default async function PencarianPage(props: Props) {
       equipment (id, nama, harga_sewa, deskripsi, gambar_url, is_active)
     `)
     .eq('role', 'umkm')
+    .eq('status_verifikasi', 'terverifikasi')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -148,8 +149,11 @@ export default async function PencarianPage(props: Props) {
     });
   });
 
-  // Shape data for client
-  const formattedUmkm = (usersList || []).map(u => {
+  // Shape data for client — hanya tampilkan UMKM yang sudah mengisi profil bisnis
+  const formattedUmkm = (usersList || []).filter(u => {
+    const umkmData = Array.isArray(u.umkm) ? u.umkm[0] : u.umkm;
+    return !!umkmData?.id;
+  }).map(u => {
     // umkm might be an array or an object depending on the relationship. Usually it's an array for 1:N
     const umkmData = Array.isArray(u.umkm) ? u.umkm[0] : u.umkm;
     const umkmNumericId = umkmData?.id ? Number(umkmData.id) : null;

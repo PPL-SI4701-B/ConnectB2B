@@ -68,6 +68,7 @@ export default async function BeriUlasanPage({
     )
     .eq("request.industri_id", industriData.id)
     .not("tanggal_selesai", "is", null)
+    .eq("status", "lunas")
     .order("tanggal_selesai", { ascending: false });
 
   if (error) {

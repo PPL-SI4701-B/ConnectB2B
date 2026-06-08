@@ -184,3 +184,100 @@ export async function ajukanKomplain(
   revalidatePath("/pantau-transaksi");
   return { success: true };
 }
+
+export async function konfirmasiPenerimaan(
+  transaksiId: number
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Anda harus login terlebih dahulu." };
+
+  const { data: industri } = await supabase
+    .from("industri")
+    .select("id, nama_perusahaan")
+    .eq("user_id", user.id)
+    .single();
+  if (!industri) return { success: false, error: "Profil industri tidak ditemukan." };
+
+  const { data: trx } = await supabase
+    .from("transaksi")
+    .select("id, bukti_pengiriman_umkm, request:request_id(industri_id, umkm:umkm_id(user_id))")
+    .eq("id", transaksiId)
+    .maybeSingle() as any;
+
+  const req = Array.isArray(trx?.request) ? trx.request[0] : trx?.request;
+  if (!trx || req?.industri_id !== industri.id) {
+    return { success: false, error: "Anda tidak memiliki akses ke transaksi ini." };
+  }
+  if (!trx.bukti_pengiriman_umkm) {
+    return { success: false, error: "UMKM belum mengupload bukti pengiriman." };
+  }
+
+  const { error: updateError } = await supabase
+    .from("transaksi")
+    .update({ konfirmasi_penerimaan: true } as any)
+    .eq("id", transaksiId);
+
+  if (updateError) return { success: false, error: updateError.message };
+
+  const umkm = Array.isArray(req?.umkm) ? req.umkm[0] : req?.umkm;
+  if (umkm?.user_id) {
+    await supabase.rpc("kirim_notifikasi", {
+      p_target_user_id: umkm.user_id,
+      p_pesan: `${industri.nama_perusahaan} telah mengkonfirmasi penerimaan barang/jasa pada TRX-${String(transaksiId).padStart(4, "0")}. Pembayaran sedang diproses.`,
+    });
+  }
+
+  revalidatePath("/pantau-transaksi");
+  revalidatePath("/dashboard/transaksi");
+  return { success: true };
+}
+
+export async function batalkanTransaksi(
+  transaksiId: number
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "Anda harus login terlebih dahulu." };
+
+  const { data: industri } = await supabase
+    .from("industri")
+    .select("id, nama_perusahaan")
+    .eq("user_id", user.id)
+    .single();
+  if (!industri) return { success: false, error: "Profil industri tidak ditemukan." };
+
+  const { data: trx } = await supabase
+    .from("transaksi")
+    .select("id, progress_status, request:request_id(industri_id, umkm:umkm_id(user_id))")
+    .eq("id", transaksiId)
+    .maybeSingle() as any;
+
+  const req = Array.isArray(trx?.request) ? trx.request[0] : trx?.request;
+  if (!trx || req?.industri_id !== industri.id) {
+    return { success: false, error: "Anda tidak memiliki akses ke transaksi ini." };
+  }
+  if (trx.progress_status?.toLowerCase() === "dibatalkan") {
+    return { success: false, error: "Transaksi sudah dibatalkan sebelumnya." };
+  }
+
+  const { error: updateError } = await supabase
+    .from("transaksi")
+    .update({ progress_status: "Dibatalkan" } as any)
+    .eq("id", transaksiId);
+
+  if (updateError) return { success: false, error: updateError.message };
+
+  const umkm = Array.isArray(req?.umkm) ? req.umkm[0] : req?.umkm;
+  if (umkm?.user_id) {
+    await supabase.rpc("kirim_notifikasi", {
+      p_target_user_id: umkm.user_id,
+      p_pesan: `Transaksi TRX-${String(transaksiId).padStart(4, "0")} telah dibatalkan oleh ${industri.nama_perusahaan}.`,
+    });
+  }
+
+  revalidatePath("/pantau-transaksi");
+  return { success: true };
+}

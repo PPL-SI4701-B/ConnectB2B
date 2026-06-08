@@ -25,7 +25,12 @@ export default function ProductDetailActions({ produkId, umkmId }: ProductDetail
       setCartSuccess(true);
       setTimeout(() => setCartSuccess(false), 3000);
     } catch (e: any) {
-      setError(e.message || 'Gagal menambahkan ke keranjang.');
+      if (e.message?.startsWith('UMKM_CONFLICT:')) {
+        const existingNama = e.message.replace('UMKM_CONFLICT:', '');
+        setError(`Keranjang sudah berisi item dari "${existingNama}". Kosongkan keranjang untuk menambahkan produk dari UMKM lain.`);
+      } else {
+        setError(e.message || 'Gagal menambahkan ke keranjang.');
+      }
     } finally {
       setIsAddingCart(false);
     }
@@ -38,7 +43,12 @@ export default function ProductDetailActions({ produkId, umkmId }: ProductDetail
       await addToCart({ produk_id: produkId, kuantitas: 1, umkm_id: umkmId });
       router.push('/keranjang');
     } catch (e: any) {
-      setError(e.message || 'Gagal memproses permintaan.');
+      if (e.message?.startsWith('UMKM_CONFLICT:')) {
+        const existingNama = e.message.replace('UMKM_CONFLICT:', '');
+        setError(`Keranjang sudah berisi item dari "${existingNama}". Kosongkan keranjang untuk menambahkan produk dari UMKM lain.`);
+      } else {
+        setError(e.message || 'Gagal memproses permintaan.');
+      }
       setIsAjukan(false);
     }
   };

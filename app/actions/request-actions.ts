@@ -241,7 +241,7 @@ export async function sendDirectRequest(data: {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) throw new Error('Anda harus login terlebih dahulu');
+  if (!user) return { success: false, error: 'Anda harus login terlebih dahulu.' };
 
   // Get the current user's role
   const { data: userData } = await supabase
@@ -262,7 +262,7 @@ export async function sendDirectRequest(data: {
       .select('id, nama_perusahaan')
       .eq('user_id', user.id)
       .single();
-    if (!industri) throw new Error('Profil industri Anda belum lengkap.');
+    if (!industri) return { success: false, error: 'Profil industri Anda belum lengkap.' };
     senderId = industri.id;
     senderName = industri.nama_perusahaan;
     isIndustri = true;
@@ -272,7 +272,7 @@ export async function sendDirectRequest(data: {
       .select('id, nama_usaha')
       .eq('user_id', user.id)
       .single();
-    if (!umkm) throw new Error('Profil UMKM Anda belum lengkap.');
+    if (!umkm) return { success: false, error: 'Profil UMKM Anda belum lengkap.' };
     senderId = umkm.id;
     senderName = umkm.nama_usaha;
   }
@@ -291,7 +291,7 @@ export async function sendDirectRequest(data: {
 
   const { data: dupRows } = await dupQuery.limit(1);
   if (dupRows && dupRows.length > 0) {
-    throw new Error('Anda sudah mengirim request ke UMKM ini dan masih menunggu respon.');
+    return { success: false, error: 'Anda sudah mengirim request untuk item ini ke UMKM tersebut dan masih menunggu respon.' };
   }
 
   // Insert request — industri_id is set only when sender is industri
@@ -306,7 +306,10 @@ export async function sendDirectRequest(data: {
     status: 'pending',
   } as any);
 
-  if (reqError) throw reqError;
+  if (reqError) {
+    console.error('Error inserting request:', reqError);
+    return { success: false, error: 'Gagal menyimpan request. Coba lagi.' };
+  }
 
   // Send notification to target UMKM
   const { data: targetUmkm } = await supabase

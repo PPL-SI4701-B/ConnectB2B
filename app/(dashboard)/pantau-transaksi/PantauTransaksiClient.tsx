@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -20,7 +20,7 @@ import {
   MessageSquareWarning,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
-import { konfirmasiSelesai, createPembayaran, ajukanKomplain } from "./actions";
+import { konfirmasiSelesai, createPembayaran, ajukanKomplain, batalkanTransaksi, konfirmasiPenerimaan } from "./actions";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -39,6 +39,8 @@ export type TransaksiItem = {
   pesan: string | null;
   total_value: number | null;
   has_ulasan: boolean;
+  bukti_kirim_umkm: string | null;
+  konfirmasi_penerimaan: boolean;
 };
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
@@ -81,6 +83,15 @@ function getStatusConfig(status: string) {
       icon: <Clock className="w-4 h-4" />,
     };
   }
+  if (s === "dibatalkan") {
+    return {
+      label: "Dibatalkan",
+      bg: "bg-slate-50",
+      text: "text-slate-500",
+      border: "border-slate-200",
+      icon: <XCircle className="w-4 h-4" />,
+    };
+  }
   return {
     label: status || "Menunggu Material",
     bg: "bg-amber-50",
@@ -117,6 +128,13 @@ function getListBadge(status: string, tanggal_selesai: string | null) {
     return (
       <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600">
         Diproses
+      </span>
+    );
+  }
+  if (s === "dibatalkan") {
+    return (
+      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">
+        Dibatalkan
       </span>
     );
   }
@@ -169,6 +187,20 @@ export default function PantauTransaksiClient({
   const [komplainPesan, setKomplainPesan] = useState("");
   const [isKomplaining, setIsKomplaining] = useState(false);
   const [komplainDoneIds, setKomplainDoneIds] = useState<Set<number>>(new Set());
+
+  // Batalkan transaksi
+  const [batalkanOpen, setBatalkanOpen] = useState(false);
+  const [isBattling, setIsBattling] = useState(false);
+  const [cancelledIds, setCancelledIds] = useState<Set<number>>(new Set());
+
+  // Konfirmasi penerimaan barang/jasa
+  const [isKonfirmasiPenerimaan, setIsKonfirmasiPenerimaan] = useState(false);
+  const [penerimaanConfirmedIds, setPenerimaanConfirmedIds] = useState<Set<number>>(new Set());
+
+  // Auto-fill nominal dari total_value saat ganti transaksi
+  useEffect(() => {
+    setJumlahTransfer(selected?.total_value ? String(selected.total_value) : "");
+  }, [selected?.transaksi_id]);
 
   const handleUploadBukti = async () => {
     if (!uploadFile || !selected) return;
@@ -250,6 +282,45 @@ export default function PantauTransaksiClient({
     });
   };
 
+  const handleKonfirmasiPenerimaan = async () => {
+    if (!selected) return;
+    setIsKonfirmasiPenerimaan(true);
+    setError(null);
+    try {
+      const result = await konfirmasiPenerimaan(selected.transaksi_id);
+      if (!result.success) {
+        setError(result.error || "Gagal mengkonfirmasi penerimaan.");
+        return;
+      }
+      setPenerimaanConfirmedIds((prev) => new Set(prev).add(selected.transaksi_id));
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || "Gagal mengkonfirmasi penerimaan.");
+    } finally {
+      setIsKonfirmasiPenerimaan(false);
+    }
+  };
+
+  const handleBatalkan = async () => {
+    if (!selected) return;
+    setIsBattling(true);
+    setError(null);
+    try {
+      const result = await batalkanTransaksi(selected.transaksi_id);
+      if (!result.success) {
+        setError(result.error || "Gagal membatalkan transaksi.");
+        return;
+      }
+      setCancelledIds((prev) => new Set(prev).add(selected.transaksi_id));
+      setBatalkanOpen(false);
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || "Gagal membatalkan transaksi.");
+    } finally {
+      setIsBattling(false);
+    }
+  };
+
   const renderUploadForm = () => (
     <div className="space-y-2">
       {uploadError && (
@@ -319,6 +390,15 @@ export default function PantauTransaksiClient({
     !!item.tanggal_selesai ||
     item.progress_status?.toLowerCase() === "selesai";
 
+  const isCancelled = (item: TransaksiItem) =>
+    cancelledIds.has(item.transaksi_id) ||
+    item.progress_status?.toLowerCase() === "dibatalkan";
+
+  const isTiba = (item: TransaksiItem) => {
+    const s = item.progress_status?.toLowerCase();
+    return s === "barang tiba" || s === "tiba";
+  };
+
   if (items.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-sm flex items-center justify-center min-h-[400px] p-10">
@@ -339,7 +419,9 @@ export default function PantauTransaksiClient({
 
   const statusConfig = selected ? getStatusConfig(selected.progress_status) : null;
   const selectedDone = selected ? isSelesai(selected) : false;
+  const selectedCancelled = selected ? isCancelled(selected) : false;
   const isCurrentSuccess = selected ? successId === selected.transaksi_id : false;
+  const isReadyToConfirm = selected ? isTiba(selected) : false;
 
   return (
     <div className="flex gap-6 min-h-[600px]">
@@ -418,8 +500,8 @@ export default function PantauTransaksiClient({
               Detail {selected.req_label}
             </h2>
 
-            {/* Confirmation info box */}
-            {!selectedDone && !isCurrentSuccess && (
+            {/* Confirmation info box — only when status is barang tiba */}
+            {!selectedDone && !isCurrentSuccess && isReadyToConfirm && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-6 flex gap-3 items-start">
                 <CheckCircle2 className="w-7 h-7 text-emerald-500 shrink-0 mt-0.5" />
                 <div>
@@ -524,8 +606,39 @@ export default function PantauTransaksiClient({
               </div>
             </div>
 
-            {/* ── Bukti Transfer Section (FR-28) ── */}
-            {(() => {
+            {/* ── Bukti UMKM sudah kirim — muncul setelah Industri bayar ── */}
+            {!selectedCancelled && selected.status_finansial === "lunas" && selected.bukti_kirim_umkm && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                <p className="text-sm font-bold text-blue-700 mb-1 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" /> UMKM Telah Mengupload Bukti Selesai Pengerjaan
+                </p>
+                <p className="text-xs text-blue-600 mb-2">
+                  {selected.umkm_nama} telah mengirimkan bukti penyelesaian pekerjaan. Silakan periksa dan konfirmasi pesanan selesai.
+                </p>
+                <a
+                  href={`https://nkhxgsuhchngdiugomju.supabase.co/storage/v1/object/public/bukti-transfer/${selected.bukti_kirim_umkm}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline"
+                >
+                  <FileText className="w-3.5 h-3.5" /> Lihat Bukti Pengerjaan
+                </a>
+              </div>
+            )}
+
+            {/* Banner dibatalkan */}
+            {selectedCancelled && (
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 flex gap-3 items-center">
+                <XCircle className="w-7 h-7 text-slate-400 shrink-0" />
+                <div>
+                  <h4 className="font-bold text-slate-600">Transaksi Dibatalkan</h4>
+                  <p className="text-sm text-slate-500">Transaksi ini telah dibatalkan dan tidak dapat dilanjutkan.</p>
+                </div>
+              </div>
+            )}
+
+            {/* ── Bukti Transfer Section (FR-28): Industri bayar dulu ── */}
+            {!selectedCancelled && (() => {
               const isLunas = selected.status_finansial === "lunas";
               const pembayaranStatus = uploadedTxIds.has(selected.transaksi_id)
                 ? "pending"
@@ -572,7 +685,7 @@ export default function PantauTransaksiClient({
 
               // null — belum pernah upload
               return (
-                <div className="bg-[#f4f7fe] border border-[#e2e8f0] rounded-xl p-4 mb-6 space-y-3">
+                <div className="bg-[#f4f7fe] border border-[#e2e8f0] rounded-xl p-4 mb-6 space-y-3" id="payment-section">
                   <div className="flex items-center gap-2 mb-1">
                     <Banknote className="w-4 h-4 text-[#4318ff]" />
                     <p className="font-bold text-[#2b3674] text-sm">Lakukan Pembayaran ke Rekening Admin</p>
@@ -593,8 +706,12 @@ export default function PantauTransaksiClient({
                       <span className="text-xs text-[#a3aed1]">Atas Nama</span>
                       <span className="text-sm font-bold text-[#2b3674]">{adminBank.bank_atas_nama || '-'}</span>
                     </div>
-                    <p className="text-xs text-amber-600 font-medium pt-1 border-t border-[#e2e8f0] mt-1">
-                      Transfer sesuai nilai kesepakatan, lalu upload bukti di bawah.
+                    <div className="flex justify-between items-center pt-2 mt-2">
+                      <span className="text-sm font-bold text-[#2b3674]">Total Nominal Pembayaran</span>
+                      <span className="text-lg font-black text-emerald-600">{selected.total_value ? formatRupiah(selected.total_value) : "Belum ada kesepakatan"}</span>
+                    </div>
+                    <p className="text-xs text-amber-600 font-medium pt-2 border-t border-[#e2e8f0] mt-2">
+                      Transfer tepat sejumlah di atas ke rekening tujuan, lalu upload bukti transfer di bawah.
                     </p>
                   </div>
 
@@ -617,25 +734,49 @@ export default function PantauTransaksiClient({
               </div>
             )}
 
-            {/* Konfirmasi Selesai + Ajukan Komplain (FR-16) */}
-            {!selectedDone && !isCurrentSuccess && (
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={handleKonfirmasi}
-                  disabled={isPending}
-                  className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-sm shadow-emerald-200"
-                >
-                  {isPending ? (
-                    <><Loader2 className="w-5 h-5 animate-spin" /> Memproses...</>
+            {/* Konfirmasi Selesai + Ajukan Komplain + Batalkan (FR-16) */}
+            {!selectedDone && !isCurrentSuccess && !selectedCancelled && (
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {isReadyToConfirm && selected.status_finansial === "lunas" ? (
+                    <button
+                      onClick={handleKonfirmasi}
+                      disabled={isPending}
+                      className="flex-1 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-sm shadow-emerald-200"
+                    >
+                      {isPending ? (
+                        <><Loader2 className="w-5 h-5 animate-spin" /> Memproses...</>
+                      ) : (
+                        <><CheckCircle2 className="w-5 h-5" /> Konfirmasi Pesanan Selesai</>
+                      )}
+                    </button>
+                  ) : isReadyToConfirm && selected.status_finansial !== "lunas" ? (
+                    <div className="flex-1 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                      <p className="text-xs text-amber-700 font-medium">
+                        Selesaikan pembayaran terlebih dahulu untuk dapat mengkonfirmasi pesanan selesai.
+                      </p>
+                    </div>
                   ) : (
-                    <><CheckCircle2 className="w-5 h-5" /> Konfirmasi Pesanan Selesai</>
+                    <div className="flex-1 flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
+                      <Clock className="w-4 h-4 text-blue-500 shrink-0" />
+                      <p className="text-xs text-blue-700 font-medium">
+                        Pesanan masih dalam proses. Konfirmasi selesai tersedia setelah barang tiba.
+                      </p>
+                    </div>
                   )}
-                </button>
+                  <button
+                    onClick={() => { setKomplainOpen(true); setError(null); }}
+                    className="sm:w-auto flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold py-3.5 px-6 rounded-xl transition-all"
+                  >
+                    <MessageSquareWarning className="w-5 h-5" /> Ajukan Komplain
+                  </button>
+                </div>
                 <button
-                  onClick={() => { setKomplainOpen(true); setError(null); }}
-                  className="sm:w-auto flex items-center justify-center gap-2 bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold py-3.5 px-6 rounded-xl transition-all"
+                  onClick={() => { setBatalkanOpen(true); setError(null); }}
+                  className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 font-semibold py-2.5 px-6 rounded-xl transition-all text-sm"
                 >
-                  <MessageSquareWarning className="w-5 h-5" /> Ajukan Komplain
+                  <XCircle className="w-4 h-4" /> Batalkan Transaksi
                 </button>
               </div>
             )}
@@ -647,8 +788,8 @@ export default function PantauTransaksiClient({
               </div>
             )}
 
-            {/* Ulasan link */}
-            {selectedDone && !isCurrentSuccess && !selected.has_ulasan && (
+            {/* Ulasan hanya jika selesai DAN sudah lunas */}
+            {selectedDone && !isCurrentSuccess && !selected.has_ulasan && selected.status_finansial === "lunas" && (
               <a
                 href={`/dashboard-industri/ulasan?transaksi_id=${selected.transaksi_id}`}
                 className="w-full flex items-center justify-center gap-2 bg-[#4318ff] hover:bg-[#3311dd] text-white font-bold py-3.5 px-6 rounded-xl transition-all mt-2"
@@ -657,20 +798,17 @@ export default function PantauTransaksiClient({
               </a>
             )}
 
+            {selectedDone && !isCurrentSuccess && !selected.has_ulasan && selected.status_finansial !== "lunas" && (
+              <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                <p className="text-sm text-amber-700 font-medium">Selesaikan pembayaran untuk dapat memberikan ulasan.</p>
+              </div>
+            )}
+
             {selectedDone && selected.has_ulasan && (
               <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mt-2">
                 <CheckCheck className="w-4 h-4 text-slate-400 shrink-0" />
                 <p className="text-sm text-slate-500 font-medium">Ulasan sudah diberikan.</p>
-              </div>
-            )}
-
-            {/* Warning jika belum bayar */}
-            {!selectedDone && !selected.pembayaran_status && !uploadedTxIds.has(selected.transaksi_id) && (
-              <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-3">
-                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-700 font-medium">
-                  Silakan selesaikan pembayaran terlebih dahulu sebelum mengkonfirmasi pesanan.
-                </p>
               </div>
             )}
           </>
@@ -715,6 +853,39 @@ export default function PantauTransaksiClient({
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl disabled:opacity-50"
                 >
                   {isKomplaining ? <><Loader2 className="w-4 h-4 animate-spin" /> Mengirim...</> : "Kirim Komplain"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Batalkan Transaksi */}
+      {batalkanOpen && selected && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={() => !isBattling && setBatalkanOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                <XCircle className="w-7 h-7 text-slate-500" />
+              </div>
+              <h3 className="font-bold text-[#2b3674] text-lg mb-2">Batalkan Transaksi?</h3>
+              <p className="text-sm text-slate-500 mb-6">
+                Transaksi <strong>{selected.req_label}</strong> akan dibatalkan dan UMKM akan diberitahu. Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setBatalkanOpen(false)}
+                  disabled={isBattling}
+                  className="flex-1 py-2.5 border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Tidak, Kembali
+                </button>
+                <button
+                  onClick={handleBatalkan}
+                  disabled={isBattling}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded-xl disabled:opacity-50"
+                >
+                  {isBattling ? <><Loader2 className="w-4 h-4 animate-spin" /> Membatalkan...</> : "Ya, Batalkan"}
                 </button>
               </div>
             </div>

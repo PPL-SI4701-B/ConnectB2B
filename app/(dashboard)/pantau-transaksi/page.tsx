@@ -45,6 +45,8 @@ export default async function PantauTransaksiPage() {
       tanggal_selesai,
       progress_status,
       status,
+      bukti_pengiriman_umkm,
+      konfirmasi_penerimaan,
       pembayaran (
         id,
         status,
@@ -55,6 +57,9 @@ export default async function PantauTransaksiPage() {
         pesan,
         industri_id,
         umkm_id,
+        kuantitas,
+        produk!request_produk_id_fkey ( id, harga ),
+        equipment!request_equipment_id_fkey ( id, harga_sewa ),
         umkm!request_umkm_id_fkey (
           id,
           nama_usaha,
@@ -72,15 +77,29 @@ export default async function PantauTransaksiPage() {
 
   const transaksiList = (transaksiRaw as any[]) ?? [];
 
-  // Collect transaksi IDs to check for ulasan
+  // Collect transaksi IDs to check for ulasan and detail_transaksi totals
   const transaksiIds = transaksiList.map((t: any) => t.id);
   let ulasanSet = new Set<number>();
+  let totalValueMap = new Map<number, number>();
+
   if (transaksiIds.length > 0) {
-    const { data: ulasanData } = await supabase
-      .from("ulasan")
-      .select("transaksi_id")
-      .in("transaksi_id", transaksiIds);
-    ulasanData?.forEach((u: any) => ulasanSet.add(u.transaksi_id));
+    const [ulasanResult, detailResult] = await Promise.all([
+      supabase
+        .from("ulasan")
+        .select("transaksi_id")
+        .in("transaksi_id", transaksiIds),
+      supabase
+        .from("detail_transaksi")
+        .select("transaksi_id, subtotal")
+        .in("transaksi_id", transaksiIds),
+    ]);
+
+    ulasanResult.data?.forEach((u: any) => ulasanSet.add(u.transaksi_id));
+
+    detailResult.data?.forEach((d: any) => {
+      const prev = totalValueMap.get(d.transaksi_id) ?? 0;
+      totalValueMap.set(d.transaksi_id, prev + (d.subtotal ?? 0));
+    });
   }
 
   // Fetch admin bank info from platform_config
@@ -107,6 +126,18 @@ export default async function PantauTransaksiPage() {
       : [];
     const pembayaran = pembayaranArr[0] ?? null;
 
+    // Fallback: compute total from request's product/equipment price if detail_transaksi is missing
+    let total_value = totalValueMap.get(t.id) ?? null;
+    if (total_value === null && req) {
+      const produk = Array.isArray(req.produk) ? req.produk[0] : req.produk;
+      const equipment = Array.isArray(req.equipment) ? req.equipment[0] : req.equipment;
+      const harga = produk?.harga ?? equipment?.harga_sewa ?? null;
+      const qty = req.kuantitas ?? 1;
+      if (harga != null && harga > 0) {
+        total_value = harga * qty;
+      }
+    }
+
     return {
       transaksi_id: t.id,
       request_id: t.request_id,
@@ -120,8 +151,10 @@ export default async function PantauTransaksiPage() {
       umkm_user_id: umkm?.user_id || "",
       umkm_initials: umkmNama.substring(0, 2).toUpperCase(),
       pesan: req?.pesan || null,
-      total_value: null,
+      total_value,
       has_ulasan: ulasanSet.has(t.id),
+      bukti_kirim_umkm: t.bukti_pengiriman_umkm ?? null,
+      konfirmasi_penerimaan: t.konfirmasi_penerimaan ?? false,
     };
   });
 

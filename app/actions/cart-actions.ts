@@ -55,6 +55,36 @@ export async function addToCart(data: { produk_id?: number | null; equipment_id?
     umkmId = umkm.id;
   }
 
+  // Single UMKM supplier constraint — keranjang hanya boleh berisi item dari 1 UMKM
+  if (industriId && data.umkm_id) {
+    const { data: existingItems } = await supabase
+      .from('keranjang')
+      .select('produk:produk_id(user_id), equipment:equipment_id(user_id)')
+      .eq('industri_id', industriId) as any;
+
+    if (existingItems && existingItems.length > 0) {
+      const ownerUserIds = new Set<string>();
+      for (const ci of existingItems) {
+        const p = Array.isArray(ci.produk) ? ci.produk[0] : ci.produk;
+        const e = Array.isArray(ci.equipment) ? ci.equipment[0] : ci.equipment;
+        const uid = p?.user_id || e?.user_id;
+        if (uid) ownerUserIds.add(uid);
+      }
+
+      if (ownerUserIds.size > 0) {
+        const { data: existingSuppliers } = await supabase
+          .from('umkm')
+          .select('id, nama_usaha')
+          .in('user_id', Array.from(ownerUserIds)) as any;
+
+        const diffSupplier = (existingSuppliers || []).find((s: any) => s.id !== data.umkm_id);
+        if (diffSupplier) {
+          throw new Error(`UMKM_CONFLICT:${diffSupplier.nama_usaha}`);
+        }
+      }
+    }
+  }
+
   // Check if item already exists in cart
   let query = supabase.from('keranjang').select('id, kuantitas');
   if (industriId) query = query.eq('industri_id', industriId);
@@ -178,7 +208,7 @@ export async function removeFromCart(cartId: number) {
   return { success: true };
 }
 
-export async function checkoutCart() {
+export async function checkoutCart(data: { jenisPermintaan: string; spesifikasi: string }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -249,7 +279,7 @@ export async function checkoutCart() {
         produk_id: item.produk_id || null,
         equipment_id: item.equipment_id || null,
         kuantitas: Math.max(1, Number(item.kuantitas) || 1),
-        pesan: `Permintaan kerja sama: ${itemNama} x${item.kuantitas}`,
+        pesan: `[${data.jenisPermintaan}] — Item: ${itemNama} x${item.kuantitas} ${data.spesifikasi}`,
         status: 'pending',
       } as any);
 
@@ -281,4 +311,27 @@ export async function checkoutCart() {
 
   revalidatePath('/keranjang');
   return { success: true, skipped };
+}
+
+export async function clearCart(): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Anda harus login terlebih dahulu.' };
+
+  const { data: industri } = await supabase
+    .from('industri')
+    .select('id')
+    .eq('user_id', user.id)
+    .single();
+  if (!industri) return { success: false, error: 'Profil industri tidak ditemukan.' };
+
+  const { error } = await supabase
+    .from('keranjang')
+    .delete()
+    .eq('industri_id', industri.id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath('/keranjang');
+  return { success: true };
 }

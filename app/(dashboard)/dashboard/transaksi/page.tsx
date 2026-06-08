@@ -57,6 +57,8 @@ export default async function TransaksiPage() {
     tanggal_mulai,
     tanggal_selesai,
     progress_status,
+    bukti_pengiriman_umkm,
+    konfirmasi_penerimaan,
     request:request_id (
       id,
       industri_id,
@@ -177,6 +179,8 @@ export default async function TransaksiPage() {
       buktiPembayaranUmkm: pem?.bukti_pembayaran_umkm ?? null,
       statusPencairan: pem?.status_pencairan ?? 'menunggu',
       buktiTerimaUang: pem?.bukti_terima_umkm ?? null,
+      buktiKirimUmkm: t.bukti_pengiriman_umkm ?? null,
+      konfirmasiPenerimaan: t.konfirmasi_penerimaan ?? false,
     };
   });
 

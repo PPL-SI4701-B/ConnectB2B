@@ -30,6 +30,25 @@ async function getUmkmAndVerifyOwnership(transaksiId: number) {
   return { error: null, supabase, umkm };
 }
 
+export async function uploadBuktiKirimUmkm(
+  transaksiId: number,
+  buktiPath: string
+): Promise<{ success: boolean; error?: string }> {
+  const { error, supabase } = await getUmkmAndVerifyOwnership(transaksiId);
+  if (error) return { success: false, error };
+
+  const { error: updateError } = await (supabase as any)
+    .from("transaksi")
+    .update({ bukti_pengiriman_umkm: buktiPath })
+    .eq("id", transaksiId);
+
+  if (updateError) return { success: false, error: updateError.message };
+
+  revalidatePath("/dashboard/transaksi");
+  revalidatePath("/pantau-transaksi");
+  return { success: true };
+}
+
 export async function uploadBuktiPengiriman(
   transaksiId: number,
   buktiPath: string

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart, Trash2, ArrowRight, Package, Wrench, Building2 } from 'lucide-react';
-import { updateCartQuantity, removeFromCart, checkoutCart } from '@/app/actions/cart-actions';
+import { updateCartQuantity, removeFromCart, checkoutCart, clearCart } from '@/app/actions/cart-actions';
 import { toast } from 'react-hot-toast';
 import NotificationBell from '@/components/layout/NotificationBell';
 
@@ -23,6 +23,9 @@ export default function CartClient({ initialItems }: { initialItems: CartItem[] 
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>(initialItems);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [isClearingCart, setIsClearingCart] = useState(false);
+  const [jenisPermintaan, setJenisPermintaan] = useState('Pesan Maklon (Jasa)');
+  const [pesanRequest, setPesanRequest] = useState('');
 
   const formatRupiah = (angka: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -60,12 +63,29 @@ export default function CartClient({ initialItems }: { initialItems: CartItem[] 
     }
   };
 
+  const handleClearCart = async () => {
+    setIsClearingCart(true);
+    try {
+      await clearCart();
+      setItems([]);
+      toast.success('Keranjang berhasil dikosongkan.');
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal mengosongkan keranjang.');
+    } finally {
+      setIsClearingCart(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (items.length === 0) return;
+    if (!pesanRequest.trim()) {
+      toast.error('Spesifikasi atau keterangan wajib diisi');
+      return;
+    }
 
     setIsCheckingOut(true);
     try {
-      const result = await checkoutCart();
+      const result = await checkoutCart({ jenisPermintaan, spesifikasi: pesanRequest });
       if (result?.skipped && result.skipped.length > 0) {
         // Sebagian item berhasil, sebagian dilewati (pemilik tanpa profil UMKM valid)
         toast.success('Sebagian request berhasil diajukan!');
@@ -125,6 +145,26 @@ export default function CartClient({ initialItems }: { initialItems: CartItem[] 
               <h2 className="text-lg font-bold text-gray-900 mb-1">Item Kolaborasi</h2>
               <p className="text-gray-500 text-sm">Anda memiliki {items.length} jenis item di keranjang.</p>
             </div>
+
+            {/* Peringatan multi-UMKM */}
+            {new Set(items.map(i => i.umkm_id)).size > 1 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+                <span className="text-amber-500 text-xl shrink-0">⚠️</span>
+                <div className="flex-1">
+                  <p className="font-bold text-amber-800 text-sm mb-1">Keranjang berisi item dari beberapa UMKM</p>
+                  <p className="text-amber-700 text-xs mb-3">
+                    Keranjang hanya boleh berisi produk dari <strong>satu UMKM</strong>. Hapus item dari UMKM lain atau kosongkan keranjang untuk melanjutkan.
+                  </p>
+                  <button
+                    onClick={handleClearCart}
+                    disabled={isClearingCart}
+                    className="text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 disabled:opacity-50 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    {isClearingCart ? 'Mengosongkan...' : 'Kosongkan Keranjang'}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {items.map(item => (
               <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 flex flex-col sm:flex-row gap-6 transition-all hover:border-indigo-200 hover:shadow-md">
@@ -206,6 +246,30 @@ export default function CartClient({ initialItems }: { initialItems: CartItem[] 
               </div>
               
               <div className="border-t border-gray-100 pt-6 mb-6">
+                <div className="mb-4">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Jenis Permintaan <span className="text-rose-500">*</span></label>
+                  <select
+                    value={jenisPermintaan}
+                    onChange={(e) => setJenisPermintaan(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white"
+                  >
+                    <option value="Pesan Maklon (Jasa)">Pesan Maklon (Jasa)</option>
+                    <option value="Pembelian Grosir">Pembelian Grosir</option>
+                    <option value="Sewa Alat">Sewa Alat</option>
+                    <option value="Kolaborasi Proyek">Kolaborasi Proyek</option>
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Spesifikasi / Keterangan <span className="text-rose-500">*</span></label>
+                  <textarea
+                    value={pesanRequest}
+                    onChange={(e) => setPesanRequest(e.target.value)}
+                    placeholder="Detail: target waktu, spesifikasi, durasi..."
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white resize-none"
+                    rows={3}
+                    required
+                  />
+                </div>
                 <div className="bg-indigo-50 text-indigo-700 p-4 rounded-xl text-sm leading-relaxed border border-indigo-100">
                   <strong>Penting:</strong> Harga di atas adalah estimasi dasar. Kesepakatan harga akhir akan ditentukan setelah Anda berdiskusi dengan UMKM melalui fitur chat/transaksi.
                 </div>
