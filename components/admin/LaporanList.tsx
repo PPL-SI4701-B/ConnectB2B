@@ -8,6 +8,7 @@ import { hapusKontenAction, abaikanKontenAction } from '@/app/(admin)/admin/tinj
 type LaporanItem = {
   id: number;
   katalog_id: number;
+  katalog_type: 'produk' | 'equipment';
   pelapor: string;
   alasan: string;
   severity: 'berat' | 'ringan';
@@ -30,13 +31,15 @@ export default function LaporanList({ laporanData }: { laporanData: LaporanItem[
   const handleHapus = async (item: LaporanItem) => {
     if (!item.produk) return;
     
-    if (confirm(`Apakah Anda yakin ingin menghapus produk "${item.produk.nama}" dari jaringan? Tindakan ini tidak bisa dibatalkan.`)) {
+    const label = item.katalog_type === 'produk' ? 'produk' : 'alat/mesin';
+    if (confirm(`Apakah Anda yakin ingin menghapus ${label} "${item.produk.nama}" dari jaringan? Tindakan ini tidak bisa dibatalkan.`)) {
       setIsProcessing(item.id);
       
-      const toastId = toast.loading('Menghapus produk...');
+      const toastId = toast.loading(`Menghapus ${label}...`);
       const res = await hapusKontenAction(
         item.id,
         item.katalog_id,
+        item.katalog_type,
         item.produk.user_id,
         item.produk.nama,
         item.produk.gambar_url

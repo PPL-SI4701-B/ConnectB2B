@@ -150,6 +150,12 @@ export default function ProdukFormClient({ user, kategoriList, initialData }: Pr
       // 2. Siapkan data deskripsi gabungan
       const finalDeskripsi = `Kapasitas: ${kapasitas}\nSatuan: ${satuan}\n\nSpesifikasi:\n${deskripsiSingkat}`;
 
+      // Deteksi kata terlarang (replika, palsu, duplikat, clone, tiruan, kw)
+      const cleanNama = (nama || '').toLowerCase();
+      const cleanDeskripsi = (deskripsiSingkat || '').toLowerCase();
+      const forbiddenPattern = /\b(replika|palsu|duplikat|clone|tiruan|kw|kw\d+)\b/i;
+      const isViolating = forbiddenPattern.test(cleanNama) || forbiddenPattern.test(cleanDeskripsi);
+
       // 3. Simpan ke database
       const produkPayload = {
         user_id: user.id,
@@ -160,25 +166,70 @@ export default function ProdukFormClient({ user, kategoriList, initialData }: Pr
         gambar_url: finalGambarUrl,
         stok: initialData?.stok || 0,
         min_pembelian: minPembelian,
+        is_active: initialData ? initialData.is_active : true,
       };
 
+      let savedProduct: any = null;
       if (initialData) {
         // Edit Row
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any)
+        const { data, error } = await (supabase as any)
           .from('produk')
           .update(produkPayload)
-          .eq('id', initialData.id);
+          .eq('id', initialData.id)
+          .select();
 
         if (error) throw error;
+        savedProduct = data?.[0];
       } else {
         // Insert new Row
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any)
+        const { data, error } = await (supabase as any)
           .from('produk')
-          .insert([produkPayload]);
+          .insert([produkPayload])
+          .select();
 
         if (error) throw error;
+        savedProduct = data?.[0];
+      }
+
+      if (isViolating && savedProduct) {
+        // Buat laporan ke laporan_konten
+        const { error: reportError } = await supabase
+          .from('laporan_konten')
+          .insert({
+            katalog_type: 'produk',
+            katalog_id: savedProduct.id,
+            pelapor: 'Sistem (Auto-Moderasi)',
+            alasan: 'Terdeteksi kata terlarang (replika/palsu/duplikat/clone/tiruan/kw) pada nama atau deskripsi.',
+            severity: 'berat',
+            status: 'pending'
+          });
+        if (reportError) console.error('Error inserting report:', reportError);
+
+        // Cari admin untuk diberi notifikasi
+        const { data: admins } = await supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'admin');
+
+        if (admins && admins.length > 0) {
+          for (const admin of admins) {
+            await supabase.rpc('kirim_notifikasi', {
+              p_target_user_id: admin.id,
+              p_pesan: `Moderasi: Produk "${nama}" oleh UMKM terindikasi melanggar ketentuan.`
+            });
+          }
+        }
+      } else if (!isViolating && initialData) {
+        // Jika produk yang diedit sekarang sudah bersih dari kata terlarang, selesaikan laporan pending-nya
+        const { error: resolveError } = await supabase
+          .from('laporan_konten')
+          .update({ status: 'diabaikan' })
+          .eq('katalog_id', initialData.id)
+          .eq('katalog_type', 'produk')
+          .eq('status', 'pending');
+        if (resolveError) console.error('Error resolving reports:', resolveError);
       }
 
       // Redirect balik ke katalog

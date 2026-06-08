@@ -110,6 +110,12 @@ export default function AlatFormClient({ user, initialData }: AlatFormProps) {
         finalGambarUrl = initialData?.gambar_url || null;
       }
 
+      // Deteksi kata terlarang (replika, palsu, duplikat, clone, tiruan, kw)
+      const cleanNama = (nama || '').toLowerCase();
+      const cleanDeskripsi = (deskripsi || '').toLowerCase();
+      const forbiddenPattern = /\b(replika|palsu|duplikat|clone|tiruan|kw|kw\d+)\b/i;
+      const isViolating = forbiddenPattern.test(cleanNama) || forbiddenPattern.test(cleanDeskripsi);
+
       const equipmentPayload = {
         user_id: user.id,
         nama,
@@ -117,26 +123,71 @@ export default function AlatFormClient({ user, initialData }: AlatFormProps) {
         deskripsi,
         status,
         stok: Number(stok),
-        gambar_url: finalGambarUrl
+        gambar_url: finalGambarUrl,
+        is_active: initialData ? initialData.is_active : true,
       };
 
+      let savedAlat: any = null;
       if (initialData) {
         // Edit Row
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any)
+        const { data, error } = await (supabase as any)
           .from('equipment')
           .update(equipmentPayload)
-          .eq('id', initialData.id);
+          .eq('id', initialData.id)
+          .select();
 
         if (error) throw error;
+        savedAlat = data?.[0];
       } else {
         // Insert new Row
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any)
+        const { data, error } = await (supabase as any)
           .from('equipment')
-          .insert([equipmentPayload]);
+          .insert([equipmentPayload])
+          .select();
 
         if (error) throw error;
+        savedAlat = data?.[0];
+      }
+
+      if (isViolating && savedAlat) {
+        // Buat laporan ke laporan_konten
+        const { error: reportError } = await supabase
+          .from('laporan_konten')
+          .insert({
+            katalog_type: 'equipment',
+            katalog_id: savedAlat.id,
+            pelapor: 'Sistem (Auto-Moderasi)',
+            alasan: 'Terdeteksi kata terlarang (replika/palsu/duplikat/clone/tiruan/kw) pada nama atau deskripsi.',
+            severity: 'berat',
+            status: 'pending'
+          });
+        if (reportError) console.error('Error inserting report:', reportError);
+
+        // Cari admin untuk diberi notifikasi
+        const { data: admins } = await supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'admin');
+
+        if (admins && admins.length > 0) {
+          for (const admin of admins) {
+            await supabase.rpc('kirim_notifikasi', {
+              p_target_user_id: admin.id,
+              p_pesan: `Moderasi: Alat/Mesin "${nama}" oleh UMKM terindikasi melanggar ketentuan.`
+            });
+          }
+        }
+      } else if (!isViolating && initialData) {
+        // Jika alat/mesin yang diedit sekarang sudah bersih dari kata terlarang, selesaikan laporan pending-nya
+        const { error: resolveError } = await supabase
+          .from('laporan_konten')
+          .update({ status: 'diabaikan' })
+          .eq('katalog_id', initialData.id)
+          .eq('katalog_type', 'equipment')
+          .eq('status', 'pending');
+        if (resolveError) console.error('Error resolving reports:', resolveError);
       }
 
       // Redirect balik ke katalog

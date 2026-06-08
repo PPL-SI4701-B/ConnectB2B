@@ -72,6 +72,7 @@ export default async function TinjauanKontenPage() {
     return {
       id: item.id,
       katalog_id: item.katalog_id,
+      katalog_type: item.katalog_type,
       pelapor: item.pelapor,
       alasan: item.alasan,
       severity: item.severity,

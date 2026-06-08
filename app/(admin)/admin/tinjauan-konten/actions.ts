@@ -6,23 +6,25 @@ import { revalidatePath } from 'next/cache';
 export async function hapusKontenAction(
   laporanId: number,
   produkId: number,
+  katalogType: 'produk' | 'equipment',
   umkmUserId: string,
   namaProduk: string,
   gambarUrl?: string | null
 ) {
   const supabase = await createClient();
 
-  // Soft-delete: nonaktifkan produk, jangan hard delete.
-  // Hard delete berisiko melanggar foreign key (request/transaksi/keranjang) dan
-  // menghapus jejak transaksi yang sudah terjadi. Gambar dibiarkan agar bisa dipulihkan.
-  const { error: deleteError } = await supabase
-    .from('produk')
+  const table = katalogType === 'produk' ? 'produk' : 'equipment';
+  const label = katalogType === 'produk' ? 'Produk' : 'Alat/Mesin';
+
+  // Soft-delete: nonaktifkan produk/alat, jangan hard delete.
+  const { error: deleteError } = await (supabase as any)
+    .from(table)
     .update({ is_active: false })
     .eq('id', produkId);
 
   if (deleteError) {
-    console.error('Error deactivating product:', deleteError);
-    return { success: false, error: 'Gagal menonaktifkan produk.' };
+    console.error(`Error deactivating ${katalogType}:`, deleteError);
+    return { success: false, error: `Gagal menonaktifkan ${label.toLowerCase()}.` };
   }
 
   // Insert notification to the UMKM owner
@@ -30,7 +32,7 @@ export async function hapusKontenAction(
     .from('notifikasi')
     .insert({
       user_id: umkmUserId,
-      pesan: `Produk "${namaProduk}" telah dinonaktifkan oleh Admin karena melanggar ketentuan platform.`,
+      pesan: `katalog anda menjual barang duplikasi`,
       status: 'belum dibaca',
     });
 
