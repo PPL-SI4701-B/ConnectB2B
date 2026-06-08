@@ -75,45 +75,55 @@ export default async function AdminPage() {
     console.error('Error fetching pending payments:', paymentError);
   }
 
-  // Fetch pembayaran yang siap dicairkan ke UMKM
+  // Fetch transaksi yang siap dicairkan ke UMKM:
+  // Syarat: Industri sudah konfirmasi selesai (tanggal_selesai NOT NULL) DAN ada pembayaran berhasil
   const { data: payoutRaw } = await supabase
-    .from('pembayaran')
+    .from('transaksi')
     .select(`
       id,
-      transaksi_id,
-      tanggal_bayar,
-      bukti_pengiriman,
-      bukti_pembayaran_umkm,
-      status_pencairan,
-      transaksi:transaksi_id (
-        request:request_id (
-          industri:industri_id ( nama_perusahaan ),
-          umkm:umkm_id ( nama_usaha, no_rekening, nama_bank, atas_nama_rekening )
-        )
+      tanggal_selesai,
+      bukti_pengiriman_umkm,
+      pembayaran (
+        id,
+        tanggal_bayar,
+        bukti_pengiriman,
+        bukti_pembayaran_umkm,
+        status_pencairan,
+        status
+      ),
+      request:request_id (
+        industri:industri_id ( nama_perusahaan ),
+        umkm:umkm_id ( nama_usaha, no_rekening, nama_bank, atas_nama_rekening )
       )
     `)
-    .eq('status', 'berhasil')
-    .not('bukti_pengiriman', 'is', null)
-    .order('tanggal_bayar', { ascending: false }) as any;
+    .not('tanggal_selesai', 'is', null)
+    .order('tanggal_selesai', { ascending: false }) as any;
 
-  const payouts: PayoutItem[] = (payoutRaw as any[] || []).map((p: any) => {
-    const req = Array.isArray(p.transaksi?.request) ? p.transaksi.request[0] : p.transaksi?.request;
-    const industri = Array.isArray(req?.industri) ? req.industri[0] : req?.industri;
-    const umkm = Array.isArray(req?.umkm) ? req.umkm[0] : req?.umkm;
-    return {
-      pembayaran_id: p.id,
-      transaksi_id: p.transaksi_id,
-      umkm_nama: umkm?.nama_usaha || 'UMKM',
-      nama_bank: umkm?.nama_bank ?? null,
-      no_rekening: umkm?.no_rekening ?? null,
-      atas_nama_rekening: umkm?.atas_nama_rekening ?? null,
-      bukti_pengiriman: p.bukti_pengiriman,
-      bukti_pembayaran_umkm: p.bukti_pembayaran_umkm ?? null,
-      status_pencairan: p.status_pencairan || 'menunggu',
-      tanggal_bayar: p.tanggal_bayar,
-      industri_nama: industri?.nama_perusahaan || 'Industri',
-    };
-  });
+  const payouts: PayoutItem[] = (payoutRaw as any[] || [])
+    .filter((t: any) => {
+      const pembayaranArr = Array.isArray(t.pembayaran) ? t.pembayaran : t.pembayaran ? [t.pembayaran] : [];
+      return pembayaranArr.some((p: any) => p.status === 'berhasil');
+    })
+    .map((t: any) => {
+      const pembayaranArr = Array.isArray(t.pembayaran) ? t.pembayaran : t.pembayaran ? [t.pembayaran] : [];
+      const p = pembayaranArr.find((p: any) => p.status === 'berhasil') ?? pembayaranArr[0] ?? {};
+      const req = Array.isArray(t.request) ? t.request[0] : t.request;
+      const industri = Array.isArray(req?.industri) ? req.industri[0] : req?.industri;
+      const umkm = Array.isArray(req?.umkm) ? req.umkm[0] : req?.umkm;
+      return {
+        pembayaran_id: p.id,
+        transaksi_id: t.id,
+        umkm_nama: umkm?.nama_usaha || 'UMKM',
+        nama_bank: umkm?.nama_bank ?? null,
+        no_rekening: umkm?.no_rekening ?? null,
+        atas_nama_rekening: umkm?.atas_nama_rekening ?? null,
+        bukti_pengiriman: p.bukti_pengiriman ?? null,
+        bukti_pembayaran_umkm: p.bukti_pembayaran_umkm ?? null,
+        status_pencairan: p.status_pencairan || 'menunggu',
+        tanggal_bayar: p.tanggal_bayar,
+        industri_nama: industri?.nama_perusahaan || 'Industri',
+      };
+    });
 
   // Fetch all products for content moderation (FR-22)
   const { data: allProducts } = await supabase

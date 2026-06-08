@@ -39,7 +39,7 @@ export default function TransaksiClient({
   umkmName: string;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'berjalan' | 'pembayaran' | 'pencairan' | 'selesai'>('berjalan');
+  const [activeTab, setActiveTab] = useState<'pembayaran' | 'pengerjaan' | 'selesai'>('pembayaran');
 
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedTransaksi, setSelectedTransaksi] = useState<TransaksiItem | null>(null);
@@ -91,24 +91,21 @@ export default function TransaksiClient({
     t.pesan.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Group by category
-  const sedangBerjalan = filtered.filter(t => t.status === 'belum lunas' && t.statusValidasi === 'menunggu');
-  const menungguPembayaran = filtered.filter(t => t.status === 'belum lunas' && t.statusValidasi !== 'menunggu');
-  // Lunas tapi Industri belum konfirmasi selesai (tanggalSelesai belum ter-set)
-  const menungguPencairan = filtered.filter(t => t.status === 'lunas' && !t.tanggalSelesai);
-  // Benar-benar selesai: Industri sudah konfirmasi (tanggalSelesai ter-set oleh konfirmasi_pesanan_selesai)
+  // Tab 1: Industri belum bayar (semua status belum lunas)
+  const menungguPembayaran = filtered.filter(t => t.status === 'belum lunas');
+  // Tab 2: Industri sudah bayar, UMKM sedang proses (belum ada konfirmasi selesai)
+  const dalamPengerjaan = filtered.filter(t => t.status === 'lunas' && !t.tanggalSelesai);
+  // Tab 3: Industri sudah konfirmasi selesai (tanggalSelesai ter-set)
   const selesai = filtered.filter(t => t.status === 'lunas' && !!t.tanggalSelesai);
 
   const tabs = [
-    { key: 'berjalan' as const, label: 'Sedang Berjalan', count: sedangBerjalan.length },
     { key: 'pembayaran' as const, label: 'Menunggu Pembayaran', count: menungguPembayaran.length },
-    { key: 'pencairan' as const, label: 'Menunggu Pencairan Dana', count: menungguPencairan.length },
+    { key: 'pengerjaan' as const, label: 'Dalam Pengerjaan', count: dalamPengerjaan.length },
     { key: 'selesai' as const, label: 'Selesai', count: selesai.length },
   ];
 
-  const currentList = activeTab === 'berjalan' ? sedangBerjalan
-    : activeTab === 'pembayaran' ? menungguPembayaran
-    : activeTab === 'pencairan' ? menungguPencairan
+  const currentList = activeTab === 'pembayaran' ? menungguPembayaran
+    : activeTab === 'pengerjaan' ? dalamPengerjaan
     : selesai;
 
   const getStatusBadge = (t: TransaksiItem) => {
@@ -290,7 +287,7 @@ export default function TransaksiClient({
                       )}
 
                       {/* Petunjuk: menunggu pembayaran dari industri */}
-                      {activeTab === 'berjalan' && t.status !== 'lunas' && (
+                      {activeTab === 'pembayaran' && (
                         <div className="flex items-start gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
                           <Clock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                           <div>
@@ -351,7 +348,7 @@ export default function TransaksiClient({
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {(activeTab === 'berjalan' || activeTab === 'pembayaran') && (
+                    {activeTab === 'pengerjaan' && (
                       <button
                         onClick={() => {
                           setSelectedTransaksi(t);

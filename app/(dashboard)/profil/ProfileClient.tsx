@@ -31,6 +31,11 @@ export default function ProfileClient({
   const [alamat, setAlamat] = useState(entityData?.alamat || entityData?.lokasi || profileData?.lokasi || '');
   const [nomorTelepon, setNomorTelepon] = useState(profileData?.kontak || '');
 
+  // Rekening bank (UMKM only)
+  const [namaBank, setNamaBank] = useState(entityData?.nama_bank || '');
+  const [noRekening, setNoRekening] = useState(entityData?.no_rekening || '');
+  const [atasNamaRekening, setAtasNamaRekening] = useState(entityData?.atas_nama_rekening || '');
+
   // Image State
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [coverUrl, setCoverUrl] = useState<string>('');
@@ -176,7 +181,10 @@ export default function ProfileClient({
         const payload = {
           nama_usaha: namaUsaha,
           kategori_id: kategoriId === '' ? null : kategoriId,
-          alamat: alamat
+          alamat: alamat,
+          nama_bank: namaBank || null,
+          no_rekening: noRekening || null,
+          atas_nama_rekening: atasNamaRekening || null,
         };
         if (entityData?.id) {
           const { error } = await supabase.from('umkm').update(payload).eq('user_id', userId);
@@ -216,6 +224,9 @@ export default function ProfileClient({
     setEmailKontak(userEmail || '');
     setAlamat(entityData?.alamat || entityData?.lokasi || profileData?.lokasi || '');
     setNomorTelepon(profileData?.kontak || '');
+    setNamaBank(entityData?.nama_bank || '');
+    setNoRekening(entityData?.no_rekening || '');
+    setAtasNamaRekening(entityData?.atas_nama_rekening || '');
   };
 
   return (
@@ -383,6 +394,55 @@ export default function ProfileClient({
           </div>
 
           <hr className="my-8 border-gray-100" />
+
+          {/* Rekening Bank — UMKM only */}
+          {role === 'umkm' && (
+            <>
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Rekening Bank</h3>
+                <p className="text-sm text-gray-500 mb-6">Digunakan Admin untuk mencairkan dana setelah transaksi selesai.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
+                    <input
+                      type="text"
+                      value={namaBank}
+                      onChange={(e) => setNamaBank(e.target.value)}
+                      placeholder="Contoh: BCA, BRI, Mandiri"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
+                    <input
+                      type="text"
+                      value={noRekening}
+                      onChange={(e) => setNoRekening(e.target.value)}
+                      placeholder="1234567890"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Atas Nama</label>
+                    <input
+                      type="text"
+                      value={atasNamaRekening}
+                      onChange={(e) => setAtasNamaRekening(e.target.value)}
+                      placeholder="Nama pemilik rekening"
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+                {(!namaBank || !noRekening || !atasNamaRekening) && (
+                  <div className="mt-3 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5">
+                    <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                    <p className="text-xs text-amber-700 font-medium">Lengkapi data rekening agar Admin dapat mencairkan dana transaksi ke akun Anda.</p>
+                  </div>
+                )}
+              </div>
+              <hr className="my-8 border-gray-100" />
+            </>
+          )}
 
           {/* Document Section (from mockup) */}
           <div className="mb-8">

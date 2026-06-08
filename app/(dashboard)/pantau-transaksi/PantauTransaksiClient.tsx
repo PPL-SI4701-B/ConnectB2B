@@ -301,6 +301,18 @@ export default function PantauTransaksiClient({
     }
   };
 
+  const handleViewBukti = async (path: string) => {
+    try {
+      const supabase = createClient();
+      const { data } = await supabase.storage
+        .from('bukti-transfer')
+        .createSignedUrl(path, 3600);
+      if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+    } catch {
+      setError('Gagal membuka file. Coba lagi.');
+    }
+  };
+
   const handleBatalkan = async () => {
     if (!selected) return;
     setIsBattling(true);
@@ -421,7 +433,10 @@ export default function PantauTransaksiClient({
   const selectedDone = selected ? isSelesai(selected) : false;
   const selectedCancelled = selected ? isCancelled(selected) : false;
   const isCurrentSuccess = selected ? successId === selected.transaksi_id : false;
-  const isReadyToConfirm = selected ? isTiba(selected) : false;
+  // Konfirmasi tersedia jika: barang tiba ATAU UMKM sudah upload bukti pengerjaan
+  const isReadyToConfirm = selected
+    ? (isTiba(selected) || !!selected.bukti_kirim_umkm)
+    : false;
 
   return (
     <div className="flex gap-6 min-h-[600px]">
@@ -615,14 +630,12 @@ export default function PantauTransaksiClient({
                 <p className="text-xs text-blue-600 mb-2">
                   {selected.umkm_nama} telah mengirimkan bukti penyelesaian pekerjaan. Silakan periksa dan konfirmasi pesanan selesai.
                 </p>
-                <a
-                  href={`https://nkhxgsuhchngdiugomju.supabase.co/storage/v1/object/public/bukti-transfer/${selected.bukti_kirim_umkm}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => handleViewBukti(selected.bukti_kirim_umkm!)}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline"
                 >
                   <FileText className="w-3.5 h-3.5" /> Lihat Bukti Pengerjaan
-                </a>
+                </button>
               </div>
             )}
 
@@ -758,10 +771,10 @@ export default function PantauTransaksiClient({
                       </p>
                     </div>
                   ) : (
-                    <div className="flex-1 flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
-                      <Clock className="w-4 h-4 text-blue-500 shrink-0" />
-                      <p className="text-xs text-blue-700 font-medium">
-                        Pesanan masih dalam proses. Konfirmasi selesai tersedia setelah barang tiba.
+                    <div className="flex-1 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                      <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                      <p className="text-xs text-slate-500 font-medium">
+                        Menunggu UMKM mengupload bukti pengerjaan/pengiriman untuk dapat dikonfirmasi.
                       </p>
                     </div>
                   )}

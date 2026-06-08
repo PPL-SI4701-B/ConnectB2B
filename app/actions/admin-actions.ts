@@ -152,10 +152,21 @@ export async function uploadBuktiPembayaranUmkm(
   const { data: adminProfile } = await db.from('users').select('role').eq('id', user.id).single();
   if (!adminProfile || adminProfile.role !== 'admin') return { success: false, error: 'Anda tidak memiliki akses admin.' };
 
-  const { data: pem } = await db.from('pembayaran').select('id, status, bukti_pengiriman, bukti_pembayaran_umkm').eq('id', pembayaranId).single();
+  const { data: pem } = await db
+    .from('pembayaran')
+    .select('id, status, bukti_pembayaran_umkm, transaksi:transaksi_id(id, konfirmasi_penerimaan, bukti_pengiriman_umkm)')
+    .eq('id', pembayaranId)
+    .single();
   if (!pem) return { success: false, error: 'Data pembayaran tidak ditemukan.' };
   if (pem.status !== 'berhasil') return { success: false, error: 'Pembayaran industri belum divalidasi.' };
-  if (!pem.bukti_pengiriman) return { success: false, error: 'UMKM belum upload bukti pengiriman barang.' };
+
+  const transaksi = Array.isArray(pem.transaksi) ? pem.transaksi[0] : pem.transaksi;
+  const umkmSudahUpload = !!(transaksi?.bukti_pengiriman_umkm);
+  const industriSudahKonfirmasi = !!(transaksi?.konfirmasi_penerimaan);
+  if (!umkmSudahUpload && !industriSudahKonfirmasi) {
+    return { success: false, error: 'UMKM belum upload bukti pengerjaan dan Industri belum konfirmasi selesai.' };
+  }
+
   if (pem.bukti_pembayaran_umkm) return { success: false, error: 'Bukti pembayaran ke UMKM sudah pernah diupload.' };
 
   const { error } = await db.from('pembayaran').update({
