@@ -18,7 +18,7 @@ test.describe('FR-06: Tambah Produk', () => {
 
   test('TC-06-02: Tombol "Tambah Item Baru" menuju form tambah produk', async ({ page }) => {
     await login(page, 'UMKM');
-    await page.goto('/dashboard/katalog');
+    await page.goto('/dashboard/katalog', { waitUntil: 'domcontentloaded' });
     await page.getByRole('link', { name: /Tambah Item Baru/i }).first().click();
     await expect(page).toHaveURL(/\/dashboard\/katalog\/tambah/);
   });
@@ -26,7 +26,7 @@ test.describe('FR-06: Tambah Produk', () => {
   test('TC-06-03: Form tambah produk menampilkan field nama & harga', async ({ page }) => {
     await login(page, 'UMKM');
     await page.goto('/dashboard/katalog/tambah');
-    // Form produk minimal punya input teks & input angka (harga)
-    await expect(page.locator('input').first()).toBeVisible({ timeout: 15_000 });
+    // Form produk minimal punya input teks & input angka (harga) (pastikan bukan file hidden)
+    await expect(page.locator('input[type="text"]').first()).toBeVisible({ timeout: 15_000 });
   });
 });

@@ -16,9 +16,10 @@ dotenv.config({ path: path.resolve(__dirname, '.env.test') });
  */
 export default defineConfig({
   testDir: './e2e',
-  // Jalankan berurutan (1 worker) supaya alur antar-FR mudah diamati saat demo & tidak rebutan sesi login
-  fullyParallel: false,
-  workers: 1,
+  // Jalankan secara paralel untuk mempercepat eksekusi test
+  fullyParallel: true,
+  // Gunakan worker sesuai jumlah core CPU (di lokal), atau 1 jika di CI
+  workers: process.env.CI ? 1 : undefined,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   timeout: 60_000,

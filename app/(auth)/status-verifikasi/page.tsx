@@ -40,7 +40,7 @@ function StatusVerifikasiContent() {
       setLoading(false);
     }
     fetchCatatan();
-  }, [status, supabase]);
+  }, [status]);
 
 
 

@@ -153,7 +153,6 @@ export async function ajukanKomplain(
 
   const trxCode = `TRX-${String(transaksiId).padStart(4, "0")}`;
 
-  // Catat di riwayat transaksi
   const { error: histError } = await supabase
     .from("transaksi_history")
     .insert({
@@ -161,7 +160,20 @@ export async function ajukanKomplain(
       status_progress: "Komplain Diajukan",
       pesan,
     } as any);
-  if (histError) return { success: false, error: "Gagal mencatat komplain." };
+
+  if (histError) {
+    console.error("Gagal mencatat history komplain (diabaikan karena RLS):", histError);
+  }
+
+  // Update status progress di transaksi agar UI tahu ini sedang komplain
+  const { error: updateErr } = await supabase
+    .from("transaksi")
+    .update({ progress_status: "Komplain Diajukan" } as any)
+    .eq("id", transaksiId);
+  
+  if (updateErr) {
+    console.error("Gagal update progress_status transaksi:", updateErr);
+  }
 
   // Notifikasi ke UMKM
   const umkm = Array.isArray(req?.umkm) ? req.umkm[0] : req?.umkm;

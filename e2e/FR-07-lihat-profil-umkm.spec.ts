@@ -18,13 +18,13 @@ test.describe('FR-07: Lihat Profil UMKM', () => {
 
   test('TC-07-02: Tersedia kotak pencarian UMKM/produk', async ({ page }) => {
     await login(page, 'Industri');
-    await page.goto('/pencarian');
+    await page.goto('/pencarian', { waitUntil: 'domcontentloaded' });
     await expect(page.getByPlaceholder(/Cari nama UMKM, produk, atau lokasi/i)).toBeVisible();
   });
 
   test('TC-07-03: Membuka detail salah satu UMKM (jika ada hasil)', async ({ page }) => {
     await login(page, 'Industri');
-    await page.goto('/pencarian');
+    await page.goto('/pencarian', { waitUntil: 'domcontentloaded' });
     // Klik kartu UMKM pertama bila ada; jika kosong, lewati assertion klik
     const detailBtn = page.getByRole('button', { name: /detail|lihat/i }).first();
     if (await detailBtn.isVisible().catch(() => false)) {

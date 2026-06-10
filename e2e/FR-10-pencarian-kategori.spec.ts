@@ -10,7 +10,7 @@ test.describe('FR-10: Pencarian', () => {
 
   test('TC-10-01: Mengetik kata kunci memperbarui hasil/URL', async ({ page }) => {
     await login(page, 'Industri');
-    await page.goto('/pencarian');
+    await page.goto('/pencarian', { waitUntil: 'domcontentloaded' });
     const search = page.getByPlaceholder(/Cari nama UMKM, produk, atau lokasi/i);
     await search.fill('kayu');
     // Debounce 500ms -> query q= masuk ke URL
@@ -19,7 +19,7 @@ test.describe('FR-10: Pencarian', () => {
 
   test('TC-10-02: Tersedia panel filter lanjutan', async ({ page }) => {
     await login(page, 'Industri');
-    await page.goto('/pencarian');
+    await page.goto('/pencarian', { waitUntil: 'domcontentloaded' });
     // Tombol/area filter (rentang harga Min/Max) dapat dibuka
     const filterToggle = page.getByRole('button', { name: /filter/i }).first();
     if (await filterToggle.isVisible().catch(() => false)) {

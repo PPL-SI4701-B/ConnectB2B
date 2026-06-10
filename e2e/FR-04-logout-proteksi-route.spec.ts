@@ -28,7 +28,7 @@ test.describe('FR-04: Logout & Proteksi Route', () => {
     test.skip(!hasCreds('UMKM'), 'Kredensial UMKM belum diisi di .env.test');
     await login(page, 'UMKM');
     await logout(page);
-    await page.goto('/dashboard');
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/login/);
   });
 });

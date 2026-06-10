@@ -17,7 +17,7 @@ test.describe('FR-05: Kelola Profil', () => {
   test('TC-05-02: Halaman profil menampilkan data akun', async ({ page }) => {
     await login(page, 'UMKM');
     await page.goto('/profil');
-    // Minimal ada input yang bisa diedit pada form profil
-    await expect(page.locator('input').first()).toBeVisible({ timeout: 15_000 });
+    // Minimal ada input text yang bisa diedit pada form profil (bukan input file hidden)
+    await expect(page.locator('input[type="text"]').first()).toBeVisible({ timeout: 15_000 });
   });
 });

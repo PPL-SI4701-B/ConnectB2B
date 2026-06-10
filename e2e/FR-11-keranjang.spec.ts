@@ -18,7 +18,7 @@ test.describe('FR-11: Keranjang Kolaborasi', () => {
 
   test('TC-11-02: Menampilkan daftar item atau pesan keranjang kosong', async ({ page }) => {
     await login(page, 'Industri');
-    await page.goto('/keranjang');
+    await page.goto('/keranjang', { waitUntil: 'domcontentloaded' });
     const kosong = page.getByText(/Keranjang Anda Kosong/i);
     const checkout = page.getByRole('button', { name: /Review & Ajukan Request/i });
     // Salah satu kondisi harus benar: kosong, atau ada tombol checkout
