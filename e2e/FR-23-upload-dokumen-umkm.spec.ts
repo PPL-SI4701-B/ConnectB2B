@@ -52,11 +52,22 @@ test.describe.serial('FR-23: Upload dokumen UMKM', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    // Reset status to terverifikasi before login so that middleware doesn't redirect to status-verifikasi
-    await supabaseAdmin.from('users').update({ status_verifikasi: 'terverifikasi' }).eq('id', umkmUserId);
+    // Retry login and navigation to handle race conditions if FR-24 modifies the status concurrently
+    await expect(async () => {
+      await supabaseAdmin.from('users').update({ status_verifikasi: 'terverifikasi' }).eq('id', umkmUserId);
+      
+      await page.goto('/login');
+      if (await page.getByRole('button', { name: /Masuk sebagai UMKM/i }).isVisible({ timeout: 2000 })) {
+        await page.getByRole('button', { name: /Masuk sebagai UMKM/i }).click();
+        await page.getByPlaceholder('nama@perusahaan.com').fill(process.env.E2E_UMKM_EMAIL!);
+        await page.getByPlaceholder('Minimal 8 karakter').fill(process.env.E2E_UMKM_PASSWORD!);
+        await page.getByRole('button', { name: /Lanjutkan Masuk/i }).click();
+      }
 
-    await login(page, 'UMKM');
-    await page.goto('/profil');
+      await expect(page).toHaveURL(/\/dashboard(?!-industri)/, { timeout: 5000 });
+      await page.goto('/profil');
+      await expect(page).toHaveURL(/\/profil/, { timeout: 5000 });
+    }).toPass({ timeout: 35000, intervals: [1000, 2000] });
   });
 
   test('TC-23-01: Lihat status dokumen', async ({ page }) => {
@@ -70,26 +81,27 @@ test.describe.serial('FR-23: Upload dokumen UMKM', () => {
 
   test('TC-23-02: Re-upload dokumen ditolak', async ({ page }) => {
     // 1. Setup data: set dokumen NIB menjadi ditolak
-    const { data: nibDoc } = await supabaseAdmin
-      .from('dokumen_legalitas')
-      .select('id')
-      .eq('user_id', umkmUserId)
-      .eq('jenis_dokumen', 'NIB')
-      .single();
+    await expect(async () => {
+      const { data: nibDoc } = await supabaseAdmin
+        .from('dokumen_legalitas')
+        .select('id')
+        .eq('user_id', umkmUserId)
+        .eq('jenis_dokumen', 'NIB')
+        .single();
 
-    if (nibDoc) {
-      await supabaseAdmin.from('dokumen_legalitas').update({ status_verifikasi: 'ditolak', catatan_admin: 'Tolong perbaiki NIB' }).eq('id', nibDoc.id);
-    }
+      if (nibDoc) {
+        await supabaseAdmin.from('dokumen_legalitas').update({ status_verifikasi: 'ditolak', catatan_admin: 'Tolong perbaiki NIB' }).eq('id', nibDoc.id);
+      }
 
-    // Set user status to ditolak as well, to trigger middleware redirect
-    await supabaseAdmin.from('users').update({ status_verifikasi: 'ditolak' }).eq('id', umkmUserId);
+      // Set user status to ditolak as well, to trigger middleware redirect
+      await supabaseAdmin.from('users').update({ status_verifikasi: 'ditolak' }).eq('id', umkmUserId);
 
-    // Refresh page to trigger middleware redirect to /status-verifikasi?status=ditolak
-    await page.reload();
+      // Refresh page to trigger middleware redirect to /status-verifikasi?status=ditolak
+      await page.reload();
 
-    // Verify we are on status-verifikasi page and see rejection message
-    await expect(page.getByText('Verifikasi Dokumen Ditolak')).toBeVisible();
-    // Skip checking exact rejection reason as it relies on client-side fetch which can be flaky
+      // Verify we are on status-verifikasi page and see rejection message
+      await expect(page.getByText('Verifikasi Dokumen Ditolak')).toBeVisible({ timeout: 5000 });
+    }).toPass({ timeout: 15000, intervals: [1000, 2000] });
 
     // LOG DB STATE
     const { data: checkDocs } = await supabaseAdmin.from('dokumen_legalitas').select('*').eq('user_id', umkmUserId);
@@ -101,16 +113,9 @@ test.describe.serial('FR-23: Upload dokumen UMKM', () => {
     // Verify we are on /re-upload
     await expect(page.getByRole('heading', { name: /Upload Ulang Dokumen/i })).toBeVisible();
 
-    // 2. Upload file baru
-    const buffer = Buffer.from('test document content');
-    
     // Find file input and upload
     const fileInput = page.locator('input[type="file"][accept="application/pdf"]').first();
-    await fileInput.setInputFiles({
-      name: 'NIB_baru.pdf',
-      mimeType: 'application/pdf',
-      buffer
-    });
+    await fileInput.setInputFiles(path.resolve(__dirname, 'dummy_nib.pdf'));
 
     // Click Upload Ulang button
     await page.getByRole('button', { name: /Upload Ulang/i }).click();
@@ -124,20 +129,22 @@ test.describe.serial('FR-23: Upload dokumen UMKM', () => {
   });
 
   test('TC-23-03: Dokumen semua terverifikasi', async ({ page }) => {
-    // Set semua dokumen menjadi terverifikasi
-    await supabaseAdmin.from('dokumen_legalitas')
-      .update({ status_verifikasi: 'terverifikasi' })
-      .eq('user_id', umkmUserId);
-      
-    await supabaseAdmin.from('users')
-      .update({ status_verifikasi: 'terverifikasi' })
-      .eq('id', umkmUserId);
+    await expect(async () => {
+      // Set semua dokumen menjadi terverifikasi
+      await supabaseAdmin.from('dokumen_legalitas')
+        .update({ status_verifikasi: 'terverifikasi' })
+        .eq('user_id', umkmUserId);
+        
+      await supabaseAdmin.from('users')
+        .update({ status_verifikasi: 'terverifikasi' })
+        .eq('id', umkmUserId);
 
-    await page.goto('/profil');
+      await page.goto('/profil');
 
-    // Cek badge
-    await expect(page.getByText('Status: Berkas Lengkap & Terverifikasi')).toBeVisible();
-    await expect(page.getByText('Dokumen Anda telah diperiksa dan disetujui')).toBeVisible();
+      // Cek badge
+      await expect(page.getByText('Status: Berkas Lengkap & Terverifikasi')).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText('Dokumen Anda telah diperiksa dan disetujui')).toBeVisible({ timeout: 5000 });
+    }).toPass({ timeout: 15000, intervals: [1000, 2000] });
   });
 
   test.afterAll(async () => {

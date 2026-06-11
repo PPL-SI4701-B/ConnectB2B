@@ -15,19 +15,28 @@ test.describe.serial('FR-24: Verifikasi dokumen UMKM', () => {
   let umkmUserId: string;
   let umkmEntityName: string;
 
+  let tempEmail: string;
+  let tempPassword = 'password123';
+
   test.beforeAll(async () => {
     supabase = createClient(supabaseUrl, supabaseKey);
     supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
-    // Login to Supabase as UMKM to get userId
-    const { data: authData } = await supabase.auth.signInWithPassword({
-      email: process.env.E2E_UMKM_EMAIL!,
-      password: process.env.E2E_UMKM_PASSWORD!,
+    tempEmail = `dummy_${Date.now()}@gmail.com`;
+
+    // Register a fresh UMKM user via API to avoid race conditions with FR-23
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: tempEmail,
+      password: tempPassword,
+      options: {
+        data: { role: 'umkm', nama: 'PT Dummy 24', nama_usaha: 'PT Dummy 24' }
+      }
     });
-    umkmUserId = authData.user!.id;
     
-    const { data } = await supabase.from('users').select('nama').eq('id', umkmUserId).single();
-    umkmEntityName = data!.nama;
+    if (error) throw new Error('API Signup failed: ' + error.message);
+
+    umkmUserId = authData.user!.id;
+    umkmEntityName = 'PT Dummy 24';
 
     await supabase.auth.signOut();
 
@@ -43,13 +52,13 @@ test.describe.serial('FR-24: Verifikasi dokumen UMKM', () => {
     await supabaseAdmin.from('users').update({ status_verifikasi: 'terverifikasi' }).eq('id', umkmUserId);
     await supabaseAdmin.from('dokumen_legalitas').update({ status_verifikasi: 'terverifikasi' }).eq('user_id', umkmUserId);
 
-    // Set dokumen ke menunggu
+    // Set dokumen ke menunggu (bersihkan yang ada lalu insert baru)
     await supabaseAdmin.from('dokumen_legalitas').delete().eq('user_id', umkmUserId);
     
     // Login as UMKM to insert (bypass RLS which blocks admin insert)
     await supabase.auth.signInWithPassword({
-      email: process.env.E2E_UMKM_EMAIL!,
-      password: process.env.E2E_UMKM_PASSWORD!,
+      email: tempEmail,
+      password: tempPassword,
     });
     await supabase.from('dokumen_legalitas').insert([
       { user_id: umkmUserId, jenis_dokumen: 'NIB', file_url: 'dummy_nib.pdf', status_verifikasi: 'menunggu' },
@@ -63,62 +72,66 @@ test.describe.serial('FR-24: Verifikasi dokumen UMKM', () => {
   });
 
   test('TC-24-02: Tolak dokumen', async ({ page }) => {
-    // Reset to menunggu so it shows up in table
-    await supabaseAdmin.from('dokumen_legalitas').update({ status_verifikasi: 'menunggu' }).eq('user_id', umkmUserId);
-    await page.reload();
+    await expect(async () => {
+      // Reset to menunggu so it shows up in table
+      await supabaseAdmin.from('dokumen_legalitas').update({ status_verifikasi: 'menunggu' }).eq('user_id', umkmUserId);
+      await page.reload();
 
-    // Cari baris user umkmanon1
-    const tableContainer = page.locator('.bg-white.rounded-2xl.shadow-sm.border.border-slate-200.overflow-hidden');
-    const userRow = tableContainer.locator('tr').filter({ hasText: umkmEntityName }).first();
-    await expect(userRow).toBeVisible();
-    await userRow.getByRole('button', { name: 'Tolak Izin' }).click();
+      // Cari baris user umkmanon1
+      const tableContainer = page.locator('.bg-white.rounded-2xl.shadow-sm.border.border-slate-200.overflow-hidden');
+      const userRow = tableContainer.locator('tr').filter({ hasText: umkmEntityName }).first();
+      await expect(userRow).toBeVisible({ timeout: 5000 });
+      await userRow.getByRole('button', { name: 'Tolak Izin' }).click();
 
-    // Dialog Tolak Verifikasi muncul
-    const rejectModal = page.getByText('Tolak Verifikasi');
-    await expect(rejectModal).toBeVisible();
+      // Dialog Tolak Verifikasi muncul
+      const rejectModal = page.getByText('Tolak Verifikasi');
+      await expect(rejectModal).toBeVisible({ timeout: 5000 });
 
-    // Isi alasan penolakan
-    await page.getByPlaceholder('Beri tahu pengguna mengapa dokumen ini ditolak').fill('Dokumen tidak dapat terbaca dengan jelas.');
+      // Isi alasan penolakan
+      await page.getByPlaceholder('Beri tahu pengguna mengapa dokumen ini ditolak').fill('Dokumen tidak dapat terbaca dengan jelas.');
 
-    // Kirim Penolakan
-    await page.getByRole('button', { name: 'Kirim Penolakan' }).click();
+      // Kirim Penolakan
+      await page.getByRole('button', { name: 'Kirim Penolakan' }).click();
 
-    // Tunggu toast sukses
-    await expect(page.getByText('dokumen berhasil ditolak')).toBeVisible({ timeout: 10000 });
+      // Tunggu toast sukses
+      await expect(page.getByText('dokumen berhasil ditolak')).toBeVisible({ timeout: 10000 });
 
-    // Verifikasi DB
-    const { data: docs } = await supabaseAdmin.from('dokumen_legalitas').select('status_verifikasi').eq('user_id', umkmUserId);
-    expect(docs?.every(d => d.status_verifikasi === 'ditolak')).toBeTruthy();
+      // Verifikasi DB
+      const { data: docs } = await supabaseAdmin.from('dokumen_legalitas').select('status_verifikasi').eq('user_id', umkmUserId);
+      expect(docs?.every(d => d.status_verifikasi === 'ditolak')).toBeTruthy();
+    }).toPass({ timeout: 15000, intervals: [1000, 2000] });
   });
 
   test('TC-24-01 & TC-24-03: Setuju dokumen dan verifikasi status', async ({ page }) => {
-    // Pastikan dokumen menunggu
-    await supabaseAdmin.from('dokumen_legalitas').update({ status_verifikasi: 'menunggu' }).eq('user_id', umkmUserId);
-    await page.reload();
+    await expect(async () => {
+      // Pastikan dokumen menunggu
+      await supabaseAdmin.from('dokumen_legalitas').update({ status_verifikasi: 'menunggu' }).eq('user_id', umkmUserId);
+      await page.reload();
 
-    const tableContainer = page.locator('.bg-white.rounded-2xl.shadow-sm.border.border-slate-200.overflow-hidden');
-    const userRow = tableContainer.locator('tr').filter({ hasText: umkmEntityName }).first();
-    await expect(userRow).toBeVisible();
+      const tableContainer = page.locator('.bg-white.rounded-2xl.shadow-sm.border.border-slate-200.overflow-hidden');
+      const userRow = tableContainer.locator('tr').filter({ hasText: umkmEntityName }).first();
+      await expect(userRow).toBeVisible({ timeout: 5000 });
 
-    // Klik Setuju
-    await userRow.getByRole('button', { name: 'Setuju' }).click();
+      // Klik Setuju
+      await userRow.getByRole('button', { name: 'Setuju' }).click();
 
-    // Dialog Setuju Verifikasi
-    const confirmModal = page.getByText('Setujui Verifikasi?');
-    await expect(confirmModal).toBeVisible();
+      // Dialog Setuju Verifikasi
+      const confirmModal = page.getByText('Setujui Verifikasi?');
+      await expect(confirmModal).toBeVisible({ timeout: 5000 });
 
-    // Klik Ya, Setujui
-    await page.getByRole('button', { name: 'Ya, Setujui' }).click();
+      // Klik Ya, Setujui
+      await page.getByRole('button', { name: 'Ya, Setujui' }).click();
 
-    // Tunggu toast sukses
-    await expect(page.getByText('dokumen berhasil diverifikasi')).toBeVisible({ timeout: 10000 });
+      // Tunggu toast sukses
+      await expect(page.getByText('dokumen berhasil diverifikasi')).toBeVisible({ timeout: 10000 });
 
-    // Verifikasi DB status dokumen
-    const { data: docs } = await supabaseAdmin.from('dokumen_legalitas').select('status_verifikasi').eq('user_id', umkmUserId);
-    expect(docs?.every(d => d.status_verifikasi === 'terverifikasi')).toBeTruthy();
+      // Verifikasi DB status dokumen
+      const { data: docs } = await supabaseAdmin.from('dokumen_legalitas').select('status_verifikasi').eq('user_id', umkmUserId);
+      expect(docs?.every(d => d.status_verifikasi === 'terverifikasi')).toBeTruthy();
 
-    // Verifikasi DB status user (TC-24-03)
-    const { data: user } = await supabaseAdmin.from('users').select('status_verifikasi').eq('id', umkmUserId).single();
-    expect(user?.status_verifikasi).toBe('terverifikasi');
+      // Verifikasi DB status user (TC-24-03)
+      const { data: user } = await supabaseAdmin.from('users').select('status_verifikasi').eq('id', umkmUserId).single();
+      expect(user?.status_verifikasi).toBe('terverifikasi');
+    }).toPass({ timeout: 15000, intervals: [1000, 2000] });
   });
 });

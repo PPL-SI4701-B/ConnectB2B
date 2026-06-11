@@ -86,7 +86,7 @@ test.describe.serial('FR-17: Beri Ulasan (Industri)', () => {
     await page.getByRole('button', { name: 'Kirim untuk Ditampilkan di Platform' }).click();
 
     // Validasi sukses
-    await expect(page.getByText('Ulasan berhasil dikirim!')).toBeVisible();
+    await expect(page.getByText('Ulasan berhasil dikirim!').first()).toBeVisible();
   });
 
   test('TC-17-01: Submit review berhasil (edit)', async ({ page }) => {
@@ -111,7 +111,7 @@ test.describe.serial('FR-17: Beri Ulasan (Industri)', () => {
     await page.getByRole('button', { name: 'Simpan Perubahan' }).click();
 
     // Validasi sukses
-    await expect(page.getByText('Ulasan berhasil dikirim!')).toBeVisible();
+    await expect(page.getByText('Ulasan berhasil dikirim!').first()).toBeVisible();
   });
 
   test.afterAll(async () => {
