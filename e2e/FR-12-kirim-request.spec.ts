@@ -55,6 +55,8 @@ test.describe.serial('FR-12: Kirim Request Kerjasama', () => {
     // Validasi error (Playwright akan mengecek validasi browser HTML5 required atau pesan error)
     // URL seharusnya tidak berubah karena diblokir
     await expect(page).toHaveURL(/\/keranjang/);
+    // Beri jeda agar konten halaman selesai dimuat & tampil penuh di frame akhir trace
+    await page.waitForTimeout(2000);
   });
 
   test('TC-12-01: Kirim request berhasil', async ({ page }) => {
@@ -74,6 +76,8 @@ test.describe.serial('FR-12: Kirim Request Kerjasama', () => {
 
     // Verifikasi redirect ke halaman transaksi (request tersimpan)
     await expect(page).toHaveURL(/\/pantau-transaksi/);
+    // Beri jeda agar konten halaman selesai dimuat & tampil penuh di frame akhir trace
+    await page.waitForTimeout(2000);
   });
 
   test('TC-12-03: Request sewa alat', async ({ page }) => {
@@ -93,5 +97,7 @@ test.describe.serial('FR-12: Kirim Request Kerjasama', () => {
 
     // Verifikasi redirect ke halaman transaksi (request tersimpan)
     await expect(page).toHaveURL(/\/pantau-transaksi/);
+    // Beri jeda agar konten halaman selesai dimuat & tampil penuh di frame akhir trace
+    await page.waitForTimeout(2000);
   });
 });

@@ -109,6 +109,8 @@ test.describe.serial('FR-16: Konfirmasi Selesai / Komplain (Industri)', () => {
     // Validasi UI berubah sukses dan redirect ke halaman review
     await expect(page.getByText('Pesanan Berhasil Dikonfirmasi!')).toBeVisible();
     await expect(page).toHaveURL(/\/beri-ulasan/, { timeout: 15000 });
+    // Beri jeda agar konten halaman selesai dimuat & tampil penuh di frame akhir trace
+    await page.waitForTimeout(2000);
   });
 
   test('TC-16-02: Ajukan komplain', async ({ page }) => {

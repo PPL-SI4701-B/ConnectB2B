@@ -48,6 +48,8 @@ test.describe('FR-05: Kelola Profil', () => {
       await page.getByRole('link', { name: /^Profil$/i }).click();
       await expect(page).toHaveURL(/\/profil/, { timeout: 5_000 });
     }).toPass({ timeout: 20_000, intervals: [500, 1000] });
+    // Beri jeda agar konten halaman selesai dimuat & tampil penuh di frame akhir trace
+    await page.waitForTimeout(2000);
   });
 
   test('TC-05-02: Halaman profil menampilkan data akun', async ({ page }) => {

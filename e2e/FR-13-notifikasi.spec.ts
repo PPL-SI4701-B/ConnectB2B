@@ -96,6 +96,8 @@ test.describe.serial('FR-13: Notifikasi UMKM', () => {
 
     // Pastikan diarahkan ke halaman request-masuk
     await expect(page).toHaveURL(/\/request-masuk/);
+    // Beri jeda agar konten halaman selesai dimuat & tampil penuh di frame akhir trace
+    await page.waitForTimeout(2000);
   });
 
   test('TC-13-03: Mark as read', async ({ page }) => {
