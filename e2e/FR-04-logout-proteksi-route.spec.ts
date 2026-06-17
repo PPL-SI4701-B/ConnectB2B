@@ -19,7 +19,6 @@ test.describe('FR-04: Logout & Proteksi Route', () => {
   test('TC-04-02: Logout dari dashboard kembali ke /login', async ({ page }) => {
     test.skip(!hasCreds('UMKM'), 'Kredensial UMKM belum diisi di .env.test');
     await login(page, 'UMKM');
-    // Klik tombol "Keluar" di sidebar
     await page.getByRole('button', { name: /Keluar/i }).click();
     await expect(page).toHaveURL(/\/login/, { timeout: 15_000 });
   });

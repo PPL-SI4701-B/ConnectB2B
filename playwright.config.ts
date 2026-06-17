@@ -48,12 +48,24 @@ export default defineConfig({
     },
   ],
 
-  // Otomatis menjalankan `npm run dev` sebelum test, lalu mematikannya setelah selesai.
-  // Jika server sudah jalan sendiri, Playwright akan memakai yang ada (reuseExistingServer).
+  // Jalankan test terhadap PRODUCTION BUILD (next build + next start) di port 3100,
+  // dengan env diarahkan ke DATABASE TEST (project ConnectB2B-Test).
+  // Alasan:
+  //   - Pakai database test kosong/terpisah → tidak mengotori data asli (permintaan dosen)
+  //   - Semua route sudah ter-compile → tidak ada timeout "cold compile" seperti di dev
+  //   - RAM hemat (tidak ada compiler/HMR) → laptop tidak freeze
+  //   - Port 3100 → tidak bentrok dengan `npm run dev` (3000) yang memakai database asli
+  //
+  // env di bawah meng-override nilai di .env.local saat build & start (process.env menang
+  // atas file .env di Next.js), jadi dev sehari-hari Anda tetap memakai database asli.
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000/login',
+    command: 'npm run build && npm run start -- -p 3100',
+    url: 'http://localhost:3100/login',
     reuseExistingServer: true,
-    timeout: 120_000,
+    timeout: 240_000,
+    env: {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+    },
   },
 });

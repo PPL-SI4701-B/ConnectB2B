@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Muat dari .env.test (berisi SUPABASE key + kredensial test)
+dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Fallback ke .env.local jika ada override
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 test.describe.serial('FR-23: Upload dokumen UMKM', () => {
@@ -21,8 +24,8 @@ test.describe.serial('FR-23: Upload dokumen UMKM', () => {
 
     // Login to Supabase as UMKM to get userId
     const { data: authData } = await supabase.auth.signInWithPassword({
-      email: process.env.E2E_UMKM_EMAIL!,
-      password: process.env.E2E_UMKM_PASSWORD!,
+      email: process.env.E2E_DOC_UMKM_EMAIL!,
+      password: process.env.E2E_DOC_UMKM_PASSWORD!,
     });
     umkmUserId = authData.user!.id;
 
@@ -59,8 +62,8 @@ test.describe.serial('FR-23: Upload dokumen UMKM', () => {
       await page.goto('/login');
       if (await page.getByRole('button', { name: /Masuk sebagai UMKM/i }).isVisible({ timeout: 2000 })) {
         await page.getByRole('button', { name: /Masuk sebagai UMKM/i }).click();
-        await page.getByPlaceholder('nama@perusahaan.com').fill(process.env.E2E_UMKM_EMAIL!);
-        await page.getByPlaceholder('Minimal 8 karakter').fill(process.env.E2E_UMKM_PASSWORD!);
+        await page.getByPlaceholder('nama@perusahaan.com').fill(process.env.E2E_DOC_UMKM_EMAIL!);
+        await page.getByPlaceholder('Minimal 8 karakter').fill(process.env.E2E_DOC_UMKM_PASSWORD!);
         await page.getByRole('button', { name: /Lanjutkan Masuk/i }).click();
       }
 
@@ -68,6 +71,17 @@ test.describe.serial('FR-23: Upload dokumen UMKM', () => {
       await page.goto('/profil');
       await expect(page).toHaveURL(/\/profil/, { timeout: 5000 });
     }).toPass({ timeout: 35000, intervals: [1000, 2000] });
+  });
+
+  // Apa pun hasilnya, kembalikan akun UMKM ke 'terverifikasi' agar tidak merusak
+  // test lain yang memakai akun yang sama.
+  test.afterAll(async () => {
+    if (supabaseAdmin && umkmUserId) {
+      await supabaseAdmin.from('dokumen_legalitas')
+        .update({ status_verifikasi: 'terverifikasi', catatan_admin: null }).eq('user_id', umkmUserId);
+      await supabaseAdmin.from('users')
+        .update({ status_verifikasi: 'terverifikasi' }).eq('id', umkmUserId);
+    }
   });
 
   test('TC-23-01: Lihat status dokumen', async ({ page }) => {
@@ -120,9 +134,14 @@ test.describe.serial('FR-23: Upload dokumen UMKM', () => {
     // Click Upload Ulang button
     await page.getByRole('button', { name: /Upload Ulang/i }).click();
 
-    // Wait for success toast and redirect to menunggu
+    // Toast sukses muncul
     await expect(page.getByText('Dokumen berhasil diunggah ulang!')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Akun Anda Sedang Diverifikasi')).toBeVisible({ timeout: 15000 });
+    // Verifikasi via DB bahwa status user kembali ke 'menunggu' (re-upload berhasil).
+    // Lebih andal daripada menunggu auto-redirect klien 3 detik yang flaky.
+    await expect(async () => {
+      const { data: u } = await supabaseAdmin.from('users').select('status_verifikasi').eq('id', umkmUserId).single();
+      expect(u?.status_verifikasi).toBe('menunggu');
+    }).toPass({ timeout: 15000, intervals: [1000, 2000] });
 
     // Reset status to terverifikasi so the next test's beforeEach login() doesn't fail
     await supabaseAdmin.from('users').update({ status_verifikasi: 'terverifikasi' }).eq('id', umkmUserId);

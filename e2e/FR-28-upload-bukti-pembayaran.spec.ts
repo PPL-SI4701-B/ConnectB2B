@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 
+// Muat dari .env.test (berisi SUPABASE key + kredensial test)
+dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Fallback ke .env.local jika ada override
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 test.describe.serial('FR-28: Upload Bukti Pembayaran', () => {

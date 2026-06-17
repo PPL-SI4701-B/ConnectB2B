@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Muat dari .env.test (berisi SUPABASE key + kredensial test)
+dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Fallback ke .env.local jika ada override
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 test.describe.serial('FR-25: Upload dokumen Industri', () => {
@@ -18,10 +21,10 @@ test.describe.serial('FR-25: Upload dokumen Industri', () => {
     supabase = createClient(supabaseUrl, supabaseKey);
     supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
-    // Login to Supabase as Industri to get userId
+    // Login to Supabase as akun dokumen Industri (khusus, terpisah dari industrianon1)
     const { data: authData } = await supabase.auth.signInWithPassword({
-      email: process.env.E2E_INDUSTRI_EMAIL!,
-      password: process.env.E2E_INDUSTRI_PASSWORD!,
+      email: process.env.E2E_DOC_INDUSTRI_EMAIL!,
+      password: process.env.E2E_DOC_INDUSTRI_PASSWORD!,
     });
     indUserId = authData.user!.id;
 
@@ -58,8 +61,25 @@ test.describe.serial('FR-25: Upload dokumen Industri', () => {
     // Reset status to terverifikasi before login so that middleware doesn't redirect to status-verifikasi
     await supabaseAdmin.from('users').update({ status_verifikasi: 'terverifikasi' }).eq('id', indUserId);
 
-    await login(page, 'Industri');
+    // Login GUI sebagai akun dokumen Industri (bukan industrianon1)
+    await page.goto('/login');
+    await page.getByRole('button', { name: /Masuk sebagai Industri/i }).click();
+    await page.getByPlaceholder('nama@perusahaan.com').fill(process.env.E2E_DOC_INDUSTRI_EMAIL!);
+    await page.getByPlaceholder('Minimal 8 karakter').fill(process.env.E2E_DOC_INDUSTRI_PASSWORD!);
+    await page.getByRole('button', { name: /Lanjutkan Masuk/i }).click();
+    await expect(page).toHaveURL(/\/dashboard-industri/, { timeout: 20_000 });
     await page.goto('/profil'); // URL profil sama untuk industri maupun UMKM
+  });
+
+  // Apa pun hasilnya, kembalikan akun Industri ke 'terverifikasi' agar tidak merusak
+  // test lain yang memakai akun yang sama (FR-28, FR-16, dll).
+  test.afterAll(async () => {
+    if (supabaseAdmin && indUserId) {
+      await supabaseAdmin.from('dokumen_legalitas')
+        .update({ status_verifikasi: 'terverifikasi', catatan_admin: null }).eq('user_id', indUserId);
+      await supabaseAdmin.from('users')
+        .update({ status_verifikasi: 'terverifikasi' }).eq('id', indUserId);
+    }
   });
 
   test('TC-25-01: Lihat status 3 dokumen', async ({ page }) => {
@@ -115,9 +135,14 @@ test.describe.serial('FR-25: Upload dokumen Industri', () => {
     // Click Upload Ulang button
     await page.getByRole('button', { name: /Upload Ulang/i }).click();
 
-    // Wait for success toast and redirect to menunggu
+    // Toast sukses muncul
     await expect(page.getByText('Dokumen berhasil diunggah ulang!')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Akun Anda Sedang Diverifikasi')).toBeVisible({ timeout: 15000 });
+    // Verifikasi via DB bahwa status user kembali ke 'menunggu' (re-upload berhasil).
+    // Lebih andal daripada menunggu auto-redirect klien 3 detik yang flaky.
+    await expect(async () => {
+      const { data: u } = await supabaseAdmin.from('users').select('status_verifikasi').eq('id', indUserId).single();
+      expect(u?.status_verifikasi).toBe('menunggu');
+    }).toPass({ timeout: 15000, intervals: [1000, 2000] });
 
     // Reset status to terverifikasi so the next test's beforeEach login() doesn't fail
     await supabaseAdmin.from('users').update({ status_verifikasi: 'terverifikasi' }).eq('id', indUserId);

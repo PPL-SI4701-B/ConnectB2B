@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Muat dari .env.test (berisi SUPABASE key + kredensial test)
+dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Fallback ke .env.local jika ada override
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 test.describe.serial('FR-24: Verifikasi dokumen UMKM', () => {
@@ -15,36 +18,25 @@ test.describe.serial('FR-24: Verifikasi dokumen UMKM', () => {
   let umkmUserId: string;
   let umkmEntityName: string;
 
-  let tempEmail: string;
-  let tempPassword = 'password123';
+  // Akun khusus FR-24 yang sudah di-seed (hindari signUp yang kena email rate limit project test)
+  let tempEmail = 'fr24-umkm@gmail.com';
+  let tempPassword = '12345678';
 
   test.beforeAll(async () => {
     supabase = createClient(supabaseUrl, supabaseKey);
     supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
-    tempEmail = `dummy_${Date.now()}@gmail.com`;
-
-    // Register a fresh UMKM user via API to avoid race conditions with FR-23
-    const { data: authData, error } = await supabase.auth.signUp({
-      email: tempEmail,
-      password: tempPassword,
-      options: {
-        data: { role: 'umkm', nama: 'PT Dummy 24', nama_usaha: 'PT Dummy 24' }
-      }
-    });
-    
-    if (error) throw new Error('API Signup failed: ' + error.message);
-
-    umkmUserId = authData.user!.id;
-    umkmEntityName = 'PT Dummy 24';
-
-    await supabase.auth.signOut();
-
-    // Login admin on supabaseAdmin client (keep it logged in)
+    // Login admin on supabaseAdmin client (keep it logged in) untuk query & reset state
     await supabaseAdmin.auth.signInWithPassword({
       email: process.env.E2E_ADMIN_EMAIL!,
       password: process.env.E2E_ADMIN_PASSWORD!,
     });
+
+    // Ambil id akun seed FR-24
+    const { data: u } = await supabaseAdmin.from('users').select('id').eq('email', tempEmail).single();
+    if (!u) throw new Error(`Akun seed FR-24 (${tempEmail}) tidak ditemukan. Jalankan supabase/seed.sql.`);
+    umkmUserId = u.id as string;
+    umkmEntityName = 'PT Dummy 24';
   });
 
   test.beforeEach(async ({ page }) => {

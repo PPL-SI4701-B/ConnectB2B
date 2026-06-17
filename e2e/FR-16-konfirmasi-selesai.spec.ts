@@ -4,6 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 
+// Muat dari .env.test (berisi SUPABASE key + kredensial test)
+dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Fallback ke .env.local jika ada override
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 test.describe.serial('FR-16: Konfirmasi Selesai / Komplain (Industri)', () => {
@@ -105,7 +108,7 @@ test.describe.serial('FR-16: Konfirmasi Selesai / Komplain (Industri)', () => {
 
     // Validasi UI berubah sukses dan redirect ke halaman review
     await expect(page.getByText('Pesanan Berhasil Dikonfirmasi!')).toBeVisible();
-    await expect(page).toHaveURL(/\/dashboard-industri\/ulasan/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/beri-ulasan/, { timeout: 15000 });
   });
 
   test('TC-16-02: Ajukan komplain', async ({ page }) => {

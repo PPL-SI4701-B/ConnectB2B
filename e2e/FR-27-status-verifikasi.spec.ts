@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Muat dari .env.test (berisi SUPABASE key + kredensial test)
+dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Fallback ke .env.local jika ada override
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 test.describe.serial('FR-27: Status verifikasi', () => {
@@ -18,12 +21,18 @@ test.describe.serial('FR-27: Status verifikasi', () => {
     supabase = createClient(supabaseUrl, supabaseKey);
     supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
-    // Login to Supabase as UMKM to get userId
+    // Login sebagai akun STATUS khusus FR-27 (terpisah dari umkmanon1 agar tidak mengotori test lain)
     const { data: authData } = await supabase.auth.signInWithPassword({
-      email: process.env.E2E_UMKM_EMAIL!,
-      password: process.env.E2E_UMKM_PASSWORD!,
+      email: process.env.E2E_STATUS_UMKM_EMAIL!,
+      password: process.env.E2E_STATUS_UMKM_PASSWORD!,
     });
     umkmUserId = authData.user!.id;
+
+    // Pastikan ada minimal 1 dokumen (untuk uji catatan penolakan); insert sebagai akun sendiri (lolos RLS)
+    const { data: existing } = await supabase.from('dokumen_legalitas').select('id').eq('user_id', umkmUserId).limit(1);
+    if (!existing || existing.length === 0) {
+      await supabase.from('dokumen_legalitas').insert({ user_id: umkmUserId, jenis_dokumen: 'NIB', file_url: 'dummy.pdf', status_verifikasi: 'terverifikasi' });
+    }
 
     await supabase.auth.signOut();
 
@@ -35,11 +44,17 @@ test.describe.serial('FR-27: Status verifikasi', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    // Reset state to ensure clean start
+    // Reset state ke kondisi bersih (dokumen & user terverifikasi)
+    await supabaseAdmin.from('dokumen_legalitas').update({ status_verifikasi: 'terverifikasi', catatan_admin: null }).eq('user_id', umkmUserId);
     await supabaseAdmin.from('users').update({ status_verifikasi: 'terverifikasi' }).eq('id', umkmUserId);
-    
-    // Default login for tests
-    await login(page, 'UMKM');
+
+    // Login GUI sebagai akun status FR-27
+    await page.goto('/login');
+    await page.getByRole('button', { name: /Masuk sebagai UMKM/i }).click();
+    await page.getByPlaceholder('nama@perusahaan.com').fill(process.env.E2E_STATUS_UMKM_EMAIL!);
+    await page.getByPlaceholder('Minimal 8 karakter').fill(process.env.E2E_STATUS_UMKM_PASSWORD!);
+    await page.getByRole('button', { name: /Lanjutkan Masuk/i }).click();
+    await expect(page).toHaveURL(/\/dashboard(?!-industri)/, { timeout: 20_000 });
   });
 
   test('TC-27-01: Badge terverifikasi', async ({ page }) => {

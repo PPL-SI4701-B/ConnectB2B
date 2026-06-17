@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Muat dari .env.test (berisi SUPABASE key + kredensial test)
+dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Fallback ke .env.local jika ada override
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 test.describe.serial('FR-26: Verifikasi dokumen Industri', () => {
@@ -19,10 +22,10 @@ test.describe.serial('FR-26: Verifikasi dokumen Industri', () => {
     supabase = createClient(supabaseUrl, supabaseKey);
     supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
-    // Login to Supabase as Industri to get userId
+    // Login sebagai akun verifikasi Industri khusus FR-26 (terpisah dari FR-25 & industrianon1)
     const { data: authData } = await supabase.auth.signInWithPassword({
-      email: process.env.E2E_INDUSTRI_EMAIL!,
-      password: process.env.E2E_INDUSTRI_PASSWORD!,
+      email: process.env.E2E_VERIF_INDUSTRI_EMAIL!,
+      password: process.env.E2E_VERIF_INDUSTRI_PASSWORD!,
     });
     industriUserId = authData.user!.id;
     
@@ -48,8 +51,8 @@ test.describe.serial('FR-26: Verifikasi dokumen Industri', () => {
   test('TC-26-02: Dokumen tidak lengkap', async ({ page }) => {
     // Industri baru upload 2 dari 3 (SIUP dan NIB saja)
     await supabase.auth.signInWithPassword({
-      email: process.env.E2E_INDUSTRI_EMAIL!,
-      password: process.env.E2E_INDUSTRI_PASSWORD!,
+      email: process.env.E2E_VERIF_INDUSTRI_EMAIL!,
+      password: process.env.E2E_VERIF_INDUSTRI_PASSWORD!,
     });
     await supabase.from('dokumen_legalitas').insert([
       { user_id: industriUserId, jenis_dokumen: 'SIUP', file_url: 'dummy_siup.pdf', status_verifikasi: 'menunggu' },
@@ -76,8 +79,8 @@ test.describe.serial('FR-26: Verifikasi dokumen Industri', () => {
   test('TC-26-03: Filter tab', async ({ page }) => {
     // Upload lengkap agar muncul di tabel
     await supabase.auth.signInWithPassword({
-      email: process.env.E2E_INDUSTRI_EMAIL!,
-      password: process.env.E2E_INDUSTRI_PASSWORD!,
+      email: process.env.E2E_VERIF_INDUSTRI_EMAIL!,
+      password: process.env.E2E_VERIF_INDUSTRI_PASSWORD!,
     });
     await supabase.from('dokumen_legalitas').insert([
       { user_id: industriUserId, jenis_dokumen: 'SIUP', file_url: 'dummy_siup.pdf', status_verifikasi: 'menunggu' },
@@ -104,8 +107,8 @@ test.describe.serial('FR-26: Verifikasi dokumen Industri', () => {
   test('TC-26-01: Verifikasi Industri berhasil', async ({ page }) => {
     // Upload lengkap
     await supabase.auth.signInWithPassword({
-      email: process.env.E2E_INDUSTRI_EMAIL!,
-      password: process.env.E2E_INDUSTRI_PASSWORD!,
+      email: process.env.E2E_VERIF_INDUSTRI_EMAIL!,
+      password: process.env.E2E_VERIF_INDUSTRI_PASSWORD!,
     });
     await supabase.from('dokumen_legalitas').insert([
       { user_id: industriUserId, jenis_dokumen: 'SIUP', file_url: 'dummy_siup.pdf', status_verifikasi: 'menunggu' },

@@ -4,6 +4,9 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 
+// Muat dari .env.test (berisi SUPABASE key + kredensial test)
+dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
+// Fallback ke .env.local jika ada override
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 test.describe.serial('FR-21: Manajemen Akun (Admin)', () => {
@@ -11,22 +14,27 @@ test.describe.serial('FR-21: Manajemen Akun (Admin)', () => {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   let supabase: ReturnType<typeof createClient>;
   
-  // Gunakan user umkmanon2 yang memang sudah disediakan khusus untuk E2E testing
-  // Jika tidak ada, fallback ke umkmanon1
-  let targetUserEmail = '';
-  let targetUserName = '';
+  // Akun KHUSUS untuk test blokir — TIDAK BOLEH sama dengan akun yang dipakai test lain.
+  // Diambil dari .env.test (E2E_BLOCK_TARGET_EMAIL). Tidak ada fallback ke umkmanon1
+  // supaya memblokir akun ini tidak pernah merusak test lain.
+  const targetUserEmail = process.env.E2E_BLOCK_TARGET_EMAIL || 'umkmanon2@gmail.com';
 
   test.beforeAll(async () => {
     supabase = createClient(supabaseUrl, supabaseKey);
-    // Kita cari umkmanon2 di database
-    const { data } = await supabase.from('users').select('email, nama').eq('nama', 'umkmanon2').single();
-    if (data) {
-      targetUserEmail = data.email;
-      targetUserName = data.nama;
-    } else {
-      // Fallback
-      targetUserEmail = process.env.E2E_UMKM_EMAIL!;
-      targetUserName = 'umkmanon1';
+    // Login sebagai admin agar bisa baca/tulis tabel users (lewati RLS)
+    await supabase.auth.signInWithPassword({
+      email: process.env.E2E_ADMIN_EMAIL!,
+      password: process.env.E2E_ADMIN_PASSWORD!,
+    });
+    // Pastikan akun target dalam keadaan AKTIF sebelum test mulai (bersihkan sisa run yang gagal)
+    await supabase.from('users').update({ is_blocked: false }).eq('email', targetUserEmail);
+  });
+
+  // Apa pun yang terjadi (sukses/gagal), kembalikan akun target ke keadaan AKTIF
+  // supaya tidak meninggalkan akun terblokir untuk run/orang berikutnya.
+  test.afterAll(async () => {
+    if (supabase) {
+      await supabase.from('users').update({ is_blocked: false }).eq('email', targetUserEmail);
     }
   });
 

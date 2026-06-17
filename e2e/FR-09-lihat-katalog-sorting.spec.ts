@@ -37,4 +37,28 @@ test.describe('FR-09: Lihat Katalog', () => {
     const emptyState = page.getByText('Tidak ada produk');
     await expect(productGrid.or(emptyState)).toBeVisible();
   });
+
+  test('TC-09-03: Urutkan katalog (sorting) mengubah urutan produk', async ({ page }) => {
+    test.skip(!hasCreds('Industri'), 'Kredensial Industri belum diatur di .env.test');
+    await login(page, 'Industri');
+    await page.goto('/katalog-publik', { waitUntil: 'domcontentloaded' });
+
+    // Dropdown ke-2 = pengurutan (yang pertama = kategori)
+    const sortSelect = page.locator('select').nth(1);
+
+    // Urut "Harga: Terendah" -> URL berubah & produk termurah di posisi pertama
+    await sortSelect.selectOption('termurah');
+    await expect(page).toHaveURL(/sort=termurah/);
+    const produkTermurah = (await page.locator('a.group h3').first().textContent())?.trim();
+
+    // Urut "Harga: Tertinggi" -> URL berubah & produk pertama berbeda (termahal)
+    await sortSelect.selectOption('termahal');
+    await expect(page).toHaveURL(/sort=termahal/);
+    const produkTermahal = (await page.locator('a.group h3').first().textContent())?.trim();
+
+    // Produk teratas saat termurah harus beda dengan saat termahal (bukti urutan benar-benar berubah)
+    expect(produkTermurah).toBeTruthy();
+    expect(produkTermahal).toBeTruthy();
+    expect(produkTermurah).not.toBe(produkTermahal);
+  });
 });
