@@ -188,12 +188,28 @@ export default async function PencarianPage(props: Props) {
 
   // Extract unique locations for the dropdown
   const uniqueLocationsSet = new Set<string>();
+  const majorCities = [
+    'Jakarta', 'Bandung', 'Surabaya', 'Semarang', 'Medan', 
+    'Makassar', 'Yogyakarta', 'Tangerang', 'Bekasi', 'Depok', 
+    'Bogor', 'Malang', 'Solo', 'Denpasar', 'Palembang', 
+    'Balikpapan', 'Samarinda', 'Cimahi'
+  ];
+  
   formattedUmkm.forEach(u => {
     if (u.alamat && u.alamat !== '-') {
-      // Basic extraction of city/province if needed, but here we just use the raw string or let the user search.
-      // For simplicity, we just use the unique raw alamat values for now or let the user type in.
-      // If we want a dropdown, we should pass unique non-empty addresses.
-      uniqueLocationsSet.add(u.alamat);
+      const foundCity = majorCities.find(city => u.alamat.toLowerCase().includes(city.toLowerCase()));
+      if (foundCity) {
+        uniqueLocationsSet.add(foundCity);
+      } else {
+        // Fallback: extract last word as city name (clean punctuation and format)
+        const cleanAlamat = u.alamat.replace(/[.,]/g, ' ').trim();
+        const parts = cleanAlamat.split(/\s+/);
+        const lastPart = parts[parts.length - 1];
+        if (lastPart && lastPart.length > 2 && !/^\d+$/.test(lastPart)) {
+          const capitalized = lastPart.charAt(0).toUpperCase() + lastPart.slice(1).toLowerCase();
+          uniqueLocationsSet.add(capitalized);
+        }
+      }
     }
   });
   const locations = Array.from(uniqueLocationsSet).sort();

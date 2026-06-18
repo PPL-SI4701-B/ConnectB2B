@@ -43,10 +43,10 @@ export default function PencarianClient({
 
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [selectedCategoryList, setSelectedCategoryList] = useState<string[]>(initialCategoryList);
-  const [selectedLokasi, setSelectedLokasi] = useState(initialLokasi);
   const [minHarga, setMinHarga] = useState(initialMinHarga?.toString() || '');
   const [maxHarga, setMaxHarga] = useState(initialMaxHarga?.toString() || '');
-  const [verifiedOnly, setVerifiedOnly] = useState(initialVerifiedOnly);
+  const selectedLokasi = '';
+  const verifiedOnly = true;
   const [showFilters, setShowFilters] = useState(false);
 
   const [selectedUmkm, setSelectedUmkm] = useState<UmkmItem | null>(null);
@@ -74,8 +74,7 @@ export default function PencarianClient({
     params.delete('kategori');
     selectedCategoryList.forEach(c => params.append('kategori', c));
     
-    if (selectedLokasi) params.set('lokasi', selectedLokasi);
-    else params.delete('lokasi');
+    params.delete('lokasi');
     
     if (minHarga) params.set('minHarga', minHarga);
     else params.delete('minHarga');
@@ -83,7 +82,7 @@ export default function PencarianClient({
     if (maxHarga) params.set('maxHarga', maxHarga);
     else params.delete('maxHarga');
     
-    params.set('verifiedOnly', verifiedOnly.toString());
+    params.set('verifiedOnly', 'true');
     
     router.push(`?${params.toString()}`);
   };
@@ -91,10 +90,8 @@ export default function PencarianClient({
   const resetFilters = () => {
     setSearchTerm('');
     setSelectedCategoryList([]);
-    setSelectedLokasi('');
     setMinHarga('');
     setMaxHarga('');
-    setVerifiedOnly(true);
     router.push('?');
   };
 
@@ -251,24 +248,9 @@ export default function PencarianClient({
           </div>
           
           {showFilters && (
-            <div className="pt-4 border-t border-gray-100 mt-2 grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Lokasi */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Lokasi Operasional</label>
-                <select
-                  value={selectedLokasi}
-                  onChange={(e) => setSelectedLokasi(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white text-gray-900"
-                >
-                  <option value="">Semua Lokasi</option>
-                  {locations.map((loc, idx) => (
-                    <option key={`loc-${idx}`} value={loc}>{loc}</option>
-                  ))}
-                </select>
-              </div>
-
+            <div className="pt-4 border-t border-gray-100 mt-2 space-y-6">
               {/* Harga */}
-              <div>
+              <div className="max-w-md">
                 <label className="block text-sm font-bold text-gray-700 mb-2">Range Harga (Rp)</label>
                 <div className="flex items-center gap-2">
                   <input
@@ -289,24 +271,8 @@ export default function PencarianClient({
                 </div>
               </div>
 
-              {/* Verifikasi */}
-              <div className="flex items-center h-full pt-6">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className={`w-6 h-6 rounded border flex items-center justify-center transition-colors ${verifiedOnly ? 'bg-indigo-600 border-indigo-600' : 'bg-white border-gray-300 group-hover:border-indigo-400'}`}>
-                    {verifiedOnly && <Star className="w-4 h-4 text-white" />}
-                  </div>
-                  <input
-                    type="checkbox"
-                    className="hidden"
-                    checked={verifiedOnly}
-                    onChange={(e) => setVerifiedOnly(e.target.checked)}
-                  />
-                  <span className="text-sm font-medium text-gray-700">Hanya UMKM Terverifikasi</span>
-                </label>
-              </div>
-
               {/* Kategori */}
-              <div className="md:col-span-3">
+              <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Jenis Usaha / Kategori</label>
                 <div className="flex flex-wrap gap-2">
                   {categories.map((cat, idx) => (
@@ -332,7 +298,7 @@ export default function PencarianClient({
               </div>
 
               {/* Actions */}
-              <div className="md:col-span-3 pt-4 border-t border-gray-100 flex justify-end gap-3">
+              <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
                 <button
                   onClick={resetFilters}
                   className="px-6 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"

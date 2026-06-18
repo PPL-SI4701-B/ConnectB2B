@@ -84,6 +84,64 @@ test.describe('FR-11: Keranjang Kolaborasi', () => {
     await expect(page.getByText(/Keranjang Anda Kosong/i)).toHaveCount(0);
   });
 
+  test.describe('FR-11: Filter Pencarian Supplier', () => {
+    test.beforeEach(async ({ page }) => {
+      await login(page, 'Industri');
+      await page.goto('/pencarian', { waitUntil: 'domcontentloaded' });
+      // Klik Filter Lanjutan untuk menampilkan panel filter
+      const filterToggle = page.getByRole('button', { name: /Filter Lanjutan/i }).first();
+      await filterToggle.click();
+    });
+
+    test('TC-11-05: Exception Case - Range Harga Terbalik (Min > Max)', async ({ page }) => {
+      const minInput = page.getByPlaceholder('Min');
+      const maxInput = page.getByPlaceholder('Max');
+      const applyBtn = page.getByRole('button', { name: /Terapkan Filter/i });
+
+      // Langkah 1: Input range harga tidak valid di mana Min > Max
+      await minInput.fill('500000');
+      await maxInput.fill('10000');
+
+      // Langkah 2: Terapkan filter
+      await applyBtn.click();
+
+      // Langkah 3: Verifikasi URL ter-update
+      await expect(page).toHaveURL(/minHarga=500000/);
+      await expect(page).toHaveURL(/maxHarga=10000/);
+
+      // Langkah 4: Harus menampilkan pesan bahwa tidak ada UMKM yang ditemukan karena filter tidak logis
+      await expect(page.getByText(/Tidak ada UMKM ditemukan/i)).toBeVisible({ timeout: 10_000 });
+    });
+
+    test('TC-11-06: Filter berdasarkan Kategori (Valid)', async ({ page }) => {
+      const categoryButton = page.locator('label:has-text("Jenis Usaha / Kategori") + div button').first();
+      const applyBtn = page.getByRole('button', { name: /Terapkan Filter/i });
+
+      if (await categoryButton.isVisible().catch(() => false)) {
+        const categoryText = (await categoryButton.textContent())?.trim() || '';
+
+        // Langkah 1: Klik kategori pertama yang tersedia
+        await categoryButton.click();
+
+        // Langkah 2: Terapkan filter
+        await applyBtn.click();
+
+        // Langkah 3: Verifikasi URL mengandung nama kategori (di-encode)
+        await expect(page).toHaveURL(new RegExp(`kategori=${encodeURIComponent(categoryText).replace(/%20/g, '(%20|\\+)')}`));
+
+        // Verifikasi semua UMKM yang tampil memiliki tag kategori yang sesuai
+        const supplierCards = page.locator('div.group.relative.bg-white');
+        const count = await supplierCards.count();
+        for (let i = 0; i < count; i++) {
+          const tag = supplierCards.nth(i).locator('span', { hasText: categoryText });
+          await expect(tag).toBeVisible();
+        }
+      } else {
+        test.skip(true, 'Tidak ada kategori yang tersedia untuk dipilih.');
+      }
+    });
+  });
+
   test.afterAll(async () => {
     await clearCart();
   });
