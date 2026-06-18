@@ -110,7 +110,7 @@ export default async function BeriUlasanPage({
 
     return {
       transaksi_id: t.id,
-      req_label: `#REQ-${String(req?.id).padStart(4, "0")}`,
+      req_label: `#TRX-${String(t.id).padStart(4, "0")}`,
       umkm_nama: umkmNama,
       umkm_initials: umkmNama.substring(0, 2).toUpperCase(),
       tanggal_selesai: t.tanggal_selesai,

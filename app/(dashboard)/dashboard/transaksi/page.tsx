@@ -88,7 +88,8 @@ export default async function TransaksiPage() {
   const { data: transaksiAsReceiver } = await supabase
     .from('transaksi')
     .select(selectFragment)
-    .order('tanggal_mulai', { ascending: false }) as any;
+    .order('tanggal_mulai', { ascending: false })
+    .order('id', { ascending: false }) as any;
 
   const allTranaksi = (transaksiAsReceiver || []) as any[];
 
