@@ -190,9 +190,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 </div>
               </Link>
 
-              {/* Action Buttons */}
               {isIndustri && umkm ? (
-                <ProductDetailActions produkId={product.id} umkmId={umkm.id} />
+                <ProductDetailActions produkId={product.id} umkmId={umkm.id} minPemesanan={product.min_pembelian || 1} />
               ) : !user ? (
                 <Link
                   href="/login"

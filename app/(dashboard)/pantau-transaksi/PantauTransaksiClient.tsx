@@ -362,17 +362,22 @@ export default function PantauTransaksiClient({
               <span className="text-xs font-semibold text-[#2b3674] truncate">{uploadFile.name}</span>
             </div>
           ) : (
-            <span className="text-xs text-[#a3aed1]">Klik untuk pilih file (PDF/JPG/PNG, maks 5MB)</span>
+            <span className="text-xs text-[#a3aed1]">Klik untuk pilih file (JPG/PNG, maks 5MB)</span>
           )}
         </div>
         <input
           ref={fileInputRef}
           type="file"
-          accept="application/pdf,image/jpeg,image/png"
+          accept="image/jpeg,image/png"
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (!f) return;
+            const validTypes = ['image/jpeg', 'image/png'];
+            if (!validTypes.includes(f.type)) {
+              setUploadError("Format file harus JPG atau PNG.");
+              return;
+            }
             if (f.size > 5 * 1024 * 1024) {
               setUploadError("Ukuran file maksimal 5MB.");
               return;
@@ -729,7 +734,7 @@ export default function PantauTransaksiClient({
                   </div>
 
                   <p className="text-xs text-[#a3aed1]">
-                    Upload bukti pembayaran (PDF/JPG/PNG, maks 5MB) agar Admin dapat memvalidasi transaksi ini.
+                    Upload bukti pembayaran (JPG/PNG, maks 5MB) agar Admin dapat memvalidasi transaksi ini.
                   </p>
                   {renderUploadForm()}
                 </div>

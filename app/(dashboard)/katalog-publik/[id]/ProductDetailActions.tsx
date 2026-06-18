@@ -8,9 +8,10 @@ import { addToCart } from '@/app/actions/cart-actions';
 interface ProductDetailActionsProps {
   produkId: number;
   umkmId: number;
+  minPemesanan?: number;
 }
 
-export default function ProductDetailActions({ produkId, umkmId }: ProductDetailActionsProps) {
+export default function ProductDetailActions({ produkId, umkmId, minPemesanan = 1 }: ProductDetailActionsProps) {
   const router = useRouter();
   const [isAddingCart, setIsAddingCart] = useState(false);
   const [isAjukan, setIsAjukan] = useState(false);
@@ -21,7 +22,7 @@ export default function ProductDetailActions({ produkId, umkmId }: ProductDetail
     setIsAddingCart(true);
     setError(null);
     try {
-      await addToCart({ produk_id: produkId, kuantitas: 1, umkm_id: umkmId });
+      await addToCart({ produk_id: produkId, kuantitas: minPemesanan || 1, umkm_id: umkmId });
       setCartSuccess(true);
       setTimeout(() => setCartSuccess(false), 3000);
     } catch (e: any) {
@@ -40,7 +41,7 @@ export default function ProductDetailActions({ produkId, umkmId }: ProductDetail
     setIsAjukan(true);
     setError(null);
     try {
-      await addToCart({ produk_id: produkId, kuantitas: 1, umkm_id: umkmId });
+      await addToCart({ produk_id: produkId, kuantitas: minPemesanan || 1, umkm_id: umkmId });
       router.push('/keranjang');
     } catch (e: any) {
       if (e.message?.startsWith('UMKM_CONFLICT:')) {

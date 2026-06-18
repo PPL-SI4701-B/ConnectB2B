@@ -46,9 +46,11 @@ export default function ProfileClient({
   // Document refs — must be at top level, not inside .map()
   const nibInputRef = useRef<HTMLInputElement>(null);
   const npwpInputRef = useRef<HTMLInputElement>(null);
+  const siupInputRef = useRef<HTMLInputElement>(null);
   const docInputRefs: Record<string, React.RefObject<HTMLInputElement>> = {
     NIB: nibInputRef,
     NPWP: npwpInputRef,
+    SIUP: siupInputRef,
   };
 
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function ProfileClient({
     const file = e.target.files[0];
     
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${docType}_${Date.now()}.${fileExt}`;
+    const fileName = `${role.toLowerCase()}/${userId}/${docType}_${Date.now()}.${fileExt}`;
 
     setIsLoading(true);
     try {
@@ -451,7 +453,7 @@ export default function ProfileClient({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Note: This is an overview as per mockup, full document upload would typically go through a different component or route as per FR-27. */}
-              {['NIB', 'NPWP'].map((docType) => {
+              {(role === 'industri' ? ['SIUP', 'NIB', 'NPWP'] : ['NIB', 'NPWP']).map((docType) => {
                 const existingDoc = documents.find((d: any) => d.jenis_dokumen === docType);
                 const fileInputRef = docInputRefs[docType];
 

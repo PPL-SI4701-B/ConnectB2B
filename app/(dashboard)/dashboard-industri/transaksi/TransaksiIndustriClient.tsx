@@ -189,9 +189,9 @@ export default function TransaksiIndustriClient({
   };
 
   const validateAndSetFile = (file: File) => {
-    const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    const validTypes = ['image/jpeg', 'image/png'];
     if (!validTypes.includes(file.type)) {
-      showToast('Format file harus JPG, PNG, atau PDF.', 'error');
+      showToast('Format file harus JPG atau PNG.', 'error');
       return;
     }
     // Limit to 5MB
@@ -510,12 +510,12 @@ export default function TransaksiIndustriClient({
                           type="file"
                           ref={fileInputRef}
                           onChange={handleFileChange}
-                          accept=".jpg,.jpeg,.png,.pdf"
+                          accept=".jpg,.jpeg,.png"
                           className="hidden"
                         />
                         <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-blue-500 transition-colors mb-2" />
                         <p className="text-sm font-medium text-gray-600 group-hover:text-blue-600">Klik atau drag untuk unggah Bukti Transfer / Resi</p>
-                        <p className="text-xs text-gray-500 mt-1">Format JPG, PNG, atau PDF maks. 5MB</p>
+                        <p className="text-xs text-gray-500 mt-1">Format JPG atau PNG maks. 5MB</p>
                       </label>
 
                       {/* Selected File Details */}

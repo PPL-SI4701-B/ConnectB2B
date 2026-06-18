@@ -1,7 +1,17 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // Skip auth processing for Next.js RSC prefetch requests.
+  // Prefetch requests can consume the single-use Supabase refresh token before the
+  // actual navigation, causing the navigation request to fail and redirect to /login.
+  const isPrefetch =
+    request.headers.get('next-router-prefetch') === '1' ||
+    request.headers.get('purpose') === 'prefetch';
+  if (isPrefetch) {
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -13,48 +23,31 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
+        getAll() {
+          return request.cookies.getAll()
         },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+            request,
           })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
         },
       },
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // Wrap getUser in try-catch: transient auth server errors should not log users out
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // If auth check fails due to network/transient error, pass through without redirecting
+    return response;
+  }
 
   const isAuthRoute =
     request.nextUrl.pathname.startsWith('/login') ||
@@ -71,11 +64,24 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/beri-ulasan');
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
 
+  // Fetch profile once for authenticated users on protected/auth routes (avoid 2 DB calls)
+  let profile: { role: string; status_verifikasi: string; is_blocked: boolean } | null = null;
+  if (user && (isAuthRoute || isDashboardRoute || isAdminRoute)) {
+    try {
+      const { data } = await supabase
+        .from('users')
+        .select('role, status_verifikasi, is_blocked')
+        .eq('id', user.id)
+        .single();
+      profile = data;
+    } catch {
+      // DB errors should not log users out — let the page handle it
+    }
+  }
+
   // Redirect authenticated users away from auth routes
   if (user && isAuthRoute) {
-    const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
     const url = request.nextUrl.clone();
-
     if (profile?.role === 'admin') {
       url.pathname = '/admin';
     } else if (profile?.role === 'industri') {
@@ -83,7 +89,11 @@ export async function middleware(request: NextRequest) {
     } else {
       url.pathname = '/dashboard';
     }
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    response.headers.getSetCookie().forEach(cookie => {
+      redirectResponse.headers.append('Set-Cookie', cookie);
+    });
+    return redirectResponse;
   }
 
   // Protect dashboard and admin routes from unauthenticated users
@@ -95,12 +105,6 @@ export async function middleware(request: NextRequest) {
 
   // Protect dashboard and admin routes: check is_blocked + status_verifikasi
   if (user && (isDashboardRoute || isAdminRoute)) {
-    const { data: profile } = await supabase
-      .from('users')
-      .select('status_verifikasi, role, is_blocked')
-      .eq('id', user.id)
-      .single();
-
     if (profile?.is_blocked) {
       await supabase.auth.signOut();
       const url = request.nextUrl.clone();
@@ -117,7 +121,11 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = '/status-verifikasi';
       url.search = `?status=${profile.status_verifikasi}`;
-      return NextResponse.redirect(url);
+      const redirectResponse = NextResponse.redirect(url);
+      response.headers.getSetCookie().forEach(cookie => {
+        redirectResponse.headers.append('Set-Cookie', cookie);
+      });
+      return redirectResponse;
     }
   }
 
