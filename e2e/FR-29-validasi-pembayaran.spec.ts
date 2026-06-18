@@ -171,6 +171,31 @@ test.describe.serial('FR-29: Validasi Pembayaran', () => {
     expect(trx?.status).toBe('belum lunas');
   });
 
+  test('TC-29-03: Validasi Pembayaran Menolak Pembayaran yang tidak sah tapi tidak mengisi alasan', async ({ page }) => {
+    // Cari baris berdasarkan TRX id
+    const trxIdFormatted = `TRX-${String(trxDitolakId).padStart(4, '0')}`;
+    const row = page.locator('tr').filter({ hasText: trxIdFormatted }).first();
+    await expect(row).toBeVisible();
+
+    // Klik "Tolak (Tidak Valid)"
+    const btnTolak = row.getByRole('button', { name: /Tolak/i });
+    await expect(btnTolak).toBeVisible();
+    await btnTolak.click();
+
+    // Kosongkan alasan penolakan
+    const inputAlasan = page.getByPlaceholder('Mis. nominal tidak sesuai, bukti tidak jelas/buram...');
+    await expect(inputAlasan).toBeVisible();
+    await inputAlasan.fill('');
+
+    // Submit
+    const modalTolak = page.getByRole('button', { name: 'Ya, Tolak' });
+    await expect(modalTolak).toBeVisible();
+    await modalTolak.click();
+
+    // Muncul notifikasi "Isi alasan penolakan"
+    await expect(page.getByText('Mohon isi alasan penolakan.')).toBeVisible({ timeout: 15000 });
+  });
+
   test.afterAll(async () => {
     await supabase.from('notifikasi').delete().like('pesan', '%E2E_FR29%');
     await supabase.from('pembayaran').delete().in('transaksi_id', [trxValidId, trxDitolakId]);
