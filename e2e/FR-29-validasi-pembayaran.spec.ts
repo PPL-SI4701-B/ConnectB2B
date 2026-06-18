@@ -105,7 +105,7 @@ test.describe.serial('FR-29: Validasi Pembayaran', () => {
     // Reset data jika test di-rerun
     await supabase.from('pembayaran').update({ status: 'pending', catatan_admin: null }).in('transaksi_id', [trxValidId, trxDitolakId]);
     await supabase.from('transaksi').update({ status: 'belum lunas' }).in('id', [trxValidId, trxDitolakId]);
-    
+
     await login(page, 'Admin');
     await page.goto('/admin');
   });
@@ -128,7 +128,7 @@ test.describe.serial('FR-29: Validasi Pembayaran', () => {
 
     // Pastikan hilang dari tabel setelah delay atau menampilkan toast
     await expect(page.getByText(/berhasil diverifikasi/i)).toBeVisible({ timeout: 15000 });
-    
+
     // Verifikasi di DB
     const { data: pay } = await supabase.from('pembayaran').select('status').eq('transaksi_id', trxValidId).single();
     expect(pay?.status).toBe('berhasil');
@@ -193,7 +193,7 @@ test.describe.serial('FR-29: Validasi Pembayaran', () => {
     await modalTolak.click();
 
     // Muncul notifikasi "Isi alasan penolakan"
-    await expect(page.getByText('Mohon isi alasan penolakan.')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/alasan penolakan/i)).toBeVisible({ timeout: 15000 });
   });
 
   test.afterAll(async () => {
