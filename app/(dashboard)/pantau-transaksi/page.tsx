@@ -69,7 +69,8 @@ export default async function PantauTransaksiPage() {
     `
     )
     .eq("request.industri_id", industriId)
-    .order("tanggal_mulai", { ascending: false });
+    .order("tanggal_mulai", { ascending: false })
+    .order("id", { ascending: false });
 
   if (txError) {
     console.error("[PantauTransaksi] Error fetching transaksi:", txError);
@@ -141,7 +142,7 @@ export default async function PantauTransaksiPage() {
     return {
       transaksi_id: t.id,
       request_id: t.request_id,
-      req_label: `#REQ-${String(t.request_id).padStart(4, "0")}`,
+      req_label: `#TRX-${String(t.id).padStart(4, "0")}`,
       progress_status: t.progress_status || "Menunggu Material",
       status_finansial: t.status || "belum lunas",
       pembayaran_status: pembayaran?.status ?? null,
