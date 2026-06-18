@@ -125,21 +125,33 @@ export default async function AdminPage() {
       };
     });
 
-  // Fetch all products for content moderation (FR-22)
-  const { data: allProducts } = await supabase
-    .from('produk')
-    .select('id, nama, kategori, harga, is_active, user_id, umkm:users!produk_user_id_fkey(nama)')
-    .order('id', { ascending: false });
+  // Fetch only flagged products for content moderation (FR-22)
+  const { data: pendingReports } = await supabase
+    .from('laporan_konten')
+    .select('katalog_id')
+    .eq('katalog_type', 'produk')
+    .eq('status', 'pending');
 
-  const formattedProducts = (allProducts as any[] || []).map((p: any) => ({
-    id: p.id,
-    nama: p.nama,
-    kategori: p.kategori,
-    harga: p.harga,
-    is_active: p.is_active ?? true,
-    user_id: p.user_id,
-    owner_nama: Array.isArray(p.umkm) ? p.umkm[0]?.nama : p.umkm?.nama ?? null,
-  }));
+  const flaggedProdukIds = (pendingReports || []).map((r: any) => r.katalog_id);
+
+  let formattedProducts: any[] = [];
+  if (flaggedProdukIds.length > 0) {
+    const { data: flaggedProducts } = await supabase
+      .from('produk')
+      .select('id, nama, kategori, harga, is_active, user_id, umkm:users!produk_user_id_fkey(nama)')
+      .in('id', flaggedProdukIds)
+      .order('id', { ascending: false });
+
+    formattedProducts = (flaggedProducts as any[] || []).map((p: any) => ({
+      id: p.id,
+      nama: p.nama,
+      kategori: p.kategori,
+      harga: p.harga,
+      is_active: p.is_active ?? true,
+      user_id: p.user_id,
+      owner_nama: Array.isArray(p.umkm) ? p.umkm[0]?.nama : p.umkm?.nama ?? null,
+    }));
+  }
 
   // Fetch all users for management table (FR-21)
   const { data: allUsers } = await supabase
